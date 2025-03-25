@@ -7,12 +7,13 @@ import InfoPage from './components/InfoPage'
 import MSGManage from './components/MSGManage'
 import StudentsManage from './components/StudentsManage'
 import CoursesManage from './components/CoursesManage'
+import MSGForms from './components/MSGForms'
 export default function App() {
   return (
     <div>
       <Header/>
       <Routes>
-        <Route path='/MSGManage' element={<MSGManage />} />
+        <Route path='/MSGFForms' element={<MSGForms />} />
         <Route path='/StudentsManage' element={<StudentsManage />} />
         <Route path='/CoursesManage' element={<CoursesManage />} />
         <Route path='/MSGManage' element={<MSGManage />} />
