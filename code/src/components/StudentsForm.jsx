@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Box from '@mui/material/Box';
 import TextField from '@mui/material/TextField';
 import Button from '@mui/material/Button';
@@ -8,9 +8,6 @@ import RadioGroup from '@mui/material/RadioGroup';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import FormControl from '@mui/material/FormControl';
 import FormLabel from '@mui/material/FormLabel';
-import Select from '@mui/material/Select';
-import MenuItem from '@mui/material/MenuItem';
-import InputLabel from '@mui/material/InputLabel';
 
 export default function StudentRegistrationForm() {
   const [studentId, setStudentId] = useState('');
@@ -18,6 +15,16 @@ export default function StudentRegistrationForm() {
   const [age, setAge] = useState('');
   const [gender, setGender] = useState('');
   const [year, setYear] = useState('');
+  const [students, setStudents] = useState(() => {
+    // Load students from local storage on initial render
+    const savedStudents = localStorage.getItem('students');
+    return savedStudents ? JSON.parse(savedStudents) : [];
+  });
+
+  useEffect(() => {
+    // Save students to local storage whenever the students array changes
+    localStorage.setItem('students', JSON.stringify(students));
+  }, [students]);
 
   const handleIdChange = (event) => {
     setStudentId(event.target.value);
@@ -48,7 +55,7 @@ export default function StudentRegistrationForm() {
       !fullName.trim() ||
       !age.trim() ||
       !gender ||
-      !setYear
+      !year.trim()
     ) {
       alert('Please fill in all fields.');
       return;
@@ -59,11 +66,16 @@ export default function StudentRegistrationForm() {
       fullName: fullName,
       age: age,
       gender: gender,
-      setYear: setYear,
+      year: year,
     };
 
     // Log the new student object to the console
     console.log('New Student:', newStudent);
+
+    // Add the new student to the students array
+    setStudents([...students, newStudent]);
+    console.log('Students:', students);
+    
 
     // Clear the form fields
     setStudentId('');
@@ -72,10 +84,6 @@ export default function StudentRegistrationForm() {
     setGender('');
     setYear('');
   };
-
-  // Generate the last 3 years for the select list
-  const currentYear = new Date().getFullYear();
-  const years = [currentYear, currentYear - 1, currentYear - 2];
 
   return (
     <Box
@@ -137,15 +145,14 @@ export default function StudentRegistrationForm() {
       </FormControl>
 
       <FormControl sx={{ m: 1, width: '30ch' }}>
-      <TextField
-        required
-        id="year"
-        label="year"
-        type="number"
-        value={year}
-        onChange={handleYearChange}
-      />
-
+        <TextField
+          required
+          id="year"
+          label="year"
+          type="number"
+          value={year}
+          onChange={handleYearChange}
+        />
       </FormControl>
 
       <Button type="submit" variant="contained" sx={{ mt: 2 }}>
