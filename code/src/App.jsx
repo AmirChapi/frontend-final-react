@@ -12,6 +12,8 @@ import MSGForms from './components/MSGForms';
 import StudentsForm from './components/StudentsForm';
 import CourseForm from './components/CourseForm';
 import LoginSimulation from './components/LoginSimulation'; // <--- Import the new component
+import TaskManage from './components/TaskManage';
+import TaskForm from './components/TaskForm';
 
 export default function App() {
   return (
@@ -27,6 +29,8 @@ export default function App() {
         <Route path='/StudentsManage' element={<StudentsManage />} />
         <Route path='/CoursesManage' element={<CoursesManage />} />
         <Route path='/MSGManage' element={<MSGManage />} />
+        <Route path='/TaskManage' element={<TaskManage />} />
+        <Route path='/TaskForm' element={<TaskForm />} />
         <Route path='/' element={<HomePage />} />
         <Route path="/help" element={<Help />} />
         <Route path="/info" element={<InfoPage />} />

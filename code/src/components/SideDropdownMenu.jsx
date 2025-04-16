@@ -24,6 +24,7 @@ export default function SideDropdownMenu() {
     { text: 'Students Manage', path: '/StudentsManage' },
     { text: 'Courses Manage', path: '/CoursesManage' },
     { text: 'MSG Manage', path: '/MSGManage' },
+    { text: 'Tasks Form', path: '/TaskForm' },
     {text: 'Login Simulation', path: '/LoginSimulation'},
     {text: 'Home Page', path: '/'},
     {text: 'Help', path: '/help'},
