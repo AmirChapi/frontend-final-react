@@ -21,12 +21,14 @@ export default function SideDropdownMenu() {
   };
 
   const menuItems = [
-    { text: 'MSG Forms', path: '/MSGFForms' },
     { text: 'Students Manage', path: '/StudentsManage' },
     { text: 'Courses Manage', path: '/CoursesManage' },
     { text: 'MSG Manage', path: '/MSGManage' },
-    { text: 'Student Form', path: '/StudentsForm' }, // Added Student Form parameter
-  ];
+    {text: 'Login Simulation', path: '/LoginSimulation'},
+    {text: 'Home Page', path: '/'},
+    {text: 'Help', path: '/help'},
+    {text: 'Info', path: '/info'},
+    ];
 
   const handleMenuItemClick = (path) => {
     navigate(path);
