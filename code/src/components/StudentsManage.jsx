@@ -11,32 +11,32 @@ import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import Paper from '@mui/material/Paper';
 import Button from '@mui/material/Button';
-import ButtonGroup from '@mui/material/ButtonGroup';
+// Removed ButtonGroup, AssignmentIcon, GradeIcon as they are no longer needed
 import AddIcon from '@mui/icons-material/Add';
-import AssignmentIcon from '@mui/icons-material/Assignment';
-import GradeIcon from '@mui/icons-material/Grade';
 import Alert from '@mui/material/Alert';
 import CircularProgress from '@mui/material/CircularProgress';
 
-// --- Placeholder Data ---
+// --- Placeholder Data (Used only if localStorage is empty) ---
 const placeholderAllStudents = [
-    { id: '12345', name: 'Alice Wonderland', email: 'alice@example.com', year: 3 },
-    { id: '67890', name: 'Bob The Builder', email: 'bob@example.com', year: 2 },
-    { id: '11223', name: 'Charlie Chaplin', email: 'charlie@example.com', year: 4 },
-    { id: '44556', name: 'Diana Prince', email: 'diana@example.com', year: 1 },
+    { id: '12345', name: 'Alice Wonderland', email: 'alice@example.com', year: '2023' }, // Ensure year is string if form saves it as string
+    { id: '67890', name: 'Bob The Builder', email: 'bob@example.com', year: '2022' },
+    { id: '11223', name: 'Charlie Chaplin', email: 'charlie@example.com', year: '2024' },
+    { id: '44556', name: 'Diana Prince', email: 'diana@example.com', year: '2021' },
 ];
 // --- End Placeholder Data ---
+
+// --- LocalStorage Key for Students (Ensure this matches StudentsForm.jsx) ---
+const STUDENTS_STORAGE_KEY = 'studentsList';
 
 // --- Get User Info (including Role) from Local Storage ---
 // Reads the role set by LoginSimulation.jsx
 const getCurrentUser = () => {
     const role = localStorage.getItem('userRole');
     console.log("StudentsManage - User role from localStorage:", role); // For debugging
-    // Return a user object structure consistent with previous usage
     return {
-        id: role === 'administrator' ? 'admin001' : 'student001', // Placeholder ID based on role
-        username: role === 'administrator' ? 'admin_user' : 'student_user', // Placeholder username
-        role: role || 'student' // Default to 'student' if nothing is set
+        id: role === 'administrator' ? 'admin001' : 'student001',
+        username: role === 'administrator' ? 'admin_user' : 'student_user',
+        role: role || 'student'
     };
 };
 // --- End Get User Info ---
@@ -48,77 +48,79 @@ export default function StudentsManage() {
     const [error, setError] = useState(null);
     const navigate = useNavigate();
 
-    // Get current user information (including role from localStorage)
     const currentUser = getCurrentUser();
     const isAdmin = currentUser?.role === 'administrator';
 
+    // --- Effect to load students from localStorage ---
     useEffect(() => {
-       // TODO: Replace with your actual API call to fetch students
         setIsLoading(true);
         setError(null);
-        // Using placeholder data for now
+        console.log("StudentsManage: Loading students from localStorage...");
+
+        // Simulate loading delay slightly
         setTimeout(() => {
-            setStudents(placeholderAllStudents);
-            setIsLoading(false);
-        }, 700); // Simulate network delay
+            try {
+                const storedStudents = localStorage.getItem(STUDENTS_STORAGE_KEY);
+                let studentsData = [];
 
-    }, []); // Runs once on component mount
+                if (storedStudents) {
+                    const parsedData = JSON.parse(storedStudents);
+                    // Basic validation: check if it's an array
+                    if (Array.isArray(parsedData)) {
+                        console.log("StudentsManage: Found students in localStorage.");
+                        studentsData = parsedData;
+                    } else {
+                        console.warn("StudentsManage: Data in localStorage is not an array. Using placeholder.");
+                        studentsData = placeholderAllStudents;
+                        localStorage.setItem(STUDENTS_STORAGE_KEY, JSON.stringify(studentsData)); // Save placeholders if data was invalid
+                    }
+                } else {
+                    // If nothing in storage, use placeholder and save it
+                    console.log("StudentsManage: No students in localStorage, using placeholder and saving.");
+                    studentsData = placeholderAllStudents;
+                    localStorage.setItem(STUDENTS_STORAGE_KEY, JSON.stringify(studentsData));
+                }
+                setStudents(studentsData);
+            } catch (err) {
+                console.error("StudentsManage: Error loading/parsing students from localStorage:", err);
+                setError('Failed to load student data. Storage might be corrupted.');
+                // Optionally clear corrupted storage: localStorage.removeItem(STUDENTS_STORAGE_KEY);
+                setStudents([]); // Set to empty array on error
+            } finally {
+                setIsLoading(false);
+            }
+        }, 100); // Short delay for simulation
 
-    // --- Navigation Handlers ---
-    const handleAddCourseClick = () => {
-        navigate('/CourseForm'); // Navigate to Add Course page
+    }, []); // Empty dependency array means this runs once on mount
+
+    // --- Navigation Handler for Adding a Student ---
+    const handleAddStudentClick = () => {
+        console.log("Navigating to Add Student Form...");
+        navigate('/StudentsForm');
     };
-
-    const handleAddAssignmentClick = () => {
-        // TODO: Create and navigate to the Add Assignment page/component
-        console.log("Navigate to Add Assignment Form");
-        // navigate('/AssignmentForm'); // Example route
-        alert("Add Assignment functionality not yet implemented.");
-    };
-
-    const handleAddGradeClick = () => {
-        // TODO: Create and navigate to the Add Grade page/component
-        console.log("Navigate to Add Grade Form");
-        // navigate('/GradeForm'); // Example route
-        alert("Add Grade functionality not yet implemented.");
-    };
-    // --- End Navigation Handlers ---
+    // --- End Navigation Handler ---
 
     return (
         <Box sx={{ width: '100%', maxWidth: 1000, margin: 'auto', mt: 4, px: 2 }}>
+            {/* Header Section - Simplified Button */}
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2, flexWrap: 'wrap', gap: 2 }}>
                 <Typography variant="h5" component="h1" gutterBottom sx={{ mb: { xs: 1, md: 0 } }}>
                     Manage Students
                 </Typography>
 
-                {/* --- Conditional Admin Buttons --- */}
-                {/* This will now show/hide based on localStorage value */}
+                {/* --- Conditional Admin Button --- */}
                 {isAdmin && (
-                    <ButtonGroup variant="contained" aria-label="admin actions button group">
-                         <Button
-                            startIcon={<AddIcon />}
-                            onClick={handleAddCourseClick}
-                            title="Add a new course to the system"
-                        >
-                            Add Course
-                        </Button>
-                        <Button
-                            startIcon={<AssignmentIcon />}
-                            onClick={handleAddAssignmentClick}
-                            title="Add a new assignment"
-                        >
-                            Add Assignment
-                        </Button>
-                        <Button
-                            startIcon={<GradeIcon />}
-                            onClick={handleAddGradeClick}
-                            title="Add a grade for a student/assignment"
-                        >
-                            Add Grade
-                        </Button>
-                    </ButtonGroup>
+                    <Button
+                        variant="contained"
+                        startIcon={<AddIcon />}
+                        onClick={handleAddStudentClick}
+                        title="Add a new student to the system"
+                    >
+                        Add Student
+                    </Button>
+                    // Removed ButtonGroup as it's not needed for a single button
                 )}
-                {/* --- End Conditional Admin Buttons --- */}
+                {/* --- End Conditional Admin Button --- */}
             </Box>
 
             {/* --- Loading and Error States --- */}
@@ -139,14 +141,14 @@ export default function StudentsManage() {
                                 <TableCell sx={{ fontWeight: 'bold' }}>Name</TableCell>
                                 <TableCell sx={{ fontWeight: 'bold' }}>Email</TableCell>
                                 <TableCell sx={{ fontWeight: 'bold' }} align="right">Year</TableCell>
-                                {/* Add Actions column if admins can edit/delete/view details per student */}
+                                {/* Optional Actions column */}
                                 {/* {isAdmin && <TableCell sx={{ fontWeight: 'bold' }} align="center">Actions</TableCell>} */}
                             </TableRow>
                         </TableHead>
                         <TableBody>
                             {students.map((student) => (
                                 <TableRow
-                                    key={student.id}
+                                    key={student.id} // Ensure student objects have unique 'id'
                                     hover
                                     sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
                                 >
@@ -156,7 +158,7 @@ export default function StudentsManage() {
                                     <TableCell>{student.name}</TableCell>
                                     <TableCell>{student.email}</TableCell>
                                     <TableCell align="right">{student.year || 'N/A'}</TableCell>
-                                    {/* Example Actions Cell (implement buttons/icons as needed) */}
+                                    {/* Optional Actions Cell */}
                                     {/* {isAdmin && (
                                         <TableCell align="center">
                                             <IconButton size="small" onClick={() => {}} title="View Details"><VisibilityIcon fontSize="inherit" /></IconButton>
@@ -168,8 +170,13 @@ export default function StudentsManage() {
                         </TableBody>
                     </Table>
                 </TableContainer>
-            ) : (
-                 !isLoading && !error && <Alert severity="info" sx={{ mt: 2 }}>No students found in the system.</Alert>
+            ) : null} {/* Render nothing if loading, error, or empty */}
+
+            {/* No Students Found State - Improved Message */}
+            {!isLoading && !error && students.length === 0 && (
+                 <Alert severity="info" sx={{ mt: 2 }}>
+                     No students found in the system. {isAdmin ? 'Use the "Add Student" button above to add one.' : ''}
+                 </Alert>
             )}
         </Box>
     );
