@@ -11,28 +11,57 @@ import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import Paper from '@mui/material/Paper';
 import Button from '@mui/material/Button';
-// Removed ButtonGroup, AssignmentIcon, GradeIcon as they are no longer needed
+import IconButton from '@mui/material/IconButton'; // Import IconButton
 import AddIcon from '@mui/icons-material/Add';
+import EditIcon from '@mui/icons-material/Edit';     // Import EditIcon
+import DeleteIcon from '@mui/icons-material/Delete'; // Import DeleteIcon
 import Alert from '@mui/material/Alert';
 import CircularProgress from '@mui/material/CircularProgress';
 
-// --- Placeholder Data (Used only if localStorage is empty) ---
+// --- Placeholder Data (Email Removed) ---
 const placeholderAllStudents = [
-    { id: '12345', name: 'Alice Wonderland', email: 'alice@example.com', year: '2023' }, // Ensure year is string if form saves it as string
-    { id: '67890', name: 'Bob The Builder', email: 'bob@example.com', year: '2022' },
-    { id: '11223', name: 'Charlie Chaplin', email: 'charlie@example.com', year: '2024' },
-    { id: '44556', name: 'Diana Prince', email: 'diana@example.com', year: '2021' },
+    { id: '123456789', name: 'Alice Wonderland', year: '2023' }, // Example 9-digit ID
+    { id: '987654321', name: 'Bob The Builder', year: '2022' },
+    { id: '112233445', name: 'Charlie Chaplin', year: '2024' },
+    { id: '556677889', name: 'Diana Prince', year: '2021' },
 ];
 // --- End Placeholder Data ---
 
-// --- LocalStorage Key for Students (Ensure this matches StudentsForm.jsx) ---
+// --- LocalStorage Key for Students ---
 const STUDENTS_STORAGE_KEY = 'studentsList';
 
+// --- Helper Functions for LocalStorage (Moved outside for potential reuse) ---
+const getStoredData = (key) => {
+    try {
+        const storedData = localStorage.getItem(key);
+        if (storedData) {
+            const parsedData = JSON.parse(storedData);
+            return Array.isArray(parsedData) ? parsedData : null;
+        }
+    } catch (error) {
+        console.error(`Error parsing data from localStorage key "${key}":`, error);
+    }
+    return null;
+};
+
+const saveDataToStorage = (key, data) => {
+    try {
+        if (!Array.isArray(data)) {
+            console.error(`Attempted to save non-array data to localStorage key "${key}".`);
+            return false; // Indicate failure
+        }
+        localStorage.setItem(key, JSON.stringify(data));
+        return true; // Indicate success
+    } catch (error) {
+        console.error(`Failed to save data to localStorage key "${key}":`, error);
+        return false; // Indicate failure
+    }
+};
+// --- End Helper Functions ---
+
 // --- Get User Info (including Role) from Local Storage ---
-// Reads the role set by LoginSimulation.jsx
 const getCurrentUser = () => {
     const role = localStorage.getItem('userRole');
-    console.log("StudentsManage - User role from localStorage:", role); // For debugging
     return {
         id: role === 'administrator' ? 'admin001' : 'student001',
         username: role === 'administrator' ? 'admin_user' : 'student_user',
@@ -46,69 +75,85 @@ export default function StudentsManage() {
     const [students, setStudents] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [feedback, setFeedback] = useState({ type: '', message: '' }); // For delete/error feedback
     const navigate = useNavigate();
 
     const currentUser = getCurrentUser();
     const isAdmin = currentUser?.role === 'administrator';
 
-    // --- Effect to load students from localStorage ---
+    // --- Load Students ---
     useEffect(() => {
         setIsLoading(true);
         setError(null);
-        console.log("StudentsManage: Loading students from localStorage...");
+        setFeedback({ type: '', message: '' }); // Clear feedback on load
 
-        // Simulate loading delay slightly
-        setTimeout(() => {
+        const timer = setTimeout(() => {
             try {
-                const storedStudents = localStorage.getItem(STUDENTS_STORAGE_KEY);
-                let studentsData = [];
+                let studentsData = getStoredData(STUDENTS_STORAGE_KEY);
 
-                if (storedStudents) {
-                    const parsedData = JSON.parse(storedStudents);
-                    // Basic validation: check if it's an array
-                    if (Array.isArray(parsedData)) {
-                        console.log("StudentsManage: Found students in localStorage.");
-                        studentsData = parsedData;
-                    } else {
-                        console.warn("StudentsManage: Data in localStorage is not an array. Using placeholder.");
-                        studentsData = placeholderAllStudents;
-                        localStorage.setItem(STUDENTS_STORAGE_KEY, JSON.stringify(studentsData)); // Save placeholders if data was invalid
-                    }
-                } else {
-                    // If nothing in storage, use placeholder and save it
-                    console.log("StudentsManage: No students in localStorage, using placeholder and saving.");
+                if (studentsData === null) {
+                    // console.log("No students in localStorage or data invalid, using placeholder and saving.");
                     studentsData = placeholderAllStudents;
-                    localStorage.setItem(STUDENTS_STORAGE_KEY, JSON.stringify(studentsData));
+                    saveDataToStorage(STUDENTS_STORAGE_KEY, studentsData);
                 }
                 setStudents(studentsData);
             } catch (err) {
-                console.error("StudentsManage: Error loading/parsing students from localStorage:", err);
-                setError('Failed to load student data. Storage might be corrupted.');
-                // Optionally clear corrupted storage: localStorage.removeItem(STUDENTS_STORAGE_KEY);
-                setStudents([]); // Set to empty array on error
+                console.error("Error loading students:", err);
+                setError('Failed to load student data.');
+                setStudents([]);
             } finally {
                 setIsLoading(false);
             }
-        }, 100); // Short delay for simulation
+        }, 50); // Short delay
 
+        return () => clearTimeout(timer);
     }, []); // Empty dependency array means this runs once on mount
 
-    // --- Navigation Handler for Adding a Student ---
+    // --- Action Handlers ---
     const handleAddStudentClick = () => {
-        console.log("Navigating to Add Student Form...");
+        // Navigate to the form in 'add' mode (no state passed)
         navigate('/StudentsForm');
     };
-    // --- End Navigation Handler ---
+
+    const handleEdit = (studentToEdit) => {
+        // Navigate to the form, passing the student object in state for 'edit' mode
+        console.log("Editing student:", studentToEdit);
+        // Note: StudentsForm needs to be updated to handle this state
+        navigate('/StudentsForm', { state: { studentToEdit: studentToEdit } });
+    };
+
+    const handleDelete = (studentIdToDelete) => {
+        // Confirmation dialog
+        if (window.confirm(`Are you sure you want to delete student ${studentIdToDelete}? This action cannot be undone.`)) {
+            try {
+                const updatedStudents = students.filter(student => student.id !== studentIdToDelete);
+                const success = saveDataToStorage(STUDENTS_STORAGE_KEY, updatedStudents);
+
+                if (success) {
+                    setStudents(updatedStudents); // Update state to reflect deletion in UI
+                    setFeedback({ type: 'success', message: `Student ${studentIdToDelete} deleted successfully.` });
+                } else {
+                    setFeedback({ type: 'error', message: 'Failed to save changes after deletion.' });
+                }
+            } catch (err) {
+                console.error("Error deleting student:", err);
+                setFeedback({ type: 'error', message: 'An error occurred while deleting the student.' });
+            }
+            // Clear feedback message after a few seconds
+            setTimeout(() => setFeedback({ type: '', message: '' }), 3000);
+        }
+    };
+    // --- End Action Handlers ---
 
     return (
         <Box sx={{ width: '100%', maxWidth: 1000, margin: 'auto', mt: 4, px: 2 }}>
-            {/* Header Section - Simplified Button */}
+            {/* Header Section */}
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2, flexWrap: 'wrap', gap: 2 }}>
                 <Typography variant="h5" component="h1" gutterBottom sx={{ mb: { xs: 1, md: 0 } }}>
                     Manage Students
                 </Typography>
 
-                {/* --- Conditional Admin Button --- */}
+                {/* Conditional Admin Button */}
                 {isAdmin && (
                     <Button
                         variant="contained"
@@ -118,12 +163,17 @@ export default function StudentsManage() {
                     >
                         Add Student
                     </Button>
-                    // Removed ButtonGroup as it's not needed for a single button
                 )}
-                {/* --- End Conditional Admin Button --- */}
             </Box>
 
-            {/* --- Loading and Error States --- */}
+            {/* Feedback Area */}
+            {feedback.message && (
+                <Alert severity={feedback.type || 'info'} sx={{ mb: 2 }}>
+                    {feedback.message}
+                </Alert>
+            )}
+
+            {/* Loading and Error States */}
             {isLoading && (
                 <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
                     <CircularProgress />
@@ -131,7 +181,7 @@ export default function StudentsManage() {
             )}
             {error && <Alert severity="error" sx={{ mt: 2 }}>{error}</Alert>}
 
-            {/* --- Student Table --- */}
+            {/* Student Table */}
             {!isLoading && !error && students.length > 0 ? (
                 <TableContainer component={Paper} sx={{ mt: 2 }}>
                     <Table sx={{ minWidth: 650 }} aria-label="students table">
@@ -139,16 +189,15 @@ export default function StudentsManage() {
                             <TableRow>
                                 <TableCell sx={{ fontWeight: 'bold' }}>Student ID</TableCell>
                                 <TableCell sx={{ fontWeight: 'bold' }}>Name</TableCell>
-                                <TableCell sx={{ fontWeight: 'bold' }}>Email</TableCell>
                                 <TableCell sx={{ fontWeight: 'bold' }} align="right">Year</TableCell>
-                                {/* Optional Actions column */}
-                                {/* {isAdmin && <TableCell sx={{ fontWeight: 'bold' }} align="center">Actions</TableCell>} */}
+                                {/* Actions Header - Only for Admins */}
+                                {isAdmin && <TableCell sx={{ fontWeight: 'bold' }} align="center">Actions</TableCell>}
                             </TableRow>
                         </TableHead>
                         <TableBody>
                             {students.map((student) => (
                                 <TableRow
-                                    key={student.id} // Ensure student objects have unique 'id'
+                                    key={student.id}
                                     hover
                                     sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
                                 >
@@ -156,23 +205,37 @@ export default function StudentsManage() {
                                         {student.id}
                                     </TableCell>
                                     <TableCell>{student.name}</TableCell>
-                                    <TableCell>{student.email}</TableCell>
                                     <TableCell align="right">{student.year || 'N/A'}</TableCell>
-                                    {/* Optional Actions Cell */}
-                                    {/* {isAdmin && (
+                                    {/* Actions Cell - Only for Admins */}
+                                    {isAdmin && (
                                         <TableCell align="center">
-                                            <IconButton size="small" onClick={() => {}} title="View Details"><VisibilityIcon fontSize="inherit" /></IconButton>
-                                            <IconButton size="small" onClick={() => {}} title="Edit Student"><EditIcon fontSize="inherit" /></IconButton>
+                                            <IconButton
+                                                size="small"
+                                                onClick={() => handleEdit(student)} // Pass the whole student object
+                                                title="Edit Student"
+                                                color="primary"
+                                            >
+                                                <EditIcon fontSize="inherit" />
+                                            </IconButton>
+                                            <IconButton
+                                                size="small"
+                                                onClick={() => handleDelete(student.id)}
+                                                title="Delete Student"
+                                                color="error"
+                                                sx={{ ml: 1 }} // Add some margin
+                                            >
+                                                <DeleteIcon fontSize="inherit" />
+                                            </IconButton>
                                         </TableCell>
-                                    )} */}
+                                    )}
                                 </TableRow>
                             ))}
                         </TableBody>
                     </Table>
                 </TableContainer>
-            ) : null} {/* Render nothing if loading, error, or empty */}
+            ) : null}
 
-            {/* No Students Found State - Improved Message */}
+            {/* No Students Found State */}
             {!isLoading && !error && students.length === 0 && (
                  <Alert severity="info" sx={{ mt: 2 }}>
                      No students found in the system. {isAdmin ? 'Use the "Add Student" button above to add one.' : ''}

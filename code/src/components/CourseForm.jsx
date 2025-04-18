@@ -1,188 +1,376 @@
 // src/components/CourseForm.jsx
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom'; // Import useNavigate
+// This form handles ADDING and EDITING course definitions.
+import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import Box from '@mui/material/Box';
 import TextField from '@mui/material/TextField';
 import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
-import FormControl from '@mui/material/FormControl';
-import InputLabel from '@mui/material/InputLabel';
 import Select from '@mui/material/Select';
 import MenuItem from '@mui/material/MenuItem';
-import Alert from '@mui/material/Alert'; // For success message
+import FormControl from '@mui/material/FormControl';
+import InputLabel from '@mui/material/InputLabel';
+import FormHelperText from '@mui/material/FormHelperText';
+import Alert from '@mui/material/Alert';
+import CircularProgress from '@mui/material/CircularProgress';
 
-// --- LocalStorage Key for Courses (ensure it matches CoursesManage.jsx) ---
-const COURSES_STORAGE_KEY = 'coursesList';
+// --- LocalStorage Key ---
+const COURSES_STORAGE_KEY = 'coursesList'; // Key for course definitions
+
+// --- Helper Functions for LocalStorage ---
+const getStoredData = (key) => {
+    try {
+        const storedData = localStorage.getItem(key);
+        if (storedData) {
+            const parsedData = JSON.parse(storedData);
+            return Array.isArray(parsedData) ? parsedData : null;
+        }
+    } catch (error) {
+        console.error(`Error parsing data from localStorage key "${key}":`, error);
+    }
+    return null;
+};
+
+const saveDataToStorage = (key, data) => {
+    try {
+        if (!Array.isArray(data)) {
+            console.error(`Attempted to save non-array data to localStorage key "${key}".`);
+            return false;
+        }
+        localStorage.setItem(key, JSON.stringify(data));
+        return true;
+    } catch (error) {
+        console.error(`Failed to save data to localStorage key "${key}":`, error);
+        return false;
+    }
+};
+// --- End Helper Functions ---
+
+// Initial state for the course definition form
+const initialFormData = {
+    id: '',       // Course Code
+    name: '',     // Course Name
+    lecturer: '', // Keep lecturer field as it was in CoursesManage
+    year: '',     // Year the course is offered/defined
+    semester: '', // Semester ('A', 'B', 'C')
+};
 
 export default function CourseForm() {
-  const [courseId, setCourseId] = useState('');
-  const [courseName, setCourseName] = useState('');
-  const [lecturerName, setLecturerName] = useState('');
-  const [year, setYear] = useState('');
-  const [semester, setSemester] = useState('');
-  const [submitStatus, setSubmitStatus] = useState({ message: '', severity: '' }); // For user feedback
+    const navigate = useNavigate();
+    const location = useLocation();
+    const courseToEdit = location.state?.courseToEdit || null;
+    const isEditMode = !!courseToEdit;
 
-  const navigate = useNavigate(); // Initialize useNavigate
+    const [formData, setFormData] = useState(initialFormData);
+    const [errors, setErrors] = useState({});
+    const [submitStatus, setSubmitStatus] = useState({ error: '', success: '' });
+    const [isLoading, setIsLoading] = useState(false);
+    const [allCourses, setAllCourses] = useState([]); // Store all courses for uniqueness check
 
-  // --- Input Handlers (remain the same) ---
-  const handleCourseIdChange = (event) => setCourseId(event.target.value);
-  const handleCourseNameChange = (event) => setCourseName(event.target.value);
-  const handleLecturerNameChange = (event) => setLecturerName(event.target.value);
-  const handleYearChange = (event) => setYear(event.target.value);
-  const handleSemesterChange = (event) => setSemester(event.target.value);
-  // --- End Input Handlers ---
+    // --- Load existing courses and pre-fill form if editing ---
+    useEffect(() => {
+        const loadedCourses = getStoredData(COURSES_STORAGE_KEY) || [];
+        setAllCourses(loadedCourses);
 
-  const handleSubmit = (event) => {
-    event.preventDefault();
-    setSubmitStatus({ message: '', severity: '' }); // Clear previous status
+        if (isEditMode && courseToEdit) {
+            setFormData({
+                id: courseToEdit.id || '',
+                name: courseToEdit.name || '',
+                lecturer: courseToEdit.lecturer || '', // Include lecturer
+                year: courseToEdit.year || '',
+                semester: courseToEdit.semester || '',
+            });
+        } else {
+            setFormData(initialFormData); // Reset for add mode
+        }
+        setErrors({});
+        setSubmitStatus({ error: '', success: '' });
 
-    // Basic validation
-    if (
-      !courseId.trim() ||
-      !courseName.trim() ||
-      !lecturerName.trim() ||
-      !year.toString().trim() || // Ensure year is treated as string for trim
-      !semester
-    ) {
-      setSubmitStatus({ message: 'Please fill in all fields.', severity: 'error' });
-      return;
-    }
+    }, [isEditMode, courseToEdit]);
 
-    const newCourse = {
-      // Ensure consistent data types (e.g., year as number if needed later)
-      id: courseId.trim(),
-      name: courseName.trim(),
-      lecturer: lecturerName.trim(),
-      year: parseInt(year, 10), // Store year as number
-      semester: semester,
-    };
+    // --- Validation ---
+    const validateField = useCallback((name, value) => {
+        let error = '';
+        const trimmedValue = typeof value === 'string' ? value.trim() : value;
 
-    try {
-        // --- Add to Local Storage ---
-        console.log('Adding new course to localStorage:', newCourse);
-        const storedCourses = localStorage.getItem(COURSES_STORAGE_KEY);
-        const currentCourses = storedCourses ? JSON.parse(storedCourses) : [];
+        switch (name) {
+            case 'id': // Course Code
+                if (!trimmedValue) {
+                    error = 'Course Code is required.';
+                } else if (!/^\d{4}$/.test(trimmedValue)) { // Must be exactly 4 digits
+                    error = 'Course Code must be exactly 4 digits.';
+                } else if (parseInt(trimmedValue, 10) <= 0) { // Must be positive
+                    error = 'Course Code must be a positive number.';
+                } else if (!isEditMode && allCourses.some(course => course.id === trimmedValue)) {
+                    // Check uniqueness only in add mode
+                    error = 'Course Code already exists.';
+                }
+                break;
 
-        // Optional: Check if course ID already exists
-        if (currentCourses.some(course => course.id === newCourse.id)) {
-             setSubmitStatus({ message: `Course with ID ${newCourse.id} already exists.`, severity: 'warning' });
-             return; // Stop submission if ID exists
+            case 'name': // Course Name
+                if (!trimmedValue) {
+                    error = 'Course Name is required.';
+                } else if (!/^[a-zA-Z\s]+$/.test(trimmedValue)) { // Letters and spaces only
+                    error = 'Course Name must contain only letters and spaces.';
+                }
+                break;
+
+            case 'lecturer': // Keep lecturer validation if needed
+                if (!trimmedValue) {
+                    error = 'Lecturer Name is required.';
+                } else if (!/^[a-zA-Z\s.\-,']+$/.test(trimmedValue)) {
+                    error = 'Lecturer Name contains invalid characters.';
+                }
+                break;
+
+            case 'year': // Year validation (general, not student-specific)
+                const yearNum = Number(trimmedValue);
+                const currentFullYear = new Date().getFullYear();
+                if (!trimmedValue) {
+                    error = 'Year is required.';
+                } else if (!/^\d{4}$/.test(trimmedValue) || isNaN(yearNum)) {
+                    error = 'Please enter a valid 4-digit year.';
+                } else if (yearNum < 2000 || yearNum > currentFullYear + 5) { // Example valid range
+                    error = `Year must be between 2000 and ${currentFullYear + 5}.`;
+                }
+                // NOTE: The requirement "Must be greater than the student's registration year"
+                // does NOT apply here, as this form defines the course itself, not an assignment.
+                break;
+
+            case 'semester': // Semester validation
+                if (!trimmedValue) {
+                    error = 'Semester is required.';
+                } else if (!['A', 'B', 'C'].includes(trimmedValue)) { // Only A, B, C allowed
+                    error = "Semester must be 'A', 'B', or 'C'.";
+                }
+                break;
+
+            default:
+                break;
         }
 
+        setErrors(prev => ({ ...prev, [name]: error }));
+        return error;
+    }, [allCourses, isEditMode]);
 
-        currentCourses.push(newCourse);
-        localStorage.setItem(COURSES_STORAGE_KEY, JSON.stringify(currentCourses));
-        // --- End Add to Local Storage ---
+    // --- Input Handlers ---
+    const handleInputChange = (event) => {
+        const { name, value } = event.target;
+        setFormData(prev => ({ ...prev, [name]: value }));
+        if (errors[name]) {
+            validateField(name, value);
+        }
+        setSubmitStatus({ error: '', success: '' });
+    };
 
-        // Provide success feedback
-        setSubmitStatus({ message: 'Course added successfully!', severity: 'success' });
+    const handleBlur = (event) => {
+        const { name, value } = event.target;
+        validateField(name, value);
+    };
 
-        // Clear the form fields
-        setCourseId('');
-        setCourseName('');
-        setLecturerName('');
-        setYear('');
-        setSemester('');
+    // --- Form Submission ---
+    const handleSubmit = (event) => {
+        event.preventDefault();
+        setSubmitStatus({ error: '', success: '' });
+        setIsLoading(true);
 
-        // Navigate back to the management page after a short delay
-        setTimeout(() => {
-            navigate('/CoursesManage');
-        }, 1000); // 1 second delay to show success message
+        // Validate all fields on submit
+        const validationErrors = {};
+        let formIsValid = true;
+        Object.keys(initialFormData).forEach(key => {
+            const error = validateField(key, formData[key]);
+            if (error) {
+                validationErrors[key] = error;
+                formIsValid = false;
+            }
+        });
 
-    } catch (error) {
-        console.error("Error saving course to localStorage:", error);
-        setSubmitStatus({ message: 'Failed to save course. Please try again.', severity: 'error' });
-    }
-  };
+        if (!formIsValid) {
+            setErrors(validationErrors);
+            setSubmitStatus({ error: 'Please fix the errors above.', success: '' });
+            setIsLoading(false);
+            return;
+        }
 
-  // Generate the last 3 years for the select list (optional, as TextField is used)
-  // const currentYear = new Date().getFullYear();
-  // const years = [currentYear, currentYear - 1, currentYear - 2];
+        // Prepare course data
+        const courseData = {
+            id: formData.id.trim(),
+            name: formData.name.trim(),
+            lecturer: formData.lecturer.trim(),
+            year: formData.year.trim(),
+            semester: formData.semester.trim(),
+        };
 
-  return (
-    <Box
-      component="form"
-      sx={{
-        '& .MuiTextField-root, & .MuiFormControl-root': { m: 1, width: '30ch' },
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        mt: 4,
-        px: 2, // Add padding
-      }}
-      noValidate
-      autoComplete="off"
-      onSubmit={handleSubmit}
-    >
-      <Typography variant="h5" component="h1" gutterBottom>
-        Add New Course
-      </Typography>
+        console.log(isEditMode ? 'Updating Course:' : 'Adding Course:', courseData);
 
-      {/* Display Submission Status */}
-      {submitStatus.message && (
-        <Alert severity={submitStatus.severity} sx={{ width: '30ch', mb: 2 }}>
-          {submitStatus.message}
-        </Alert>
-      )}
+        try {
+            let updatedCourses = [];
+            if (isEditMode) {
+                updatedCourses = allCourses.map(course =>
+                    course.id === courseToEdit.id ? courseData : course
+                );
+            } else {
+                // Add new course (uniqueness already checked by validation)
+                updatedCourses = [...allCourses, courseData];
+            }
 
-      {/* --- Form Fields (remain the same) --- */}
-      <TextField
-        required
-        id="course-id"
-        label="Course ID"
-        value={courseId}
-        onChange={handleCourseIdChange}
-        error={submitStatus.severity === 'error' && !courseId.trim()} // Basic error highlight
-        helperText={submitStatus.severity === 'error' && !courseId.trim() ? 'Required' : ''}
-      />
-      <TextField
-        required
-        id="course-name"
-        label="Course Name"
-        value={courseName}
-        onChange={handleCourseNameChange}
-        error={submitStatus.severity === 'error' && !courseName.trim()}
-        helperText={submitStatus.severity === 'error' && !courseName.trim() ? 'Required' : ''}
-      />
-      <TextField
-        required
-        id="lecturer-name"
-        label="Lecturer Name"
-        value={lecturerName}
-        onChange={handleLecturerNameChange}
-        error={submitStatus.severity === 'error' && !lecturerName.trim()}
-        helperText={submitStatus.severity === 'error' && !lecturerName.trim() ? 'Required' : ''}
-      />
-       <TextField
-        required
-        id="year"
-        label="Year"
-        type="number"
-        value={year}
-        onChange={handleYearChange}
-        error={submitStatus.severity === 'error' && !year.toString().trim()}
-        helperText={submitStatus.severity === 'error' && !year.toString().trim() ? 'Required' : ''}
-      />
-      <FormControl required sx={{ m: 1, width: '30ch' }} error={submitStatus.severity === 'error' && !semester}>
-        <InputLabel id="semester-label">Semester</InputLabel>
-        <Select
-          labelId="semester-label"
-          id="semester"
-          value={semester}
-          label="Semester"
-          onChange={handleSemesterChange}
+            const success = saveDataToStorage(COURSES_STORAGE_KEY, updatedCourses);
+
+            if (success) {
+                setSubmitStatus({ error: '', success: `Course ${isEditMode ? 'updated' : 'added'} successfully!` });
+                setErrors({});
+                setTimeout(() => navigate('/CoursesManage'), 1500); // Navigate back
+            } else {
+                 setSubmitStatus({ error: 'Failed to save course data to storage.', success: '' });
+            }
+
+        } catch (err) {
+            console.error("CourseForm: Error during submission process:", err);
+            setSubmitStatus({ error: 'An unexpected error occurred while saving.', success: '' });
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    // --- Cancel Handler ---
+    const handleCancel = () => {
+        navigate('/CoursesManage');
+    };
+
+    return (
+        <Box
+            component="form"
+            sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: 2.5,
+                maxWidth: 600,
+                margin: 'auto',
+                p: { xs: 2, sm: 3 },
+                border: '1px solid', borderColor: 'divider',
+                borderRadius: 2,
+                mt: 4,
+            }}
+            noValidate
+            autoComplete="off"
+            onSubmit={handleSubmit}
         >
-          <MenuItem value={'A'}>Semester A</MenuItem>
-          <MenuItem value={'B'}>Semester B</MenuItem>
-          <MenuItem value={'Summer'}>Summer Semester</MenuItem>
-        </Select>
-        {submitStatus.severity === 'error' && !semester && <Typography variant="caption" color="error" sx={{ pl: 2, pt: 1 }}>Required</Typography>}
-      </FormControl>
-      {/* --- End Form Fields --- */}
+            <Typography variant="h5" component="h1" gutterBottom>
+                {isEditMode ? 'Edit Course Definition' : 'Add New Course'}
+            </Typography>
 
-      <Button type="submit" variant="contained" sx={{ mt: 2 }}>
-        Add Course
-      </Button>
-    </Box>
-  );
+            {/* Course Code (ID) */}
+            <TextField
+                required
+                fullWidth
+                id="course-id"
+                name="id"
+                label="Course Code (4 digits)" // Updated label
+                value={formData.id}
+                onChange={handleInputChange}
+                onBlur={handleBlur}
+                error={!!errors.id}
+                helperText={errors.id || 'Unique 4-digit numeric code'} // Updated helper text
+                disabled={isEditMode} // Correctly disabled in edit mode
+                inputProps={{
+                    maxLength: 4,
+                    inputMode: 'numeric', // Hint for numeric keyboard
+                    pattern: '\\d*',      // Allow only digits
+                 }}
+            />
+
+            {/* Course Name */}
+            <TextField
+                required
+                fullWidth
+                id="course-name"
+                name="name"
+                label="Course Name (Letters Only)" // Updated label
+                value={formData.name}
+                onChange={handleInputChange}
+                onBlur={handleBlur}
+                error={!!errors.name}
+                helperText={errors.name || ' '}
+            />
+
+            {/* Lecturer */}
+            <TextField
+                required
+                fullWidth
+                id="lecturer"
+                name="lecturer"
+                label="Lecturer Name"
+                value={formData.lecturer}
+                onChange={handleInputChange}
+                onBlur={handleBlur}
+                error={!!errors.lecturer}
+                helperText={errors.lecturer || ' '}
+            />
+
+            {/* Year */}
+            <TextField
+                required
+                fullWidth
+                id="year"
+                name="year"
+                label="Year"
+                type="number"
+                value={formData.year}
+                onChange={handleInputChange}
+                onBlur={handleBlur}
+                error={!!errors.year}
+                helperText={errors.year || 'Enter 4-digit year'}
+                inputProps={{
+                     min: 2000,
+                     max: new Date().getFullYear() + 5,
+                     step: 1,
+                }}
+            />
+
+             {/* Semester Selection */}
+             <FormControl fullWidth required error={!!errors.semester}>
+                <InputLabel id="semester-select-label">Semester</InputLabel>
+                <Select
+                    labelId="semester-select-label"
+                    id="semester-select"
+                    name="semester"
+                    value={formData.semester}
+                    label="Semester"
+                    onChange={handleInputChange}
+                    onBlur={handleBlur}
+                >
+                    <MenuItem value="" disabled><em>Select semester...</em></MenuItem>
+                    <MenuItem value="A">A</MenuItem>
+                    <MenuItem value="B">B</MenuItem>
+                    <MenuItem value="C">C</MenuItem>
+                    {/* Removed other options like Summer/Winter */}
+                </Select>
+                {errors.semester && <FormHelperText>{errors.semester}</FormHelperText>}
+            </FormControl>
+
+
+            {/* Submission Feedback Area */}
+            {submitStatus.error && (
+                <Alert severity="error" sx={{ width: '100%', mt: 1 }}>{submitStatus.error}</Alert>
+            )}
+            {submitStatus.success && (
+                <Alert severity="success" sx={{ width: '100%', mt: 1 }}>{submitStatus.success}</Alert>
+            )}
+
+            {/* Action Buttons */}
+            <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1, width: '100%', mt: 2 }}>
+                 <Button variant="outlined" onClick={handleCancel}>
+                    Cancel
+                 </Button>
+                <Button
+                    type="submit"
+                    variant="contained"
+                    disabled={isLoading || Object.values(errors).some(e => !!e)}
+                >
+                    {isLoading ? <CircularProgress size={24} /> : (isEditMode ? 'Update Course' : 'Add Course')}
+                </Button>
+            </Box>
+        </Box>
+    );
 }
