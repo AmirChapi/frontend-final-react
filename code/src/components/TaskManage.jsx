@@ -1,32 +1,32 @@
+// src/components/TaskManage.jsx
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Box from '@mui/material/Box';
-import TextField from '@mui/material/TextField';
-import Select from '@mui/material/Select';
-import MenuItem from '@mui/material/MenuItem';
-import FormControl from '@mui/material/FormControl';
-import InputLabel from '@mui/material/InputLabel';
-import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
-import CircularProgress from '@mui/material/CircularProgress';
-import FormHelperText from '@mui/material/FormHelperText';
+import Button from '@mui/material/Button';
+import Table from '@mui/material/Table';
+import TableBody from '@mui/material/TableBody';
+import TableCell from '@mui/material/TableCell';
+import TableContainer from '@mui/material/TableContainer';
+import TableHead from '@mui/material/TableHead';
+import TableRow from '@mui/material/TableRow';
+import Paper from '@mui/material/Paper';
 import Alert from '@mui/material/Alert';
-
-// --- Date Picker Imports ---
-import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
-import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import CircularProgress from '@mui/material/CircularProgress';
+import IconButton from '@mui/material/IconButton'; // Import IconButton
+import EditIcon from '@mui/icons-material/Edit'; // Import EditIcon
+import DeleteIcon from '@mui/icons-material/Delete'; // Import DeleteIcon
 import dayjs from 'dayjs';
 
 // --- LocalStorage Key for Tasks ---
 const TASKS_STORAGE_KEY = 'Task';
 
-// --- Static Placeholder Tasks (Used if localStorage is empty) ---
+// --- Static Placeholder Tasks (Copied from TaskManage for consistency) ---
 const placeholderTasks = Array.from({ length: 10 }, (_, i) => {
-    const code = (101 + i).toString(); // Example: 101, 102, ... 110
-    const courseIndex = i % 3; // Cycle through CS101, MA202, PH305
+    const code = (101 + i).toString();
+    const courseIndex = i % 3;
     const courses = ['CS101', 'MA202', 'PH305'];
-    const submissionDate = dayjs().add(i + 7, 'day').toISOString(); // Staggered future dates
+    const submissionDate = dayjs().add(i + 7, 'day').toISOString();
 
     return {
         assignmentCode: code,
@@ -38,403 +38,198 @@ const placeholderTasks = Array.from({ length: 10 }, (_, i) => {
 });
 // --- End Static Placeholder Tasks ---
 
-
 // --- Helper Functions for LocalStorage ---
+const saveTasksToStorage = (tasks) => {
+    try {
+        localStorage.setItem(TASKS_STORAGE_KEY, JSON.stringify(tasks));
+        console.log("TaskManage: Saved tasks to localStorage.");
+    } catch (error) {
+        console.error("TaskManage: Failed to save tasks to localStorage:", error);
+        // Optionally, inform the user about the error
+    }
+};
+
 const getStoredTasks = () => {
     try {
         const storedTasks = localStorage.getItem(TASKS_STORAGE_KEY);
         if (storedTasks) {
             const parsedTasks = JSON.parse(storedTasks);
-            // Ensure it's an array before returning
             if (Array.isArray(parsedTasks)) {
-                console.log("Found valid tasks in localStorage.");
+                console.log("TaskManage: Found valid tasks in localStorage.");
                 return parsedTasks;
             } else {
-                console.warn("Data in localStorage for tasks was not an array. Using placeholders.");
+                console.warn("TaskManage: Data in localStorage for tasks was not an array. Using placeholders.");
             }
         } else {
-            console.log("No tasks found in localStorage. Using placeholders.");
+            console.log("TaskManage: No tasks found in localStorage. Using placeholders.");
         }
     } catch (error) {
-        console.error("Error parsing tasks from localStorage. Using placeholders.", error);
+        console.error("TaskManage: Error parsing tasks from localStorage. Using placeholders.", error);
     }
 
-    // If we reach here, it means storage was empty, invalid, or parsing failed
-    // Save the placeholders back to storage for next time
-    console.log("Saving placeholder tasks to localStorage.");
-    saveTasksToStorage(placeholderTasks);
+    // If storage was empty, invalid, or parsing failed
+    console.log("TaskManage: Saving placeholder tasks to localStorage.");
+    saveTasksToStorage(placeholderTasks); // Save placeholders if needed
     return placeholderTasks;
-};
-
-const saveTasksToStorage = (tasks) => {
-    try {
-        localStorage.setItem(TASKS_STORAGE_KEY, JSON.stringify(tasks));
-    } catch (error) {
-        console.error("Failed to save tasks to localStorage:", error);
-        // Handle potential storage errors (e.g., quota exceeded) if necessary
-    }
 };
 // --- End Helper Functions ---
 
-// --- Course Data Fetching (Keep as is) ---
-const getExistingCourses = () => {
-    const COURSES_STORAGE_KEY = 'coursesList';
-    try {
-        const storedCourses = localStorage.getItem(COURSES_STORAGE_KEY);
-        if (storedCourses) {
-            const parsedCourses = JSON.parse(storedCourses);
-            if (Array.isArray(parsedCourses)) {
-                 return parsedCourses.map(course => ({ code: course.id, name: course.name }));
-            }
-        }
-    } catch (error) {
-         console.error("Error loading/parsing courses from localStorage:", error);
-    }
-    console.warn("No valid courses found in localStorage for TaskManage, using fallback.");
-    return [
-        { code: 'CS101', name: 'Introduction to Computer Science' },
-        { code: 'MA202', name: 'Calculus II' },
-        { code: 'PH305', name: 'Modern Physics' },
-    ];
-};
 
-// --- Assignment Code Check (Relies on getStoredTasks) ---
-const checkAssignmentCodeExists = async (code) => {
-    console.log(`Checking localStorage for task code: ${code}`);
-    // getStoredTasks now handles initialization if needed
-    const existingTasks = getStoredTasks();
-    const exists = existingTasks.some(task => task.assignmentCode === code);
-    await new Promise(resolve => setTimeout(resolve, 50)); // Simulate async
-    console.log(`Code ${code} exists in localStorage: ${exists}`);
-    return exists;
-};
-// --- End Placeholder Data & Functions ---
-
-// Initial state structure for the form data
-const initialFormData = {
-    assignmentCode: '',
-    courseCode: '',
-    assignmentName: '',
-    submissionDate: null, // Use null for DatePicker
-    description: '',
-};
-
-export default function TaskManage({ initialData = null, isEditMode = false, onSubmit }) {
-    // --- Single State for Form Data ---
-    const [formData, setFormData] = useState(initialFormData);
-
-    // --- Other State Variables (Keep separate) ---
-    const [errors, setErrors] = useState({});
-    const [isCheckingCode, setIsCheckingCode] = useState(false);
-    const [submitError, setSubmitError] = useState('');
-    const [availableCourses, setAvailableCourses] = useState([]);
-
-    // --- Navigation ---
+export default function TaskManage() { // Renamed component to TaskManage
+    const [tasks, setTasks] = useState([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState(null);
     const navigate = useNavigate();
 
-    // --- Fetch Available Courses ---
+    // --- Load Tasks ---
     useEffect(() => {
-        const courses = getExistingCourses();
-        setAvailableCourses(courses);
+        setIsLoading(true);
+        setError(null);
+        console.log("TaskManage: Loading tasks...");
+
+        // Simulate async loading (optional, remove if not needed)
+        const timer = setTimeout(() => {
+            try {
+                const tasksData = getStoredTasks();
+                setTasks(tasksData);
+            } catch (err) {
+                console.error("TaskManage: Error loading tasks:", err);
+                setError("Failed to load tasks. Please try again later.");
+            } finally {
+                setIsLoading(false);
+            }
+        }, 100); // Short delay to show loading indicator
+
+        return () => clearTimeout(timer); // Cleanup timer on unmount
+
     }, []);
 
-    // --- Effects ---
-    // Populate form based on initialData or reset
-    useEffect(() => {
-        if (isEditMode && initialData) {
-            setFormData({
-                assignmentCode: initialData.assignmentCode || '',
-                courseCode: initialData.courseCode || '',
-                assignmentName: initialData.assignmentName || '',
-                submissionDate: initialData.submissionDate ? dayjs(initialData.submissionDate) : null,
-                description: initialData.description || '',
-            });
-            setErrors({});
-            setSubmitError('');
-        } else {
-             // Reset form to initial state
-             setFormData(initialFormData);
-             setErrors({});
-             setSubmitError('');
-        }
-    }, [isEditMode, initialData]);
-
-    // --- Validation Function ---
-    const validateField = async (name, value) => {
-        let error = '';
-
-        if (name === 'assignmentCode') {
-            if (!isEditMode) {
-                const codeValue = value || '';
-                if (!/^\d+$/.test(codeValue)) {
-                    error = 'Code must contain only numbers.';
-                } else if (codeValue.length !== 3) {
-                    error = 'Code must be exactly 3 digits.';
-                } else if (parseInt(codeValue, 10) <= 0) {
-                    error = 'Code must be a positive number.';
-                } else {
-                    setIsCheckingCode(true);
-                    setErrors(prev => ({ ...prev, assignmentCode: '' }));
-                    // checkAssignmentCodeExists now uses getStoredTasks which initializes if needed
-                    const exists = await checkAssignmentCodeExists(codeValue);
-                    if (exists) {
-                        error = 'Assignment code already exists.';
-                    }
-                    setIsCheckingCode(false);
-                }
-            }
-        } else if (name === 'courseCode') {
-            if (!value) {
-                error = 'Please select a course.';
-            }
-        } else if (name === 'assignmentName') {
-            if (!value || !value.trim()) {
-                error = 'Assignment name is required.';
-            }
-        } else if (name === 'submissionDate') {
-            if (!value) {
-                error = 'Submission date is required.';
-            } else if (!dayjs(value).isValid()) {
-                error = 'Invalid date format.';
-            } else {
-                const today = dayjs().startOf('day');
-                const selectedDate = dayjs(value).startOf('day');
-                if (selectedDate.isBefore(today) || selectedDate.isSame(today)) {
-                    error = 'Submission date must be in the future.';
-                }
-            }
-        }
-
-        setErrors(prevErrors => ({ ...prevErrors, [name]: error }));
-        return error;
+    // --- Format Date ---
+    const formatDate = (dateString) => {
+        if (!dateString) return 'N/A';
+        return dayjs(dateString).format('DD/MM/YYYY');
     };
 
-    // --- Handlers ---
-    const handleInputChange = (e) => {
-        const { name, value } = e.target;
-        setFormData(prevData => ({
-            ...prevData,
-            [name]: value,
-        }));
-
-        if (errors[name]) {
-             setErrors(prev => ({ ...prev, [name]: '' }));
-        }
-    };
-
-     const handleDateChange = (newValue) => {
-        setFormData(prevData => ({
-            ...prevData,
-            submissionDate: newValue,
-        }));
-
-        if (errors.submissionDate) {
-            setErrors(prev => ({ ...prev, submissionDate: '' }));
-        }
-    };
-
-    const handleBlur = async (e) => {
-        const { name } = e.target;
-        const value = formData[name];
-        await validateField(name, value);
-    };
-
-    // --- Submit Handler (Handles the "Save" action) ---
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        setSubmitError('');
-
-        const validationResults = await Promise.all([
-            validateField('assignmentCode', formData.assignmentCode),
-            validateField('courseCode', formData.courseCode),
-            validateField('assignmentName', formData.assignmentName),
-            validateField('submissionDate', formData.submissionDate)
-        ]);
-
-        const hasValidationErrors = validationResults.some(error => !!error);
-        const hasCurrentStateErrors = Object.values(errors).some(error => !!error);
-
-        if (hasValidationErrors || hasCurrentStateErrors || isCheckingCode) {
-            console.log('Validation errors present or check in progress.');
-            setSubmitError('Please fix the errors above before submitting.');
-            return;
-        }
-
-        const taskData = {
-            ...formData,
-            assignmentCode: isEditMode ? initialData.assignmentCode : formData.assignmentCode,
-            submissionDate: formData.submissionDate ? formData.submissionDate.toISOString() : null,
-        };
-
-        console.log('Saving Task Data:', taskData);
-
-        // getStoredTasks handles initialization if needed
-        const existingTasks = getStoredTasks();
-        let updatedTasks;
-
-        if (isEditMode) {
-            updatedTasks = existingTasks.map(task =>
-                task.assignmentCode === taskData.assignmentCode ? taskData : task
-            );
-            console.log(`Updating task with code: ${taskData.assignmentCode}`);
-        } else {
-            updatedTasks = [...existingTasks, taskData];
-             console.log(`Adding new task with code: ${taskData.assignmentCode}`);
-        }
-
-        saveTasksToStorage(updatedTasks);
-        console.log("Tasks saved to localStorage successfully.");
-
-        if (onSubmit) {
-            onSubmit(taskData);
-            
-        }
-
-        if (!isEditMode) {
-            setFormData(initialFormData);
-            setErrors({});
-        } else {
-            navigate('/TaskForm');
-        }
-    };
-
-    // --- Cancel Handler ---
-    const handleCancel = () => {
-        console.log("Cancel clicked, navigating to /TaskForm");
+    // --- Navigation Handlers ---
+    const handleAddTask = () => {
+        // Navigate to the form for adding a new task
+        // The TaskForm component handles the 'add' mode by default
         navigate('/TaskForm');
     };
 
+    const handleEdit = (taskToEdit) => {
+        // Navigate to the form for editing, passing the task data
+        // The TaskForm component should use this data to pre-fill the form
+        console.log("Navigating to edit task:", taskToEdit);
+        navigate('/TaskForm', { state: { taskToEdit: taskToEdit } });
+    };
 
-    // --- Rendering ---
+    // --- Delete Handler ---
+    const handleDelete = (assignmentCodeToDelete) => {
+        // Confirmation dialog
+        if (window.confirm(`Are you sure you want to delete task ${assignmentCodeToDelete}?`)) {
+            console.log("Deleting task:", assignmentCodeToDelete);
+            try {
+                const updatedTasks = tasks.filter(task => task.assignmentCode !== assignmentCodeToDelete);
+                setTasks(updatedTasks); // Update state
+                saveTasksToStorage(updatedTasks); // Update localStorage
+                console.log("Task deleted successfully.");
+            } catch (err) {
+                console.error("TaskManage: Error deleting task:", err);
+                setError("Failed to delete task. Please try again.");
+                // Optionally revert state if save fails, though localStorage errors are less common here
+            }
+        } else {
+            console.log("Deletion cancelled for task:", assignmentCodeToDelete);
+        }
+    };
+
     return (
-        <LocalizationProvider dateAdapter={AdapterDayjs}>
-            <Box
-                component="form"
-                onSubmit={handleSubmit}
-                noValidate
-                sx={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: 3,
-                    maxWidth: 600,
-                    margin: 'auto',
-                    p: 3,
-                    border: '1px solid',
-                    borderColor: 'divider',
-                    borderRadius: 2,
-                    mt: 4,
-                }}
-            >
-                <Typography variant="h5" component="h2" gutterBottom>
-                    {isEditMode ? 'Edit Task' : 'Add New Task'}
+        <Box sx={{ width: '100%', maxWidth: 1100, margin: 'auto', mt: 4, px: 2 }}>
+            {/* Header and Add Button */}
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                <Typography variant="h5" component="h1">
+                    Tasks Overview
                 </Typography>
-
-                {/* Assignment Code Input */}
-                <TextField
-                    id="assignmentCode"
-                    name="assignmentCode"
-                    label="Assignment Code"
-                    value={formData.assignmentCode}
-                    onChange={handleInputChange}
-                    onBlur={handleBlur}
-                    required
-                    fullWidth
-                    disabled={isEditMode}
-                    error={!!errors.assignmentCode}
-                    helperText={errors.assignmentCode || (isCheckingCode ? 'Checking uniqueness...' : ' ')}
-                    inputProps={{ maxLength: 3 }}
-                    InputProps={{
-                        readOnly: isEditMode,
-                        endAdornment: isCheckingCode && !isEditMode ? <CircularProgress size={20} /> : null,
-                    }}
-                />
-
-                {/* Course Code Select Dropdown */}
-                <FormControl fullWidth required error={!!errors.courseCode}>
-                    <InputLabel id="courseCode-label">Course</InputLabel>
-                    <Select
-                        labelId="courseCode-label"
-                        id="courseCode"
-                        name="courseCode"
-                        value={formData.courseCode}
-                        label="Course"
-                        onChange={handleInputChange}
-                        onBlur={handleBlur}
-                    >
-                        <MenuItem value="" disabled><em>-- Select a Course --</em></MenuItem>
-                        {availableCourses.map(course => (
-                            <MenuItem key={course.code} value={course.code}>
-                                {course.code} - {course.name}
-                            </MenuItem>
-                        ))}
-                    </Select>
-                    {errors.courseCode && <FormHelperText>{errors.courseCode}</FormHelperText>}
-                </FormControl>
-
-                {/* Assignment Name Input */}
-                <TextField
-                    id="assignmentName"
-                    name="assignmentName"
-                    label="Assignment Name"
-                    value={formData.assignmentName}
-                    onChange={handleInputChange}
-                    onBlur={handleBlur}
-                    required
-                    fullWidth
-                    error={!!errors.assignmentName}
-                    helperText={errors.assignmentName || ' '}
-                />
-
-                {/* Submission Date Picker */}
-                 <DatePicker
-                    label="Submission Date"
-                    value={formData.submissionDate}
-                    onChange={handleDateChange}
-                    minDate={dayjs().add(1, 'day')}
-                    slotProps={{
-                        textField: {
-                            fullWidth: true,
-                            required: true,
-                            name: 'submissionDate',
-                            error: !!errors.submissionDate,
-                            helperText: errors.submissionDate || ' ',
-                            onBlur: handleBlur
-                        },
-                    }}
-                />
-
-                {/* Assignment Description Text Area */}
-                <TextField
-                    id="description"
-                    name="description"
-                    label="Description"
-                    value={formData.description}
-                    onChange={handleInputChange}
-                    multiline
-                    rows={4}
-                    fullWidth
-                    helperText=" "
-                />
-
-                 {/* General Submission Error Message Area */}
-                 {submitError && (
-                    <Alert severity="error" sx={{ mt: 1 }}>{submitError}</Alert>
-                 )}
-
-                {/* Action Buttons (Cancel and Save) */}
-                <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1, mt: 2 }}>
-                     <Button variant="outlined" onClick={handleCancel}>
-                         Cancel
-                     </Button>
-                    <Button
-                        type="submit"
-                        variant="contained"
-                        disabled={isCheckingCode || Object.values(errors).some(e => !!e)}
-                    >
-                        Save
-                    </Button>
-                </Box>
+                <Button variant="contained" onClick={handleAddTask}>
+                    Add New Task
+                </Button>
             </Box>
-        </LocalizationProvider>
+
+            {/* Loading State */}
+            {isLoading && (
+                <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
+                    <CircularProgress />
+                </Box>
+            )}
+
+            {/* Error State */}
+            {error && (
+                <Alert severity="error" sx={{ mt: 2 }}>
+                    {error}
+                </Alert>
+            )}
+
+            {/* Task Table */}
+            {!isLoading && !error && tasks.length > 0 ? (
+                <TableContainer component={Paper} sx={{ mt: 2 }}>
+                    <Table sx={{ minWidth: 750 }} aria-label="tasks table"> {/* Increased minWidth */}
+                        <TableHead sx={{ backgroundColor: 'primary.light' }}>
+                            <TableRow>
+                                <TableCell sx={{ fontWeight: 'bold' }}>Assignment Code</TableCell>
+                                <TableCell sx={{ fontWeight: 'bold' }}>Course Code</TableCell>
+                                <TableCell sx={{ fontWeight: 'bold' }}>Assignment Name</TableCell>
+                                <TableCell sx={{ fontWeight: 'bold' }}>Submission Date</TableCell>
+                                <TableCell sx={{ fontWeight: 'bold' }}>Description</TableCell>
+                                <TableCell sx={{ fontWeight: 'bold', textAlign: 'center' }}>Actions</TableCell> {/* Added Action Header */}
+                            </TableRow>
+                        </TableHead>
+                        <TableBody>
+                            {tasks.map((task) => (
+                                <TableRow
+                                    key={task.assignmentCode}
+                                    hover
+                                    sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
+                                >
+                                    <TableCell component="th" scope="row">
+                                        {task.assignmentCode}
+                                    </TableCell>
+                                    <TableCell>{task.courseCode}</TableCell>
+                                    <TableCell>{task.assignmentName}</TableCell>
+                                    <TableCell>{formatDate(task.submissionDate)}</TableCell>
+                                    <TableCell>{task.description || '-'}</TableCell>
+                                    {/* Action Buttons Cell */}
+                                    <TableCell align="center">
+                                        <IconButton
+                                            aria-label="edit"
+                                            size="small"
+                                            onClick={() => handleEdit(task)} // Pass the whole task object
+                                            sx={{ mr: 0.5 }} // Add some margin between buttons
+                                        >
+                                            <EditIcon fontSize="small" />
+                                        </IconButton>
+                                        <IconButton
+                                            aria-label="delete"
+                                            size="small"
+                                            color="error" // Make delete button red
+                                            onClick={() => handleDelete(task.assignmentCode)}
+                                        >
+                                            <DeleteIcon fontSize="small" />
+                                        </IconButton>
+                                    </TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </TableContainer>
+            ) : null}
+
+            {/* No Tasks Found State */}
+            {!isLoading && !error && tasks.length === 0 && (
+                 <Alert severity="info" sx={{ mt: 2 }}>
+                     No tasks found. Use the "Add New Task" button to create one.
+                 </Alert>
+            )}
+        </Box>
     );
 }
