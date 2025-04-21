@@ -1,7 +1,109 @@
-import React from 'react'
+import React, { useEffect, useState } from "react";
+import {
+  Box,
+  Button,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
+  Typography,
+} from "@mui/material";
+import { useNavigate } from "react-router-dom";
 
 export default function GradeManage() {
+  const [grades, setGrades] = useState([]);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const storedGrades = JSON.parse(localStorage.getItem("grades")) || [];
+    setGrades(storedGrades);
+  }, []);
+
+  const handleAddGrade = () => {
+    navigate("/GradeForm");
+  };
+
+  const handleEdit = (grade) => {
+    navigate("/GradeForm", { state: { gradeToEdit: grade } });
+  };
+
+  const handleDelete = (indexToDelete) => {
+    const confirmDelete = window.confirm(
+      "Are you sure you want to delete this grade?"
+    );
+    if (confirmDelete) {
+      const updatedGrades = grades.filter((_, index) => index !== indexToDelete);
+      setGrades(updatedGrades);
+      localStorage.setItem("grades", JSON.stringify(updatedGrades));
+    }
+  };
+
   return (
-    <div>GradeManage</div>
-  )
+    <Box sx={{ p: 4 }}>
+      <Typography variant="h5" gutterBottom>
+        Grade Management
+      </Typography>
+
+      <Box sx={{ mb: 2, display: "flex", justifyContent: "flex-end" }}>
+        <Button
+          variant="contained"
+          sx={{ backgroundColor: "#1976d2" }}
+          onClick={handleAddGrade}
+        >
+          ADD NEW GRADE
+        </Button>
+      </Box>
+
+      <TableContainer component={Paper}>
+        <Table>
+          <TableHead sx={{ backgroundColor: "#1976d2" }}>
+            <TableRow>
+              <TableCell sx={{ color: "white", fontWeight: "bold" }}>ID Number</TableCell>
+              <TableCell sx={{ color: "white", fontWeight: "bold" }}>Task Name</TableCell>
+              <TableCell sx={{ color: "white", fontWeight: "bold" }}>Grade</TableCell>
+              <TableCell sx={{ color: "white", fontWeight: "bold" }}>Function</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {grades.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={4} align="center">
+                  No grades found.
+                </TableCell>
+              </TableRow>
+            ) : (
+              grades.map((grade, index) => (
+                <TableRow key={index}>
+                  <TableCell>{grade.idNumber}</TableCell>
+                  <TableCell>{grade.taskName}</TableCell>
+                  <TableCell>{grade.taskGrade}</TableCell>
+                  <TableCell>
+                    <Button
+                      size="small"
+                      variant="outlined"
+                      sx={{ mr: 1 }}
+                      onClick={() => handleEdit(grade)}
+                    >
+                      Edit
+                    </Button>
+                    <Button
+                      size="small"
+                      variant="outlined"
+                      color="error"
+                      onClick={() => handleDelete(index)}
+                    >
+                      Delete
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </TableContainer>
+    </Box>
+  );
 }

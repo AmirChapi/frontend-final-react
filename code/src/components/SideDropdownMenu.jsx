@@ -9,6 +9,7 @@ import IconButton from '@mui/material/IconButton';
 import MenuIcon from '@mui/icons-material/Menu';
 import { useNavigate } from 'react-router-dom'; // Import useNavigate
 
+
 export default function SideDropdownMenu() {
   const [isOpen, setIsOpen] = useState(false);
   const navigate = useNavigate(); // Initialize useNavigate
@@ -25,6 +26,7 @@ export default function SideDropdownMenu() {
     { text: 'Courses Manage', path: '/CoursesManage' },
     { text: 'MSG Manage', path: '/MSGManage' },
     { text: 'Tasks Manage', path: '/TaskManage' },
+    { text: 'Grades Manage', path: '/GradeManage' },
     {text: 'Login Simulation', path: '/LoginSimulation'},
     {text: 'Home Page', path: '/'},
     {text: 'Help', path: '/help'},

@@ -14,6 +14,7 @@ import CourseForm from './components/CourseForm';
 import LoginSimulation from './components/LoginSimulation'; // <--- Import the new component
 import TaskManage from './components/TaskManage';
 import TaskForm from './components/TaskForm';
+import GradeManage from './components/GradeManage';
 import GradeForm from './components/GradeForm';
 
 
@@ -33,6 +34,7 @@ export default function App() {
         <Route path='/MSGManage' element={<MSGManage />} />
         <Route path='/TaskManage' element={<TaskManage />} />
         <Route path='/TaskForm' element={<TaskForm />} />
+        <Route path='/GradeManage' element={<GradeManage />} />
         <Route path='/GradeForm' element={<GradeForm />} />
         <Route path='/' element={<HomePage />} />
         <Route path="/help" element={<Help />} />
