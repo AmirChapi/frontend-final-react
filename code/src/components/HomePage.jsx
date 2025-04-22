@@ -54,8 +54,8 @@ export default function HomePage() {
     // COURSES
     if (!localStorage.getItem("coursesList")) {
       const defaultCourses = Array.from({ length: 10 }, (_, i) => ({
-        id: `C${100 + i}`,
-        name: `Course ${i + 1}`,
+        courseCode: `${100 + i}`,
+        courseName: ['React', 'Angular', 'Vue'][i % 3],
         lecturer: `Dr. Lecturer ${i + 1}`,
         year: `20${22 + (i % 3)}`,
         semester: ['A', 'B', 'C'][i % 3],

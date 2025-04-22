@@ -21,6 +21,7 @@ export default function GradeManage() {
     const storedGrades = JSON.parse(localStorage.getItem("grades")) || [];
     setGrades(storedGrades);
   }, []);
+console.log(grades);
 
   const handleAddGrade = () => {
     navigate("/GradeForm");
@@ -32,8 +33,7 @@ export default function GradeManage() {
 
   const handleDelete = (indexToDelete) => {
     const confirmDelete = window.confirm(
-      "Are you sure you want to delete this grade?"
-    );
+      "Are you sure you want to delete this grade?");
     if (confirmDelete) {
       const updatedGrades = grades.filter((_, index) => index !== indexToDelete);
       setGrades(updatedGrades);
