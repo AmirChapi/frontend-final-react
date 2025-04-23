@@ -1,16 +1,21 @@
-// src/components/MSGForms.jsx
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Box from '@mui/material/Box';
-import TextField from '@mui/material/TextField';
-import Button from '@mui/material/Button';
-import Dialog from '@mui/material/Dialog';
-import DialogActions from '@mui/material/DialogActions';
-import DialogContent from '@mui/material/DialogContent';
-import DialogContentText from '@mui/material/DialogContentText';
-import DialogTitle from '@mui/material/DialogTitle';
-import Stack from '@mui/material/Stack';
-import Typography from '@mui/material/Typography';
+import {
+  Box,
+  TextField,
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
+  Stack,
+  Typography,
+  Select,
+  MenuItem,
+  InputLabel,
+  FormControl
+} from '@mui/material';
 
 export default function MSGForms() {
   const navigate = useNavigate();
@@ -19,16 +24,18 @@ export default function MSGForms() {
     messageCode: '',
     courseCode: '',
     courseName: '',
-    assignmentCode: '',
-    assignmentName: '',
     messageContent: '',
   });
 
+  const [errors, setErrors] = useState({});
+  const [courseOptions, setCourseOptions] = useState([]);
   const [openCancelDialog, setOpenCancelDialog] = useState(false);
   const [editMode, setEditMode] = useState(false);
 
-  // Load data if editing
   useEffect(() => {
+    const storedCourses = JSON.parse(localStorage.getItem('coursesList')) || [];
+    setCourseOptions(storedCourses);
+
     const storedMessage = localStorage.getItem('editMessage');
     if (storedMessage) {
       setFormValues(JSON.parse(storedMessage));
@@ -36,16 +43,42 @@ export default function MSGForms() {
     }
   }, []);
 
+  const validateField = (name, value) => {
+    let errorMsg = '';
+    if (name === 'messageCode') {
+      if (!value) {
+        errorMsg = 'Message code is required.';
+      } else {
+        const messages = JSON.parse(localStorage.getItem('messages')) || [];
+        const exists = messages.some(
+          (msg) => msg.messageCode === value && (!editMode || msg.id !== formValues.id)
+        );
+        if (exists) {
+          errorMsg = 'This message code already exists.';
+        }
+      }
+    } else if (name === 'messageContent' && !value.trim()) {
+      errorMsg = 'Message content is required.';
+    }
+    setErrors((prev) => ({ ...prev, [name]: errorMsg }));
+  };
+
   const handleChange = (event) => {
     const { name, value } = event.target;
     setFormValues({
       ...formValues,
       [name]: value,
     });
+    validateField(name, value);
   };
 
   const handleSave = (event) => {
     event.preventDefault();
+    const newErrors = {};
+    Object.entries(formValues).forEach(([key, value]) => validateField(key, value));
+
+    if (Object.values(errors).some((e) => e)) return;
+
     let updatedMessages = JSON.parse(localStorage.getItem('messages')) || [];
 
     if (editMode) {
@@ -108,62 +141,77 @@ export default function MSGForms() {
 
         <TextField
           required
-          id="message-code"
           name="messageCode"
           label="Message Code"
           value={formValues.messageCode}
           onChange={handleChange}
-          variant="outlined"
+          onBlur={() => validateField('messageCode', formValues.messageCode)}
           disabled={editMode}
+          error={Boolean(errors.messageCode)}
+          helperText={errors.messageCode}
+          slotProps={{
+            input: { 'aria-invalid': Boolean(errors.messageCode) },
+            helperText: {
+              sx: {
+                color: errors.messageCode ? 'error.main' : 'text.secondary',
+              },
+            },
+          }}
         />
+
+        <FormControl required sx={{ m: 1.5, width: '90%' }}>
+          <InputLabel id="course-code-label">Course Code</InputLabel>
+          <Select
+            labelId="course-code-label"
+            name="courseCode"
+            value={formValues.courseCode}
+            onChange={(e) => {
+              const selected = courseOptions.find(c => c.courseCode === e.target.value);
+              setFormValues({
+                ...formValues,
+                courseCode: selected?.courseCode || '',
+                courseName: selected?.courseName || ''
+              });
+            }}
+            label="Course Code"
+            disabled={editMode}
+          >
+            {courseOptions.map((course) => (
+              <MenuItem key={course.courseCode} value={course.courseCode}>
+                {course.courseCode} - {course.courseName}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+
         <TextField
           required
-          id="course-code"
-          name="courseCode"
-          label="Course Code"
-          value={formValues.courseCode}
-          onChange={handleChange}
-          variant="outlined"
-          disabled={editMode}
-        />
-        <TextField
-          required
-          id="course-name"
           name="courseName"
           label="Course Name"
           value={formValues.courseName}
           onChange={handleChange}
-          variant="outlined"
+          disabled
         />
+
         <TextField
           required
-          id="assignment-code"
-          name="assignmentCode"
-          label="Assignment Code"
-          value={formValues.assignmentCode}
-          onChange={handleChange}
-          variant="outlined"
-          disabled={editMode}
-        />
-        <TextField
-          required
-          id="assignment-name"
-          name="assignmentName"
-          label="Assignment Name"
-          value={formValues.assignmentName}
-          onChange={handleChange}
-          variant="outlined"
-        />
-        <TextField
-          required
-          id="message-content"
           name="messageContent"
           label="Message Content"
           multiline
           rows={4}
           value={formValues.messageContent}
           onChange={handleChange}
-          variant="outlined"
+          onBlur={() => validateField('messageContent', formValues.messageContent)}
+          error={Boolean(errors.messageContent)}
+          helperText={errors.messageContent}
+          slotProps={{
+            input: { 'aria-invalid': Boolean(errors.messageContent) },
+            helperText: {
+              sx: {
+                color: errors.messageContent ? 'error.main' : 'text.secondary',
+              },
+            },
+          }}
         />
 
         <Stack direction="row" spacing={2} sx={{ mt: 3, justifyContent: 'center', width: '90%' }}>

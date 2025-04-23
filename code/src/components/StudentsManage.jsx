@@ -18,12 +18,12 @@ import DeleteIcon from '@mui/icons-material/Delete'; // Import DeleteIcon
 import Alert from '@mui/material/Alert';
 import CircularProgress from '@mui/material/CircularProgress';
 
-// --- Placeholder Data (Email Removed) ---
+// --- Placeholder Data (Email Removed, Age Added) ---
 const placeholderAllStudents = [
-    { id: '123456789', name: 'Alice Wonderland', year: '2023' }, // Example 9-digit ID
-    { id: '987654321', name: 'Bob The Builder', year: '2022' },
-    { id: '112233445', name: 'Charlie Chaplin', year: '2024' },
-    { id: '556677889', name: 'Diana Prince', year: '2021' },
+    { id: '123456789', name: 'Alice Wonderland', age: 21, year: '2023' }, // Example 9-digit ID
+    { id: '987654321', name: 'Bob The Builder', age: 25, year: '2022' },
+    { id: '112233445', name: 'Charlie Chaplin', age: 19, year: '2024' },
+    { id: '556677889', name: 'Diana Prince', age: 22, year: '2021' },
 ];
 // --- End Placeholder Data ---
 
@@ -36,7 +36,13 @@ const getStoredData = (key) => {
         const storedData = localStorage.getItem(key);
         if (storedData) {
             const parsedData = JSON.parse(storedData);
-            return Array.isArray(parsedData) ? parsedData : null;
+            // Basic check if it's an array and items have an 'id' (adjust as needed)
+            if (Array.isArray(parsedData) && parsedData.every(item => item && typeof item.id !== 'undefined')) {
+                return parsedData;
+            } else {
+                 console.warn(`Data in localStorage key "${key}" is not a valid array of student objects.`);
+                 return null; // Treat invalid data as null
+            }
         }
     } catch (error) {
         console.error(`Error parsing data from localStorage key "${key}":`, error);
@@ -62,10 +68,12 @@ const saveDataToStorage = (key, data) => {
 // --- Get User Info (including Role) from Local Storage ---
 const getCurrentUser = () => {
     const role = localStorage.getItem('userRole');
+    // Provide default values if role is not set or invalid
+    const safeRole = (role === 'administrator' || role === 'student') ? role : 'student';
     return {
-        id: role === 'administrator' ? 'admin001' : 'student001',
-        username: role === 'administrator' ? 'admin_user' : 'student_user',
-        role: role || 'student'
+        id: safeRole === 'administrator' ? 'admin001' : 'student001',
+        username: safeRole === 'administrator' ? 'admin_user' : 'student_user',
+        role: safeRole
     };
 };
 // --- End Get User Info ---
@@ -94,9 +102,12 @@ export default function StudentsManage() {
                 if (studentsData === null) {
                     // console.log("No students in localStorage or data invalid, using placeholder and saving.");
                     studentsData = placeholderAllStudents;
-                    saveDataToStorage(STUDENTS_STORAGE_KEY, studentsData);
+                    if (!saveDataToStorage(STUDENTS_STORAGE_KEY, studentsData)) {
+                         console.warn("Failed to save placeholder data to localStorage.");
+                         // Optionally set an error state here if saving placeholder is critical
+                    }
                 }
-                setStudents(studentsData);
+                setStudents(studentsData || []); // Ensure students is always an array
             } catch (err) {
                 console.error("Error loading students:", err);
                 setError('Failed to load student data.');
@@ -104,7 +115,7 @@ export default function StudentsManage() {
             } finally {
                 setIsLoading(false);
             }
-        }, 50); // Short delay
+        }, 50); // Short delay for simulated loading
 
         return () => clearTimeout(timer);
     }, []); // Empty dependency array means this runs once on mount
@@ -189,6 +200,9 @@ export default function StudentsManage() {
                             <TableRow>
                                 <TableCell sx={{ fontWeight: 'bold' }}>Student ID</TableCell>
                                 <TableCell sx={{ fontWeight: 'bold' }}>Name</TableCell>
+                                {/* --- Added Age Header --- */}
+                                <TableCell sx={{ fontWeight: 'bold' }} align="right">Age</TableCell>
+                                {/* --- End Added Age Header --- */}
                                 <TableCell sx={{ fontWeight: 'bold' }} align="right">Year</TableCell>
                                 {/* Actions Header - Only for Admins */}
                                 {isAdmin && <TableCell sx={{ fontWeight: 'bold' }} align="center">Actions</TableCell>}
@@ -205,6 +219,9 @@ export default function StudentsManage() {
                                         {student.id}
                                     </TableCell>
                                     <TableCell>{student.name}</TableCell>
+                                    {/* --- Added Age Data Cell --- */}
+                                    <TableCell align="right">{student.age || 'N/A'}</TableCell>
+                                    {/* --- End Added Age Data Cell --- */}
                                     <TableCell align="right">{student.year || 'N/A'}</TableCell>
                                     {/* Actions Cell - Only for Admins */}
                                     {isAdmin && (

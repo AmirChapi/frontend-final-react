@@ -22,6 +22,7 @@ export default function GradeForm() {
 
   const [students, setStudents] = useState([]);
   const [tasks, setTasks] = useState([]);
+  const [errors, setErrors] = useState({});
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -37,20 +38,42 @@ export default function GradeForm() {
     }
   }, [gradeToEdit]);
 
+  const validateField = (name, value) => {
+    let errorMsg = "";
+    if (name === "taskGrade") {
+      const num = Number(value);
+      if (!value) errorMsg = "Grade is required.";
+      else if (isNaN(num) || num < 0 || num > 100) {
+        errorMsg = "Grade must be a number between 0 and 100.";
+      }
+    } else if (name === "idNumber") {
+      if (!value) errorMsg = "Student ID is required.";
+    } else if (name === "taskName") {
+      if (!value) errorMsg = "Task Name is required.";
+    }
+    setErrors((prev) => ({ ...prev, [name]: errorMsg }));
+  };
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+    if (errors[name]) {
+      validateField(name, value);
+    }
     setError("");
   };
 
   const handleSubmit = (event) => {
     event.preventDefault();
+    let hasErrors = false;
+    Object.entries(formData).forEach(([key, value]) => {
+      validateField(key, value);
+      if (!value || errors[key]) {
+        hasErrors = true;
+      }
+    });
 
-    const taskGradeNum = Number(formData.taskGrade);
-    if (isNaN(taskGradeNum) || taskGradeNum < 0 || taskGradeNum > 100) {
-      alert("Grade must be a number between 0 and 100");
-      return;
-    }
+    if (hasErrors) return;
 
     const existingGrades = JSON.parse(localStorage.getItem("grades")) || [];
 
@@ -58,9 +81,9 @@ export default function GradeForm() {
       (g) =>
         g.idNumber === formData.idNumber &&
         g.taskName === formData.taskName &&
-        (!gradeToEdit || // if we're adding, all duplicates are invalid
+        (!gradeToEdit ||
           (g.idNumber !== gradeToEdit.idNumber ||
-            g.taskName !== gradeToEdit.taskName)) // if editing, allow same record
+            g.taskName !== gradeToEdit.taskName))
     );
 
     if (isDuplicate) {
@@ -70,7 +93,6 @@ export default function GradeForm() {
 
     let updatedGrades;
     if (gradeToEdit) {
-      // editing existing
       updatedGrades = existingGrades.map((g) =>
         g.idNumber === gradeToEdit.idNumber &&
         g.taskName === gradeToEdit.taskName
@@ -78,7 +100,6 @@ export default function GradeForm() {
           : g
       );
     } else {
-      // adding new
       updatedGrades = [...existingGrades, formData];
     }
 
@@ -112,8 +133,19 @@ export default function GradeForm() {
             label="Student ID"
             value={formData.idNumber}
             onChange={handleChange}
+            onBlur={() => validateField("idNumber", formData.idNumber)}
             fullWidth
             disabled={!!gradeToEdit}
+            error={Boolean(errors.idNumber)}
+            helperText={errors.idNumber}
+            slotProps={{
+              input: { 'aria-invalid': Boolean(errors.idNumber) },
+              helperText: {
+                sx: {
+                  color: errors.idNumber ? 'error.main' : 'text.secondary',
+                },
+              },
+            }}
           >
             {students.map((student) => (
               <MenuItem key={student.studentId} value={student.studentId}>
@@ -128,10 +160,20 @@ export default function GradeForm() {
             name="taskGrade"
             label="Task Grade"
             type="number"
-            inputProps={{ min: 0, max: 100 }}
             value={formData.taskGrade}
             onChange={handleChange}
+            onBlur={() => validateField("taskGrade", formData.taskGrade)}
             fullWidth
+            error={Boolean(errors.taskGrade)}
+            helperText={errors.taskGrade}
+            slotProps={{
+              input: { 'aria-invalid': Boolean(errors.taskGrade) },
+              helperText: {
+                sx: {
+                  color: errors.taskGrade ? 'error.main' : 'text.secondary',
+                },
+              },
+            }}
           />
 
           <TextField
@@ -142,8 +184,19 @@ export default function GradeForm() {
             label="Task Name"
             value={formData.taskName}
             onChange={handleChange}
+            onBlur={() => validateField("taskName", formData.taskName)}
             fullWidth
             disabled={!!gradeToEdit}
+            error={Boolean(errors.taskName)}
+            helperText={errors.taskName}
+            slotProps={{
+              input: { 'aria-invalid': Boolean(errors.taskName) },
+              helperText: {
+                sx: {
+                  color: errors.taskName ? 'error.main' : 'text.secondary',
+                },
+              },
+            }}
           >
             {tasks.map((task) => (
               <MenuItem key={task.taskName} value={task.taskName}>

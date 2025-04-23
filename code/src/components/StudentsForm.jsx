@@ -1,378 +1,371 @@
-// src/components/StudentsForm.jsx
+// StudentsForm.jsx
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import Box from '@mui/material/Box';
-import TextField from '@mui/material/TextField';
-import Button from '@mui/material/Button';
-import Typography from '@mui/material/Typography';
-import Radio from '@mui/material/Radio';
-import RadioGroup from '@mui/material/RadioGroup';
-import FormControlLabel from '@mui/material/FormControlLabel';
-import FormControl from '@mui/material/FormControl';
-import FormLabel from '@mui/material/FormLabel';
-import FormHelperText from '@mui/material/FormHelperText';
-import Alert from '@mui/material/Alert';
+import {
+  Box,
+  TextField,
+  Button,
+  Typography,
+  RadioGroup,
+  FormControlLabel,
+  Radio,
+  FormLabel,
+  FormControl,
+  Paper, // Import Paper for styling
+  Stack, // Import Stack for button layout
+} from '@mui/material';
+import { useLocation, useNavigate } from 'react-router-dom';
 
-// --- LocalStorage Key ---
-const STUDENTS_STORAGE_KEY = 'studentsList';
+export default function StudentsForm() {
+  const location = useLocation();
+  const navigate = useNavigate();
 
-// --- Static Placeholder Students (Adjusted - Email Removed) ---
-const placeholderStudents = Array.from({ length: 5 }, (_, i) => ({
-    id: `${100000000 + i}`, // Example 9-digit IDs
-    name: `Placeholder Student ${i + 1}`,
-    // email: `student${i + 1}@placeholder.edu`, // Removed email
-    year: `${2020 + (i % 4)}`, // Example year >= 2020
-}));
+  // --- Get student data from location state ---
+  const studentToEdit = location.state?.studentToEdit || null;
+  // --- End Get student data ---
 
-// --- Helper Functions for LocalStorage (Keep as they are) ---
-const getStoredStudents = () => {
-    try {
-        const storedData = localStorage.getItem(STUDENTS_STORAGE_KEY);
-        if (storedData) {
-            const parsedData = JSON.parse(storedData);
-            if (Array.isArray(parsedData)) {
-                return parsedData;
-            } else {
-                 console.warn("StudentsForm: Data in localStorage is not an array. Re-initializing.");
-                 return null;
-            }
-        }
-    } catch (error) {
-        console.error("StudentsForm: Error parsing students from localStorage:", error);
-    }
-    return null;
-};
-
-const saveStudentsToStorage = (students) => {
-    try {
-        if (!Array.isArray(students)) {
-            console.error("StudentsForm: Attempted to save non-array data to localStorage.");
-            return;
-        }
-        localStorage.setItem(STUDENTS_STORAGE_KEY, JSON.stringify(students));
-    } catch (error) {
-        console.error("StudentsForm: Failed to save students to localStorage:", error);
-    }
-};
-// --- End Helper Functions ---
-
-// Initial state for the form (Email Removed)
-const initialFormData = {
+  const [formData, setFormData] = useState({
     id: '',
     name: '',
-    // email: '', // Removed email
     age: '',
     gender: '',
     year: '',
-};
+  });
 
-export default function StudentRegistrationForm() {
-    const navigate = useNavigate();
-    const [formData, setFormData] = useState(initialFormData);
-    const [errors, setErrors] = useState({});
-    const [submitStatus, setSubmitStatus] = useState({ error: '', success: '' });
+  const [errors, setErrors] = useState({});
+  const [touched, setTouched] = useState({}); // Keep touched state
+  const [existingIDs, setExistingIDs] = useState([]);
 
-    // --- Check and Initialize LocalStorage on Mount ---
-    useEffect(() => {
-        const existingStudents = getStoredStudents();
-        if (existingStudents === null) {
-            console.log("StudentsForm: Initializing localStorage with placeholder students.");
-            saveStudentsToStorage(placeholderStudents);
+  // --- Effect to load existing IDs and populate form for editing ---
+  useEffect(() => {
+    const storedStudents = JSON.parse(localStorage.getItem('studentsList')) || [];
+    // Exclude the current student's ID if editing
+    const ids = storedStudents
+      .filter(student => !studentToEdit || student.id !== studentToEdit.id)
+      .map(student => student.id);
+    setExistingIDs(ids);
+
+    if (studentToEdit) {
+      setFormData(studentToEdit);
+      // Mark all fields as touched initially when editing to show potential initial errors
+      const initialTouched = Object.keys(studentToEdit).reduce((acc, key) => {
+        acc[key] = true;
+        return acc;
+      }, {});
+      setTouched(initialTouched);
+      // Optionally validate all fields on load when editing
+      // validateAllFields(studentToEdit); // Pass initial data to validation
+    } else {
+      // Reset form if adding a new student
+      setFormData({ id: '', name: '', age: '', gender: '', year: '' });
+      setTouched({});
+      setErrors({});
+    }
+    // Depend on studentToEdit to re-run if navigating between add/edit
+  }, [studentToEdit]); // Removed location.state, studentToEdit is derived from it
+
+  // --- Validation function for a single field ---
+  const validateField = (name, value, currentFormData = formData) => {
+    let errorMsg = '';
+    const dataToValidate = { ...currentFormData, [name]: value }; // Use potentially updated value
+
+    switch (name) {
+      case 'id':
+        if (!value) {
+          errorMsg = 'ID is required';
+        } else if (!/^[0-9]{9}$/.test(value)) {
+          errorMsg = 'ID must be exactly 9 digits';
+        } else if (!studentToEdit && existingIDs.includes(value)) { // Check only if adding
+          errorMsg = 'ID already exists';
         }
-    }, []);
-
-    // --- Updated Validation (Email Case Removed) ---
-    const validateField = (name, value) => {
-        let error = '';
-        const trimmedValue = value.trim();
-        const students = getStoredStudents() || [];
-
-        switch (name) {
-            case 'id':
-                if (!trimmedValue) {
-                    error = 'Student ID is required.';
-                } else if (!/^\d{9}$/.test(trimmedValue)) {
-                    error = 'Student ID must be exactly 9 digits.';
-                } else if (students.some(student => student.id === trimmedValue)) {
-                    error = 'Student ID already exists.';
-                }
-                break;
-
-            case 'name':
-                if (!trimmedValue) {
-                    error = 'Full Name is required.';
-                } else if (!/^[a-zA-Z\s]+$/.test(trimmedValue)) {
-                    error = 'Full Name must contain only letters and spaces.';
-                }
-                break;
-
-            // case 'email': // Removed email validation case
-            //     // ...
-            //     break;
-
-            case 'age':
-                const ageNum = Number(trimmedValue);
-                if (!trimmedValue) {
-                    error = 'Age is required.';
-                } else if (isNaN(ageNum) || !Number.isInteger(ageNum) || ageNum <= 18) {
-                    error = 'Age must be a whole number greater than 18.';
-                }
-                break;
-
-            case 'gender':
-                if (!value) {
-                    error = 'Gender is required.';
-                }
-                break;
-
-            case 'year':
-                const yearNum = Number(trimmedValue);
-                const currentFullYear = new Date().getFullYear();
-                if (!trimmedValue) {
-                    error = 'Registration Year is required.';
-                } else if (!/^\d{4}$/.test(trimmedValue)) {
-                    error = 'Please enter a valid 4-digit year.';
-                } else if (isNaN(yearNum) || yearNum < 2020 || yearNum > currentFullYear + 1) {
-                    error = `Year must be between 2020 and ${currentFullYear + 1}.`;
-                }
-                break;
-
-            default:
-                break;
+        break;
+      case 'name':
+        if (!value) {
+          errorMsg = 'Full name is required';
+        } else if (!/^[A-Za-z\s]+$/.test(value)) {
+          errorMsg = 'Full name must contain only letters and spaces';
         }
-
-        setErrors(prev => ({ ...prev, [name]: error }));
-        return error;
-    };
-
-    // --- Input Handlers (No changes needed here) ---
-    const handleInputChange = (event) => {
-        const { name, value } = event.target;
-        setFormData(prev => ({ ...prev, [name]: value }));
-        if (errors[name]) {
-            validateField(name, value);
+        break;
+      case 'age':
+        const age = Number(value);
+        if (!value) {
+          errorMsg = 'Age is required';
+        } else if (isNaN(age) || !Number.isInteger(age) || age <= 18) {
+          errorMsg = 'Age must be a whole number greater than 18';
         }
-        setSubmitStatus({ error: '', success: '' });
-    };
-
-    const handleBlur = (event) => {
-        const { name, value } = event.target;
-        validateField(name, value);
-    };
-
-    // --- Form Submission (Email Removed from checks and newStudent object) ---
-    const handleSubmit = (event) => {
-        event.preventDefault();
-        setSubmitStatus({ error: '', success: '' });
-
-        const validationErrors = {};
-        let formIsValid = true;
-        // Use Object.keys on initialFormData to ensure all expected fields are validated
-        Object.keys(initialFormData).forEach(key => {
-            const error = validateField(key, formData[key]);
-            if (error) {
-                validationErrors[key] = error;
-                formIsValid = false;
-            }
-        });
-
-        if (!formIsValid) {
-            setErrors(validationErrors);
-            setSubmitStatus({ error: 'Please fix the errors above.', success: '' });
-            return;
+        break;
+      case 'gender':
+        if (!value) {
+          errorMsg = 'Please select a gender';
         }
-
-        // Prepare the new student object (Email Removed)
-        const newStudent = {
-            id: formData.id.trim(),
-            name: formData.name.trim(),
-            // email: formData.email.trim(), // Removed email
-            year: formData.year.trim(),
-            // Age and Gender are validated but not saved
-        };
-
-        console.log('Registering New Student (Table Structure - No Email):', newStudent);
-
-        try {
-            const existingStudents = getStoredStudents() || [];
-            // Updated uniqueness check (Email Removed)
-            if (existingStudents.some(s => s.id === newStudent.id)) {
-                 setSubmitStatus({ error: 'Student ID already exists. Please check your input.', success: '' });
-                 validateField('id', formData.id); // Re-run validation to highlight ID field
-                 return;
-            }
-
-            const updatedStudents = [...existingStudents, newStudent];
-            saveStudentsToStorage(updatedStudents);
-
-            setSubmitStatus({ error: '', success: 'Student registered successfully!' });
-            setFormData(initialFormData);
-            setErrors({});
-
-            setTimeout(() => navigate('/StudentsManage'), 1500);
-
-        } catch (err) {
-            console.error("StudentsForm: Error during submission process:", err);
-            setSubmitStatus({ error: 'Failed to register student. Please try again.', success: '' });
+        break;
+      case 'year':
+        const year = Number(value);
+        const currentYear = new Date().getFullYear();
+        if (!value) {
+          errorMsg = 'Registration year is required';
+        } else if (isNaN(year) || !/^\d{4}$/.test(value) || !Number.isInteger(year)) {
+            errorMsg = 'Enter a valid 4-digit year';
+        } else if (year <= 2020) {
+          errorMsg = 'Registration year must be after 2020';
+        } else if (year > currentYear) {
+            errorMsg = `Registration year cannot be in the future (current: ${currentYear})`;
         }
-    };
+        break;
+      default:
+        break;
+    }
+    // Update errors state for the specific field
+    setErrors((prevErrors) => ({ ...prevErrors, [name]: errorMsg }));
+    return !errorMsg; // Return true if valid, false otherwise
+  };
+  // --- End Validation function ---
 
-    // --- Cancel Handler ---
-    const handleCancel = () => {
-        navigate('/StudentsManage');
-    };
+  // --- Validate all fields (used for submit) ---
+  const validateAllFields = (dataToValidate = formData) => {
+    let isValid = true;
+    const newErrors = {};
+    const fieldsToValidate = ['id', 'name', 'age', 'gender', 'year'];
 
+    fieldsToValidate.forEach(field => {
+      // Reuse validateField logic but collect all errors
+      if (!validateField(field, dataToValidate[field], dataToValidate)) {
+          isValid = false;
+          // Re-capture the error message set by validateField
+          newErrors[field] = getValidationError(field, dataToValidate[field]); // Use helper
+      }
+    });
 
-    return (
-        <Box
-            component="form"
-            sx={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                gap: 2.5,
-                maxWidth: 500,
-                margin: 'auto',
-                p: { xs: 2, sm: 3 },
-                border: '1px solid', borderColor: 'divider',
-                borderRadius: 2,
-                mt: 4,
+    setErrors(newErrors); // Set all errors at once
+    return isValid;
+  };
+
+  // Helper to get validation message without setting state
+  const getValidationError = (name, value) => {
+      let errorMsg = '';
+      // Simplified duplication of validation logic for immediate return
+      switch (name) {
+        case 'id':
+          if (!value) errorMsg = 'ID is required';
+          else if (!/^[0-9]{9}$/.test(value)) errorMsg = 'ID must be exactly 9 digits';
+          else if (!studentToEdit && existingIDs.includes(value)) errorMsg = 'ID already exists';
+          break;
+        case 'name':
+          if (!value) errorMsg = 'Full name is required';
+          else if (!/^[A-Za-z\s]+$/.test(value)) errorMsg = 'Full name must contain only letters and spaces';
+          break;
+        case 'age':
+          const age = Number(value);
+          if (!value) errorMsg = 'Age is required';
+          else if (isNaN(age) || !Number.isInteger(age) || age <= 18) errorMsg = 'Age must be a whole number greater than 18';
+          break;
+        case 'gender':
+          if (!value) errorMsg = 'Please select a gender';
+          break;
+        case 'year':
+          const year = Number(value);
+          const currentYear = new Date().getFullYear();
+          if (!value) errorMsg = 'Registration year is required';
+          else if (isNaN(year) || !/^\d{4}$/.test(value) || !Number.isInteger(year)) errorMsg = 'Enter a valid 4-digit year';
+          else if (year <= 2020) errorMsg = 'Registration year must be after 2020';
+          else if (year > currentYear) errorMsg = `Registration year cannot be in the future (current: ${currentYear})`;
+          break;
+        default: break;
+      }
+      return errorMsg;
+  }
+  // --- End Validate all fields ---
+
+  // --- Use name attribute for simpler handleChange with immediate validation ---
+  const handleChange = (event) => {
+    const { name, value } = event.target;
+    setFormData((prevData) => ({ ...prevData, [name]: value }));
+    validateField(name, value); // Validate immediately
+    // Mark as touched on change
+    if (!touched[name]) {
+        setTouched((prevTouched) => ({ ...prevTouched, [name]: true }));
+    }
+  };
+
+  // --- Use name attribute for simpler handleBlur ---
+  const handleBlur = (event) => {
+    const { name, value } = event.target;
+    // Ensure touched state is set
+    if (!touched[name]) {
+        setTouched((prevTouched) => ({ ...prevTouched, [name]: true }));
+    }
+    // Validate on blur as well
+    validateField(name, value);
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    // Mark all fields as touched to show errors on submit attempt
+    setTouched({ id: true, name: true, age: true, gender: true, year: true });
+
+    if (validateAllFields()) { // Validate all fields before submitting
+      const stored = JSON.parse(localStorage.getItem('studentsList')) || [];
+      let updated;
+      if (studentToEdit) {
+        // Update existing student
+        updated = stored.map(s => s.id === formData.id ? { ...formData } : s);
+      } else {
+        // Add new student
+        updated = [...stored, { ...formData }];
+      }
+      localStorage.setItem('studentsList', JSON.stringify(updated));
+      navigate('/StudentsManage'); // Navigate back to the management page
+    } else {
+        console.log("Validation failed on submit", errors);
+    }
+  };
+
+  // --- Cancel Handler ---
+  const handleCancel = () => {
+    // Optional: Add confirmation dialog if needed
+    // const confirmCancel = window.confirm("Are you sure you want to cancel? Unsaved changes will be lost.");
+    // if (confirmCancel) {
+        navigate('/StudentsManage'); // Navigate back without saving
+    // }
+  };
+
+  return (
+    <Box sx={{ maxWidth: 500, mx: 'auto', mt: 4 }}>
+      <Paper elevation={3} sx={{ p: 3, borderRadius: 2 }}> {/* Added Paper styling */}
+        <Typography variant="h5" gutterBottom align="center">
+          {studentToEdit ? 'Edit Student' : 'Add New Student'}
+        </Typography>
+        <Box component="form" onSubmit={handleSubmit} noValidate sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}> {/* Use Box for form layout */}
+          <TextField
+            required
+            label="ID Number"
+            name="id" // Use name attribute
+            value={formData.id}
+            onChange={handleChange}
+            onBlur={handleBlur}
+            fullWidth
+            disabled={!!studentToEdit} // Disable only when editing
+            error={!!errors.id} // Error state based on errors object
+            helperText={errors.id || ''} // Display error message directly
+            inputProps={{ maxLength: 9 }}
+            // --- Use slotProps ---
+            slotProps={{
+              input: { 'aria-invalid': !!errors.id }, // Accessibility
+              helperText: {
+                sx: { // Style helper text based on error state
+                  color: errors.id ? 'error.main' : 'text.secondary',
+                  minHeight: '1.2em' // Reserve space to prevent layout shifts
+                },
+              },
             }}
-            noValidate
-            autoComplete="off"
-            onSubmit={handleSubmit}
-        >
-            <Typography variant="h5" component="h1" gutterBottom>
-                Student Registration
-            </Typography>
-
-            {/* Student ID */}
-            <TextField
-                required
-                fullWidth
-                id="student-id"
-                name="id"
-                label="Student ID (9 digits)"
-                value={formData.id}
-                onChange={handleInputChange}
-                onBlur={handleBlur}
-                error={!!errors.id}
-                helperText={errors.id || ' '}
-                inputProps={{
-                    maxLength: 9,
-                    inputMode: 'numeric',
-                    pattern: '\\d*',
-                 }}
-            />
-
-            {/* Full Name */}
-            <TextField
-                required
-                fullWidth
-                id="full-name"
-                name="name"
-                label="Full Name"
-                value={formData.name}
-                onChange={handleInputChange}
-                onBlur={handleBlur}
-                error={!!errors.name}
-                helperText={errors.name || ' '}
-            />
-
-            {/* Email Field (Removed) */}
-            {/*
-            <TextField
-                required
-                fullWidth
-                id="email"
-                name="email"
-                label="Email Address"
-                type="email"
-                value={formData.email}
-                onChange={handleInputChange}
-                onBlur={handleBlur}
-                error={!!errors.email}
-                helperText={errors.email || ' '}
-            />
-            */}
-
-            {/* Age */}
-            <TextField
-                required
-                fullWidth
-                id="age"
-                name="age"
-                label="Age (Must be over 18)"
-                type="number"
-                value={formData.age}
-                onChange={handleInputChange}
-                onBlur={handleBlur}
-                error={!!errors.age}
-                helperText={errors.age || ' '}
-                inputProps={{
-                    min: 19,
-                    step: 1,
-                }}
-            />
-
-            {/* Gender */}
-            <FormControl component="fieldset" required error={!!errors.gender} sx={{ alignSelf: 'flex-start', width: '100%' }}>
-                <FormLabel component="legend">Gender</FormLabel>
-                <RadioGroup
-                    row
-                    aria-label="gender"
-                    name="gender"
-                    value={formData.gender}
-                    onChange={handleInputChange}
-                >
-                    <FormControlLabel value="female" control={<Radio required />} label="Female" />
-                    <FormControlLabel value="male" control={<Radio required />} label="Male" />
-                    <FormControlLabel value="other" control={<Radio required />} label="Other" />
-                </RadioGroup>
-                {errors.gender && <FormHelperText>{errors.gender}</FormHelperText>}
-            </FormControl>
-
-            {/* Registration Year */}
-            <TextField
-                required
-                fullWidth
-                id="year"
-                name="year"
-                label="Registration Year (2020 onwards)"
-                type="number"
-                value={formData.year}
-                onChange={handleInputChange}
-                onBlur={handleBlur}
-                error={!!errors.year}
-                helperText={errors.year || 'Enter a 4-digit year'}
-                inputProps={{
-                     min: 2020,
-                     max: new Date().getFullYear() + 1,
-                     step: 1,
-                }}
-            />
-
-            {/* Submission Feedback Area */}
-            {submitStatus.error && (
-                <Alert severity="error" sx={{ width: '100%', mt: 1 }}>{submitStatus.error}</Alert>
+            // --- End slotProps ---
+          />
+          <TextField
+            required
+            label="Full Name"
+            name="name" // Use name attribute
+            value={formData.name}
+            onChange={handleChange}
+            onBlur={handleBlur}
+            fullWidth
+            error={!!errors.name}
+            helperText={errors.name || ''}
+            // --- Use slotProps ---
+            slotProps={{
+              input: { 'aria-invalid': !!errors.name },
+              helperText: {
+                sx: {
+                  color: errors.name ? 'error.main' : 'text.secondary',
+                  minHeight: '1.2em'
+                },
+              },
+            }}
+            // --- End slotProps ---
+          />
+          <TextField
+            required
+            label="Age"
+            name="age" // Use name attribute
+            type="number"
+            value={formData.age}
+            onChange={handleChange}
+            onBlur={handleBlur}
+            fullWidth
+            error={!!errors.age}
+            helperText={errors.age || ''}
+            inputProps={{ min: 19 }}
+            // --- Use slotProps ---
+            slotProps={{
+              input: { 'aria-invalid': !!errors.age },
+              helperText: {
+                sx: {
+                  color: errors.age ? 'error.main' : 'text.secondary',
+                  minHeight: '1.2em'
+                 },
+              },
+            }}
+            // --- End slotProps ---
+          />
+          {/* --- Gender Radio Group --- */}
+          <FormControl component="fieldset" fullWidth error={!!errors.gender} required>
+            <FormLabel component="legend">Gender</FormLabel>
+            <RadioGroup
+              row
+              name="gender" // Use name attribute
+              value={formData.gender}
+              onChange={handleChange}
+              onBlur={handleBlur} // Add onBlur to the group
+            >
+              <FormControlLabel value="Male" control={<Radio />} label="Male" />
+              <FormControlLabel value="Female" control={<Radio />} label="Female" />
+            </RadioGroup>
+            {/* Display error message below the group */}
+            {errors.gender && (
+              <Typography variant="caption" color="error" sx={{ pl: 2, mt: -1, minHeight: '1.2em' }}>
+                {errors.gender}
+              </Typography>
             )}
-            {submitStatus.success && (
-                <Alert severity="success" sx={{ width: '100%', mt: 1 }}>{submitStatus.success}</Alert>
-            )}
-
-            {/* Action Buttons */}
-            <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1, width: '100%', mt: 2 }}>
-                 <Button variant="outlined" onClick={handleCancel}>
-                    Cancel
-                 </Button>
-                <Button
-                    type="submit"
-                    variant="contained"
-                    disabled={!Object.values(formData).some(v => v !== '') || Object.values(errors).some(e => !!e)}
-                 >
-                    Register Student
-                </Button>
-            </Box>
+          </FormControl>
+          {/* --- End Gender Radio Group --- */}
+          <TextField
+            required
+            label="Registration Year"
+            name="year" // Use name attribute
+            type="number"
+            value={formData.year}
+            onChange={handleChange}
+            onBlur={handleBlur}
+            fullWidth
+            error={!!errors.year}
+            helperText={errors.year || ''}
+            inputProps={{ min: 2021 }}
+            // --- Use slotProps ---
+            slotProps={{
+              input: { 'aria-invalid': !!errors.year },
+              helperText: {
+                sx: {
+                  color: errors.year ? 'error.main' : 'text.secondary',
+                  minHeight: '1.2em'
+                 },
+              },
+            }}
+            // --- End slotProps ---
+          />
+          {/* --- Buttons using Stack for layout --- */}
+          <Stack direction="row" spacing={2} justifyContent="space-between" sx={{ mt: 2 }}>
+              <Button
+                  variant="outlined"
+                  onClick={handleCancel}
+                  color="secondary"
+              >
+                  Cancel
+              </Button>
+              <Button type="submit" variant="contained" color="primary">
+                  {studentToEdit ? 'Save Changes' : 'Add Student'}
+              </Button>
+          </Stack>
+          {/* --- End Buttons --- */}
         </Box>
-    );
+      </Paper>
+    </Box>
+  );
 }
