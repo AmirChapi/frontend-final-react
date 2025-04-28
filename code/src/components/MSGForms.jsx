@@ -14,23 +14,27 @@ import {
   Select,
   MenuItem,
   InputLabel,
-  FormControl
+  FormControl,
+  Snackbar,
+  Alert,
 } from '@mui/material';
 
 export default function MSGForms() {
   const navigate = useNavigate();
 
-  const [formValues, setFormValues] = useState({
+  const initialValues = {
     messageCode: '',
     courseCode: '',
     courseName: '',
     messageContent: '',
-  });
+  };
 
+  const [formValues, setFormValues] = useState(initialValues);
   const [errors, setErrors] = useState({});
   const [courseOptions, setCourseOptions] = useState([]);
   const [openCancelDialog, setOpenCancelDialog] = useState(false);
   const [editMode, setEditMode] = useState(false);
+  const [openSnackbar, setOpenSnackbar] = useState(false);
 
   useEffect(() => {
     const storedCourses = JSON.parse(localStorage.getItem('coursesList')) || [];
@@ -43,56 +47,55 @@ export default function MSGForms() {
     }
   }, []);
 
-  const validateField = (name, value) => {
-    let errorMsg = '';
-    if (name === 'messageCode') {
-      if (!value) {
-        errorMsg = 'Message code is required.';
-      } else {
-        const messages = JSON.parse(localStorage.getItem('messages')) || [];
-        const exists = messages.some(
-          (msg) => msg.messageCode === value && (!editMode || msg.id !== formValues.id)
-        );
-        if (exists) {
-          errorMsg = 'This message code already exists.';
-        }
-      }
-    } else if (name === 'messageContent' && !value.trim()) {
-      errorMsg = 'Message content is required.';
-    }
-    setErrors((prev) => ({ ...prev, [name]: errorMsg }));
-  };
-
   const handleChange = (event) => {
     const { name, value } = event.target;
-    setFormValues({
-      ...formValues,
-      [name]: value,
-    });
-    validateField(name, value);
+    setFormValues(prev => ({ ...prev, [name]: value }));
+
+    let errorField = false;
+
+    if (name === 'messageCode') {
+      const messages = JSON.parse(localStorage.getItem('messages')) || [];
+      const exists = messages.some(
+        (msg) => msg.messageCode === value && (!editMode || msg.id !== formValues.id)
+      );
+      errorField = !value || exists;
+    }
+
+    if (name === 'messageContent') {
+      errorField = !value.trim();
+    }
+
+    setErrors(prev => ({ ...prev, [name]: errorField }));
   };
 
-  const handleSave = (event) => {
-    event.preventDefault();
-    const newErrors = {};
-    Object.entries(formValues).forEach(([key, value]) => validateField(key, value));
+  const handleSave = (e) => {
+    e.preventDefault();
 
-    if (Object.values(errors).some((e) => e)) return;
+    const updatedMessages = JSON.parse(localStorage.getItem('messages')) || [];
 
-    let updatedMessages = JSON.parse(localStorage.getItem('messages')) || [];
+    const isDuplicate = updatedMessages.some(
+      (msg) => msg.messageCode === formValues.messageCode && (!editMode || msg.id !== formValues.id)
+    );
 
+    if (isDuplicate) {
+      setErrors(prev => ({ ...prev, messageCode: true }));
+      return;
+    }
+
+    let finalMessages;
     if (editMode) {
-      updatedMessages = updatedMessages.map((msg) =>
+      finalMessages = updatedMessages.map((msg) =>
         msg.messageCode === formValues.messageCode ? { ...formValues, id: msg.id } : msg
       );
       localStorage.removeItem('editMessage');
     } else {
       const newMessage = { ...formValues, id: `msg${Date.now()}` };
-      updatedMessages.push(newMessage);
+      finalMessages = [...updatedMessages, newMessage];
     }
 
-    localStorage.setItem('messages', JSON.stringify(updatedMessages));
-    navigate('/MSGManage');
+    localStorage.setItem('messages', JSON.stringify(finalMessages));
+    setOpenSnackbar(true);
+    setTimeout(() => navigate('/MSGManage'), 1000);
   };
 
   const handleCancelClick = () => {
@@ -107,6 +110,10 @@ export default function MSGForms() {
     handleCloseDialog();
     localStorage.removeItem('editMessage');
     navigate('/MSGManage');
+  };
+
+  const handleCloseSnackbar = () => {
+    setOpenSnackbar(false);
   };
 
   const handleHelp = () => {
@@ -145,18 +152,9 @@ export default function MSGForms() {
           label="Message Code"
           value={formValues.messageCode}
           onChange={handleChange}
-          onBlur={() => validateField('messageCode', formValues.messageCode)}
           disabled={editMode}
-          error={Boolean(errors.messageCode)}
-          helperText={errors.messageCode}
-          slotProps={{
-            input: { 'aria-invalid': Boolean(errors.messageCode) },
-            helperText: {
-              sx: {
-                color: errors.messageCode ? 'error.main' : 'text.secondary',
-              },
-            },
-          }}
+          error={errors.messageCode}
+          helperText={errors.messageCode ? "Message code is required or already exists" : ""}
         />
 
         <FormControl required sx={{ m: 1.5, width: '90%' }}>
@@ -189,7 +187,6 @@ export default function MSGForms() {
           name="courseName"
           label="Course Name"
           value={formValues.courseName}
-          onChange={handleChange}
           disabled
         />
 
@@ -201,17 +198,8 @@ export default function MSGForms() {
           rows={4}
           value={formValues.messageContent}
           onChange={handleChange}
-          onBlur={() => validateField('messageContent', formValues.messageContent)}
-          error={Boolean(errors.messageContent)}
-          helperText={errors.messageContent}
-          slotProps={{
-            input: { 'aria-invalid': Boolean(errors.messageContent) },
-            helperText: {
-              sx: {
-                color: errors.messageContent ? 'error.main' : 'text.secondary',
-              },
-            },
-          }}
+          error={errors.messageContent}
+          helperText={errors.messageContent ? "Message content is required" : ""}
         />
 
         <Stack direction="row" spacing={2} sx={{ mt: 3, justifyContent: 'center', width: '90%' }}>
@@ -248,6 +236,12 @@ export default function MSGForms() {
           </Button>
         </DialogActions>
       </Dialog>
+
+      <Snackbar open={openSnackbar} autoHideDuration={3000} onClose={handleCloseSnackbar}>
+        <Alert severity="success" sx={{ width: '100%' }} onClose={handleCloseSnackbar}>
+          Message successfully saved!
+        </Alert>
+      </Snackbar>
     </>
   );
 }

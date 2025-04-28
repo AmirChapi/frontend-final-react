@@ -21,7 +21,6 @@ export default function GradeManage() {
     const storedGrades = JSON.parse(localStorage.getItem("grades")) || [];
     setGrades(storedGrades);
   }, []);
-console.log(grades);
 
   const handleAddGrade = () => {
     navigate("/GradeForm");
@@ -33,7 +32,8 @@ console.log(grades);
 
   const handleDelete = (indexToDelete) => {
     const confirmDelete = window.confirm(
-      "Are you sure you want to delete this grade?");
+      "Are you sure you want to delete this grade?"
+    );
     if (confirmDelete) {
       const updatedGrades = grades.filter((_, index) => index !== indexToDelete);
       setGrades(updatedGrades);
@@ -63,6 +63,7 @@ console.log(grades);
             <TableRow>
               <TableCell sx={{ color: "white", fontWeight: "bold" }}>ID Number</TableCell>
               <TableCell sx={{ color: "white", fontWeight: "bold" }}>Task Name</TableCell>
+              <TableCell sx={{ color: "white", fontWeight: "bold" }}>Task Code</TableCell> {/* הוספתי עמודת Task Code */}
               <TableCell sx={{ color: "white", fontWeight: "bold" }}>Grade</TableCell>
               <TableCell sx={{ color: "white", fontWeight: "bold" }}>Function</TableCell>
             </TableRow>
@@ -70,7 +71,7 @@ console.log(grades);
           <TableBody>
             {grades.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={4} align="center">
+                <TableCell colSpan={5} align="center">
                   No grades found.
                 </TableCell>
               </TableRow>
@@ -79,6 +80,7 @@ console.log(grades);
                 <TableRow key={index}>
                   <TableCell>{grade.idNumber}</TableCell>
                   <TableCell>{grade.taskName}</TableCell>
+                  <TableCell>{grade.taskCode}</TableCell> {/* כאן מציגים את ה-Task Code */}
                   <TableCell>{grade.taskGrade}</TableCell>
                   <TableCell>
                     <Button

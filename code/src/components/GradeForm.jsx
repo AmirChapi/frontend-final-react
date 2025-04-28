@@ -6,6 +6,8 @@ import {
   Typography,
   Paper,
   MenuItem,
+  Snackbar,
+  Alert,
 } from "@mui/material";
 import { useNavigate, useLocation } from "react-router-dom";
 
@@ -14,15 +16,18 @@ export default function GradeForm() {
   const location = useLocation();
   const gradeToEdit = location.state?.gradeToEdit || null;
 
-  const [formData, setFormData] = useState({
+  const initialValues = {
     idNumber: "",
+    taskCode: "",
     taskGrade: "",
     taskName: "",
-  });
+  };
 
+  const [formData, setFormData] = useState(initialValues);
   const [students, setStudents] = useState([]);
   const [tasks, setTasks] = useState([]);
   const [errors, setErrors] = useState({});
+  const [openSnackbar, setOpenSnackbar] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -30,50 +35,47 @@ export default function GradeForm() {
     const storedTasks = JSON.parse(localStorage.getItem("tasks")) || [];
     setStudents(storedStudents);
     setTasks(storedTasks);
-  }, []);
-
-  useEffect(() => {
     if (gradeToEdit) {
-      setFormData(gradeToEdit);
+      setFormData({ ...gradeToEdit });
     }
   }, [gradeToEdit]);
 
-  const validateField = (name, value) => {
-    let errorMsg = "";
+  const handleChange = (event) => {
+    const { name, value } = event.target;
+    let newFormData = { ...formData, [name]: value };
+
+    // When taskName changes, update taskCode automatically
+    if (name === "taskName") {
+      const selectedTask = tasks.find(task => task.taskName === value);
+      if (selectedTask) {
+        newFormData.taskCode = selectedTask.taskCode || "";
+      } else {
+        newFormData.taskCode = "";
+      }
+    }
+
+    setFormData(newFormData);
+
+    let errorField = false;
+
     if (name === "taskGrade") {
       const num = Number(value);
-      if (!value) errorMsg = "Grade is required.";
-      else if (isNaN(num) || num < 0 || num > 100) {
-        errorMsg = "Grade must be a number between 0 and 100.";
-      }
-    } else if (name === "idNumber") {
-      if (!value) errorMsg = "Student ID is required.";
-    } else if (name === "taskName") {
-      if (!value) errorMsg = "Task Name is required.";
+      errorField = !(value && !isNaN(num) && num >= 0 && num <= 100);
     }
-    setErrors((prev) => ({ ...prev, [name]: errorMsg }));
+
+    if (name === "idNumber") {
+      errorField = !value;
+    }
+
+    if (name === "taskName") {
+      errorField = !value;
+    }
+
+    setErrors((prev) => ({ ...prev, [name]: errorField }));
   };
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-    if (errors[name]) {
-      validateField(name, value);
-    }
-    setError("");
-  };
-
-  const handleSubmit = (event) => {
-    event.preventDefault();
-    let hasErrors = false;
-    Object.entries(formData).forEach(([key, value]) => {
-      validateField(key, value);
-      if (!value || errors[key]) {
-        hasErrors = true;
-      }
-    });
-
-    if (hasErrors) return;
+  const handleSubmit = (e) => {
+    e.preventDefault();
 
     const existingGrades = JSON.parse(localStorage.getItem("grades")) || [];
 
@@ -82,8 +84,8 @@ export default function GradeForm() {
         g.idNumber === formData.idNumber &&
         g.taskName === formData.taskName &&
         (!gradeToEdit ||
-          (g.idNumber !== gradeToEdit.idNumber ||
-            g.taskName !== gradeToEdit.taskName))
+          g.idNumber !== gradeToEdit.idNumber ||
+          g.taskName !== gradeToEdit.taskName)
     );
 
     if (isDuplicate) {
@@ -91,40 +93,30 @@ export default function GradeForm() {
       return;
     }
 
-    let updatedGrades;
-    if (gradeToEdit) {
-      updatedGrades = existingGrades.map((g) =>
-        g.idNumber === gradeToEdit.idNumber &&
-        g.taskName === gradeToEdit.taskName
-          ? formData
-          : g
-      );
-    } else {
-      updatedGrades = [...existingGrades, formData];
-    }
+    const updatedGrades = gradeToEdit
+      ? existingGrades.map((g) =>
+          g.idNumber === gradeToEdit.idNumber && g.taskName === gradeToEdit.taskName
+            ? formData
+            : g
+        )
+      : [...existingGrades, formData];
 
     localStorage.setItem("grades", JSON.stringify(updatedGrades));
-    navigate("/GradeManage");
+    setOpenSnackbar(true);
+    setTimeout(() => navigate("/GradeManage"), 1000);
+  };
+
+  const handleCloseSnackbar = () => {
+    setOpenSnackbar(false);
   };
 
   return (
-    <Box
-      sx={{
-        minHeight: "60vh",
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-      }}
-    >
+    <Box sx={{ minHeight: "60vh", display: "flex", justifyContent: "center", alignItems: "center" }}>
       <Paper elevation={3} sx={{ padding: 4, width: 400, borderRadius: 2 }}>
         <Typography variant="h5" align="center" gutterBottom>
           {gradeToEdit ? "Edit Grade" : "New Grade Entry"}
         </Typography>
-        <Box
-          component="form"
-          onSubmit={handleSubmit}
-          sx={{ display: "flex", flexDirection: "column", gap: 2 }}
-        >
+        <Box component="form" onSubmit={handleSubmit} sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
           <TextField
             select
             required
@@ -133,19 +125,10 @@ export default function GradeForm() {
             label="Student ID"
             value={formData.idNumber}
             onChange={handleChange}
-            onBlur={() => validateField("idNumber", formData.idNumber)}
             fullWidth
             disabled={!!gradeToEdit}
-            error={Boolean(errors.idNumber)}
-            helperText={errors.idNumber}
-            slotProps={{
-              input: { 'aria-invalid': Boolean(errors.idNumber) },
-              helperText: {
-                sx: {
-                  color: errors.idNumber ? 'error.main' : 'text.secondary',
-                },
-              },
-            }}
+            error={errors.idNumber}
+            helperText={errors.idNumber ? "Student ID is required" : ""}
           >
             {students.map((student) => (
               <MenuItem key={student.studentId} value={student.studentId}>
@@ -162,18 +145,9 @@ export default function GradeForm() {
             type="number"
             value={formData.taskGrade}
             onChange={handleChange}
-            onBlur={() => validateField("taskGrade", formData.taskGrade)}
             fullWidth
-            error={Boolean(errors.taskGrade)}
-            helperText={errors.taskGrade}
-            slotProps={{
-              input: { 'aria-invalid': Boolean(errors.taskGrade) },
-              helperText: {
-                sx: {
-                  color: errors.taskGrade ? 'error.main' : 'text.secondary',
-                },
-              },
-            }}
+            error={errors.taskGrade}
+            helperText={errors.taskGrade ? "Grade must be a number between 0 and 100" : ""}
           />
 
           <TextField
@@ -184,19 +158,10 @@ export default function GradeForm() {
             label="Task Name"
             value={formData.taskName}
             onChange={handleChange}
-            onBlur={() => validateField("taskName", formData.taskName)}
             fullWidth
             disabled={!!gradeToEdit}
-            error={Boolean(errors.taskName)}
-            helperText={errors.taskName}
-            slotProps={{
-              input: { 'aria-invalid': Boolean(errors.taskName) },
-              helperText: {
-                sx: {
-                  color: errors.taskName ? 'error.main' : 'text.secondary',
-                },
-              },
-            }}
+            error={errors.taskName}
+            helperText={errors.taskName ? "Task name is required" : ""}
           >
             {tasks.map((task) => (
               <MenuItem key={task.taskName} value={task.taskName}>
@@ -204,6 +169,17 @@ export default function GradeForm() {
               </MenuItem>
             ))}
           </TextField>
+
+          <TextField
+            required
+            id="taskCode"
+            name="taskCode"
+            label="Task Code"
+            value={formData.taskCode}
+            fullWidth
+            disabled
+            helperText="Task code is selected automatically"
+          />
 
           {error && (
             <Typography color="error" fontSize="0.9rem">
@@ -229,6 +205,11 @@ export default function GradeForm() {
           </Box>
         </Box>
       </Paper>
+      <Snackbar open={openSnackbar} autoHideDuration={3000} onClose={handleCloseSnackbar}>
+        <Alert severity="success" sx={{ width: '100%' }} onClose={handleCloseSnackbar}>
+          Grade successfully saved!
+        </Alert>
+      </Snackbar>
     </Box>
   );
 }

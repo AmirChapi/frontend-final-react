@@ -11,7 +11,6 @@ import CoursesManage from './components/CoursesManage';   // Make sure this is i
 import MSGForms from './components/MSGForms';
 import StudentsForm from './components/StudentsForm';
 import CourseForm from './components/CourseForm';
-import LoginSimulation from './components/LoginSimulation'; // <--- Import the new component
 import TaskManage from './components/TaskManage';
 import TaskForm from './components/TaskForm';
 import GradeManage from './components/GradeManage';
@@ -25,7 +24,6 @@ export default function App() {
 
       <Routes>
         {/* Add the route for the login simulation page */}
-        <Route path='/LoginSimulation' element={<LoginSimulation />} />
         <Route path='/MSGFForms' element={<MSGForms />} />
         <Route path='/StudentsForm' element={<StudentsForm />} />
         <Route path='/CourseForm' element={<CourseForm />} />

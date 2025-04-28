@@ -6,6 +6,8 @@ import {
   Typography,
   Paper,
   MenuItem,
+  Snackbar,
+  Alert,
 } from "@mui/material";
 import { useNavigate, useLocation } from "react-router-dom";
 
@@ -14,115 +16,90 @@ export default function CourseForm() {
   const location = useLocation();
   const courseToEdit = location.state?.courseToEdit || null;
 
-  const [formData, setFormData] = useState({
+  const initialValues = {
     courseCode: "",
     courseName: "",
     lecturer: "",
     year: "",
     semester: "",
-  });
+  };
 
+  const [formData, setFormData] = useState(initialValues);
   const [errors, setErrors] = useState({});
+  const [courses, setCourses] = useState([]);
+  const [openSnackbar, setOpenSnackbar] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
+    const storedCourses = JSON.parse(localStorage.getItem("coursesList")) || [];
+    setCourses(storedCourses);
     if (courseToEdit) {
-      setFormData(courseToEdit);
+      setFormData({ ...courseToEdit });
     }
   }, [courseToEdit]);
 
-  const validateField = (name, value) => {
-    let errorMsg = "";
-    switch (name) {
-      case "courseCode":
-        if (!value) errorMsg = "Course code is required.";
-        else if (!/^[0-9]+$/.test(value)) errorMsg = "Course code must contain digits only.";
-        else if (value.length !== 3) errorMsg = "Course code must be exactly 3 digits.";
-        else if (parseInt(value) <= 0) errorMsg = "Course code must be a positive number.";
-        break;
-      case "courseName":
-        if (!value) errorMsg = "Course name is required.";
-        else if (/\d/.test(value)) errorMsg = "Course name must not contain numbers.";
-        break;
-      case "lecturer":
-        if (!value) errorMsg = "Lecturer is required.";
-        break;
-      case "year":
-        if (!value) errorMsg = "Year is required.";
-        else if (!/^\d{4}$/.test(value)) errorMsg = "Enter a valid 4-digit year.";
-        else if (parseInt(value) <= 2000) errorMsg = "Year must be greater than 2000.";
-        break;
-      case "semester":
-        if (!value) errorMsg = "Semester is required.";
-        break;
-      default:
-        break;
-    }
-    setErrors((prev) => ({ ...prev, [name]: errorMsg }));
-  };
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
+  const handleChange = (event) => {
+    const { name, value } = event.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
-    if (errors[name]) {
-      validateField(name, value);
+
+    let errorField = false;
+
+    if (name === "courseCode") {
+      errorField = !(value.length === 3 && /^[0-9]+$/.test(value) && parseInt(value) > 0);
     }
-    setError("");
+
+    if (name === "courseName") {
+      errorField = !value.trim() || /\d/.test(value);
+    }
+
+    if (name === "lecturer") {
+      errorField = !value.trim();
+    }
+
+    if (name === "year") {
+      errorField = !(value.length === 4 && parseInt(value) > 2000);
+    }
+
+    if (name === "semester") {
+      errorField = !value.trim();
+    }
+
+    setErrors((prev) => ({ ...prev, [name]: errorField }));
   };
 
-  const handleSubmit = (event) => {
-    event.preventDefault();
-    let hasErrors = false;
-    Object.entries(formData).forEach(([key, value]) => {
-      validateField(key, value);
-      if (!value || errors[key]) {
-        hasErrors = true;
-      }
-    });
-
-    if (hasErrors) return;
+  const handleSubmit = (e) => {
+    e.preventDefault();
 
     const storedCourses = JSON.parse(localStorage.getItem("coursesList")) || [];
-    const isDuplicate = !courseToEdit && storedCourses.some(
-      (course) => course.courseCode === formData.courseCode
-    );
+    const isDuplicate = !courseToEdit && storedCourses.some((course) => course.courseCode === formData.courseCode);
 
     if (isDuplicate) {
       setError("This course already exists.");
       return;
     }
 
-    let updatedCourses;
-    if (courseToEdit) {
-      updatedCourses = storedCourses.map((course) =>
-        course.courseCode === courseToEdit.courseCode ? formData : course
-      );
-    } else {
-      updatedCourses = [...storedCourses, formData];
-    }
+    const updatedCourses = courseToEdit
+      ? storedCourses.map((course) =>
+          course.courseCode === courseToEdit.courseCode ? formData : course
+        )
+      : [...storedCourses, formData];
 
     localStorage.setItem("coursesList", JSON.stringify(updatedCourses));
-    navigate("/CoursesManage");
+    setOpenSnackbar(true);
+    setTimeout(() => navigate("/CoursesManage"), 1000);
+  };
+
+  const handleCloseSnackbar = () => {
+    setOpenSnackbar(false);
   };
 
   return (
-    <Box
-      sx={{
-        minHeight: "60vh",
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-      }}
-    >
+    <Box sx={{ minHeight: "60vh", display: "flex", justifyContent: "center", alignItems: "center" }}>
       <Paper elevation={3} sx={{ padding: 4, width: 400, borderRadius: 2 }}>
         <Typography variant="h5" align="center" gutterBottom>
           {courseToEdit ? "Edit Course" : "Add new Course"}
         </Typography>
-        <Box
-          component="form"
-          onSubmit={handleSubmit}
-          sx={{ display: "flex", flexDirection: "column", gap: 2 }}
-        >
+        <Box component="form" onSubmit={handleSubmit} sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
           <TextField
             required
             id="courseCode"
@@ -130,21 +107,11 @@ export default function CourseForm() {
             label="Course Code"
             value={formData.courseCode}
             onChange={handleChange}
-            onBlur={() => validateField("courseCode", formData.courseCode)}
             fullWidth
             disabled={!!courseToEdit}
-            error={Boolean(errors.courseCode)}
-            helperText={errors.courseCode}
-            slotProps={{
-              input: { 'aria-invalid': Boolean(errors.courseCode) },
-              helperText: {
-                sx: {
-                  color: errors.courseCode ? 'error.main' : 'text.secondary',
-                },
-              },
-            }}
+            error={errors.courseCode}
+            helperText={errors.courseCode ? "Course code must be a positive 3-digit number" : ""}
           />
-
           <TextField
             required
             id="courseName"
@@ -152,20 +119,10 @@ export default function CourseForm() {
             label="Course Name"
             value={formData.courseName}
             onChange={handleChange}
-            onBlur={() => validateField("courseName", formData.courseName)}
             fullWidth
-            error={Boolean(errors.courseName)}
-            helperText={errors.courseName}
-            slotProps={{
-              input: { 'aria-invalid': Boolean(errors.courseName) },
-              helperText: {
-                sx: {
-                  color: errors.courseName ? 'error.main' : 'text.secondary',
-                },
-              },
-            }}
+            error={errors.courseName}
+            helperText={errors.courseName ? "Course name must not contain numbers and cannot be empty" : ""}
           />
-
           <TextField
             required
             id="lecturer"
@@ -173,20 +130,10 @@ export default function CourseForm() {
             label="Lecturer"
             value={formData.lecturer}
             onChange={handleChange}
-            onBlur={() => validateField("lecturer", formData.lecturer)}
             fullWidth
-            error={Boolean(errors.lecturer)}
-            helperText={errors.lecturer}
-            slotProps={{
-              input: { 'aria-invalid': Boolean(errors.lecturer) },
-              helperText: {
-                sx: {
-                  color: errors.lecturer ? 'error.main' : 'text.secondary',
-                },
-              },
-            }}
+            error={errors.lecturer}
+            helperText={errors.lecturer ? "Lecturer is required" : ""}
           />
-
           <TextField
             required
             id="year"
@@ -195,20 +142,10 @@ export default function CourseForm() {
             type="number"
             value={formData.year}
             onChange={handleChange}
-            onBlur={() => validateField("year", formData.year)}
             fullWidth
-            error={Boolean(errors.year)}
-            helperText={errors.year}
-            slotProps={{
-              input: { 'aria-invalid': Boolean(errors.year) },
-              helperText: {
-                sx: {
-                  color: errors.year ? 'error.main' : 'text.secondary',
-                },
-              },
-            }}
+            error={errors.year}
+            helperText={errors.year ? "Year must be after 2000 and 4 digits" : ""}
           />
-
           <TextField
             required
             id="semester"
@@ -216,31 +153,20 @@ export default function CourseForm() {
             label="Semester"
             value={formData.semester}
             onChange={handleChange}
-            onBlur={() => validateField("semester", formData.semester)}
             fullWidth
             select
-            error={Boolean(errors.semester)}
-            helperText={errors.semester}
-            slotProps={{
-              input: { 'aria-invalid': Boolean(errors.semester) },
-              helperText: {
-                sx: {
-                  color: errors.semester ? 'error.main' : 'text.secondary',
-                },
-              },
-            }}
+            error={errors.semester}
+            helperText={errors.semester ? "Semester is required" : ""}
           >
             <MenuItem value="A">A</MenuItem>
             <MenuItem value="B">B</MenuItem>
             <MenuItem value="C">C</MenuItem>
           </TextField>
-
           {error && (
             <Typography color="error" fontSize="0.9rem">
               {error}
             </Typography>
           )}
-
           <Box sx={{ display: "flex", justifyContent: "space-between" }}>
             <Button
               variant="outlined"
@@ -259,6 +185,11 @@ export default function CourseForm() {
           </Box>
         </Box>
       </Paper>
+      <Snackbar open={openSnackbar} autoHideDuration={3000} onClose={handleCloseSnackbar}>
+        <Alert severity="success" sx={{ width: '100%' }} onClose={handleCloseSnackbar}>
+          Course successfully saved!
+        </Alert>
+      </Snackbar>
     </Box>
   );
 }
