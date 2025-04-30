@@ -31,22 +31,17 @@ export default function StudentsForm() {
   });
 
   const [errors, setErrors] = useState({});
-  const [existingIDs, setExistingIDs] = useState([]);
+  const [students, setStudents] = useState([]);
   const [openSnackbar, setOpenSnackbar] = useState(false);
 
   useEffect(() => {
     const storedStudents = JSON.parse(localStorage.getItem('studentsList')) || [];
-    const ids = storedStudents
-      .filter(student => !studentToEdit || student.id !== studentToEdit.id)
-      .map(student => student.id);
-    setExistingIDs(ids);
-
+    setStudents(storedStudents);
     if (studentToEdit) {
       setFormData({ ...studentToEdit });
-    } else {
-      setFormData({ id: '', name: '', age: '', gender: '', year: '' });
     }
-  }, [studentToEdit]);
+    }, [studentToEdit]);
+
 
   const handleChange = (event) => {
     const { name, value } = event.target;
@@ -83,13 +78,13 @@ export default function StudentsForm() {
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    const storedStudents = JSON.parse(localStorage.getItem('studentsList')) || [];
+    const storedStudents = JSON.parse(localStorage.getItem('students')) || [];
 
     const updatedStudents = studentToEdit
       ? storedStudents.map(s => s.id === formData.id ? { ...formData } : s)
       : [...storedStudents, { ...formData }];
 
-    localStorage.setItem('studentsList', JSON.stringify(updatedStudents));
+    localStorage.setItem('students', JSON.stringify(updatedStudents));
     setOpenSnackbar(true);
     setTimeout(() => navigate('/StudentsManage'), 1000);
   };
