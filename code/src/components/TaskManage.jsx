@@ -10,8 +10,12 @@ import {
   TableRow,
   Paper,
   Typography,
+  IconButton,
+  Stack,
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
+import EditIcon from "@mui/icons-material/Edit";
+import DeleteIcon from "@mui/icons-material/Delete";
 
 export default function TasksManage() {
   const [tasks, setTasks] = useState([]);
@@ -30,14 +34,13 @@ export default function TasksManage() {
     const confirmDelete = window.confirm(
       "Are you sure you want to delete this task? This action cannot be undone."
     );
-  
+
     if (confirmDelete) {
       const updatedTasks = tasks.filter((_, index) => index !== indexToDelete);
       setTasks(updatedTasks);
       localStorage.setItem("tasks", JSON.stringify(updatedTasks));
     }
   };
-  
 
   const handleEdit = (task) => {
     navigate("/TaskForm", { state: { taskToEdit: task } });
@@ -68,7 +71,9 @@ export default function TasksManage() {
               <TableCell sx={{ color: "white", fontWeight: "bold" }}>Task Name</TableCell>
               <TableCell sx={{ color: "white", fontWeight: "bold" }}>Submission Date</TableCell>
               <TableCell sx={{ color: "white", fontWeight: "bold" }}>Description</TableCell>
-              <TableCell sx={{ color: "white", fontWeight: "bold" }}>Function</TableCell>
+              <TableCell sx={{ color: "white", fontWeight: "bold", textAlign: "center" }}>
+                Actions
+              </TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -79,24 +84,15 @@ export default function TasksManage() {
                 <TableCell>{task.taskName}</TableCell>
                 <TableCell>{task.submissionDate}</TableCell>
                 <TableCell>{task.taskDescription}</TableCell>
-                <TableCell>
-                  <Button
-                    size="small"
-                    variant="outlined"
-                    color="primary"
-                    sx={{ mr: 1 }}
-                    onClick={() => handleEdit(task)}
-                  >
-                    Edit
-                  </Button>
-                  <Button
-                    size="small"
-                    variant="outlined"
-                    color="error"
-                    onClick={() => handleDelete(index)}
-                  >
-                    Delete
-                  </Button>
+                <TableCell align="center">
+                  <Stack direction="row" spacing={0.5} justifyContent="center">
+                    <IconButton color="info" onClick={() => handleEdit(task)}>
+                      <EditIcon fontSize="small" />
+                    </IconButton>
+                    <IconButton color="error" onClick={() => handleDelete(index)}>
+                      <DeleteIcon fontSize="small" />
+                    </IconButton>
+                  </Stack>
                 </TableCell>
               </TableRow>
             ))}

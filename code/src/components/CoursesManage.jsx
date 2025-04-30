@@ -10,8 +10,12 @@ import {
   TableRow,
   Paper,
   Typography,
+  IconButton,
+  Stack,
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
+import EditIcon from "@mui/icons-material/Edit";
+import DeleteIcon from "@mui/icons-material/Delete";
 
 export default function CourseManage() {
   const [courses, setCourses] = useState([]);
@@ -39,7 +43,6 @@ export default function CourseManage() {
     }
   };
 
-
   return (
     <Box sx={{ p: 4 }}>
       <Typography variant="h5" gutterBottom>
@@ -65,13 +68,15 @@ export default function CourseManage() {
               <TableCell sx={{ color: "white", fontWeight: "bold" }}>Lecturer</TableCell>
               <TableCell sx={{ color: "white", fontWeight: "bold" }}>year</TableCell>
               <TableCell sx={{ color: "white", fontWeight: "bold" }}>semester</TableCell>
-              <TableCell sx={{ color: "white", fontWeight: "bold" }}>Function</TableCell>
+              <TableCell sx={{ color: "white", fontWeight: "bold", textAlign: "center" }}>
+                Actions
+              </TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {courses.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={4} align="center">
+                <TableCell colSpan={6} align="center">
                   No courses found.
                 </TableCell>
               </TableRow>
@@ -83,23 +88,15 @@ export default function CourseManage() {
                   <TableCell>{course.lecturer}</TableCell>
                   <TableCell>{course.year}</TableCell>
                   <TableCell>{course.semester}</TableCell>
-                  <TableCell>
-                    <Button
-                      size="small"
-                      variant="outlined"
-                      sx={{ mr: 1 }}
-                      onClick={() => handleEdit(course)}
-                    >
-                      Edit
-                    </Button>
-                    <Button
-                      size="small"
-                      variant="outlined"
-                      color="error"
-                      onClick={() => handleDelete(index)}
-                    >
-                      Delete
-                    </Button>
+                  <TableCell align="center">
+                    <Stack direction="row" spacing={0.5} justifyContent="center">
+                      <IconButton color="info" onClick={() => handleEdit(course)}>
+                        <EditIcon fontSize="small" />
+                      </IconButton>
+                      <IconButton color="error" onClick={() => handleDelete(index)}>
+                        <DeleteIcon fontSize="small" />
+                      </IconButton>
+                    </Stack>
                   </TableCell>
                 </TableRow>
               ))

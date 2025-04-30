@@ -23,8 +23,8 @@ export default function StudentsForm() {
   const studentToEdit = location.state?.studentToEdit || null;
 
   const [formData, setFormData] = useState({
-    id: '',
-    name: '',
+    studentId: '',
+    fullName: '',
     age: '',
     gender: '',
     year: '',
@@ -32,30 +32,34 @@ export default function StudentsForm() {
 
   const [errors, setErrors] = useState({});
   const [students, setStudents] = useState([]);
+  const [existingIDs, setExistingIDs] = useState([]);
   const [openSnackbar, setOpenSnackbar] = useState(false);
 
   useEffect(() => {
-    const storedStudents = JSON.parse(localStorage.getItem('studentsList')) || [];
+    const storedStudents = JSON.parse(localStorage.getItem('students')) || [];
     setStudents(storedStudents);
+    setExistingIDs(storedStudents.map((s) => s.studentId));
+
     if (studentToEdit) {
       setFormData({ ...studentToEdit });
     }
-    }, [studentToEdit]);
-
+  }, [studentToEdit]);
 
   const handleChange = (event) => {
     const { name, value } = event.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
 
     let errorField = false;
     const currentYear = new Date().getFullYear();
 
-    if (name === 'id') {
-      errorField = !(value.length === 9 && /^[0-9]+$/.test(value)) || (!studentToEdit && existingIDs.includes(value));
+    if (name === 'studentId') {
+      errorField =
+        !(value.length === 9 && /^[0-9]+$/.test(value)) ||
+        (!studentToEdit && existingIDs.includes(value));
     }
 
-    if (name === 'name') {
-      errorField = !value.trim() || !/^[A-Za-z\\s]+$/.test(value);
+    if (name === 'fullName') {
+      errorField = !value.trim() || !/^[A-Za-z\s]+$/.test(value);
     }
 
     if (name === 'age') {
@@ -72,7 +76,7 @@ export default function StudentsForm() {
       errorField = !(value.length === 4 && Number.isInteger(year) && year > 2020 && year <= currentYear);
     }
 
-    setErrors(prev => ({ ...prev, [name]: errorField }));
+    setErrors((prev) => ({ ...prev, [name]: errorField }));
   };
 
   const handleSubmit = (e) => {
@@ -81,7 +85,9 @@ export default function StudentsForm() {
     const storedStudents = JSON.parse(localStorage.getItem('students')) || [];
 
     const updatedStudents = studentToEdit
-      ? storedStudents.map(s => s.id === formData.id ? { ...formData } : s)
+      ? storedStudents.map((s) =>
+          s.studentId === formData.studentId ? { ...formData } : s
+        )
       : [...storedStudents, { ...formData }];
 
     localStorage.setItem('students', JSON.stringify(updatedStudents));
@@ -103,29 +109,42 @@ export default function StudentsForm() {
         <Typography variant="h5" gutterBottom align="center">
           {studentToEdit ? 'Edit Student' : 'Add New Student'}
         </Typography>
-        <Box component="form" onSubmit={handleSubmit} noValidate sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+        <Box
+          component="form"
+          onSubmit={handleSubmit}
+          noValidate
+          sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}
+        >
           <TextField
             required
-            label="ID Number"
-            name="id"
-            value={formData.id}
+            label="Student ID"
+            name="studentId"
+            value={formData.studentId}
             onChange={handleChange}
             fullWidth
             disabled={!!studentToEdit}
-            error={errors.id}
-            helperText={errors.id ? "ID must be exactly 9 digits and unique" : ""}
+            error={errors.studentId}
+            helperText={
+              errors.studentId
+                ? existingIDs.includes(formData.studentId) && !studentToEdit
+                  ? 'This ID already exists'
+                  : 'ID must be exactly 9 digits'
+                : ''
+            }
             inputProps={{ maxLength: 9 }}
           />
+
           <TextField
             required
             label="Full Name"
-            name="name"
-            value={formData.name}
+            name="fullName"
+            value={formData.fullName}
             onChange={handleChange}
             fullWidth
-            error={errors.name}
-            helperText={errors.name ? "Full name must contain only letters and spaces" : ""}
+            error={errors.fullName}
+            helperText={errors.fullName ? 'Only letters and spaces allowed' : ''}
           />
+
           <TextField
             required
             label="Age"
@@ -135,9 +154,10 @@ export default function StudentsForm() {
             onChange={handleChange}
             fullWidth
             error={errors.age}
-            helperText={errors.age ? "Age must be a whole number greater than 18" : ""}
+            helperText={errors.age ? 'Must be a whole number greater than 18' : ''}
             inputProps={{ min: 19 }}
           />
+
           <FormControl component="fieldset" fullWidth error={errors.gender} required>
             <FormLabel component="legend">Gender</FormLabel>
             <RadioGroup
@@ -155,6 +175,7 @@ export default function StudentsForm() {
               </Typography>
             )}
           </FormControl>
+
           <TextField
             required
             label="Registration Year"
@@ -164,9 +185,10 @@ export default function StudentsForm() {
             onChange={handleChange}
             fullWidth
             error={errors.year}
-            helperText={errors.year ? "Year must be after 2020 and not in the future" : ""}
+            helperText={errors.year ? 'Year must be after 2020 and not in the future' : ''}
             inputProps={{ min: 2021 }}
           />
+
           <Stack direction="row" spacing={2} justifyContent="space-between" sx={{ mt: 2 }}>
             <Button variant="outlined" onClick={handleCancel} color="secondary">
               Cancel
@@ -177,6 +199,7 @@ export default function StudentsForm() {
           </Stack>
         </Box>
       </Paper>
+
       <Snackbar open={openSnackbar} autoHideDuration={3000} onClose={handleCloseSnackbar}>
         <Alert severity="success" sx={{ width: '100%' }} onClose={handleCloseSnackbar}>
           Student successfully saved!

@@ -12,7 +12,11 @@ import {
   TableHead,
   TableRow,
   Paper,
+  IconButton,
+  Stack,
 } from '@mui/material';
+import EditIcon from '@mui/icons-material/Edit';
+import DeleteIcon from '@mui/icons-material/Delete';
 
 export default function StudentsManage() {
   const [students, setStudents] = useState([]);
@@ -64,7 +68,7 @@ export default function StudentsManage() {
               <TableCell sx={{ color: "white", fontWeight: "bold" }}>Full Name</TableCell>
               <TableCell sx={{ color: "white", fontWeight: "bold" }}>Age</TableCell>
               <TableCell sx={{ color: "white", fontWeight: "bold" }}>Registration Year</TableCell>
-              <TableCell sx={{ color: "white", fontWeight: "bold" }}>Function</TableCell>
+              <TableCell sx={{ color: "white", fontWeight: "bold", textAlign: 'center' }}>Actions</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -81,23 +85,15 @@ export default function StudentsManage() {
                   <TableCell>{student.fullName}</TableCell>
                   <TableCell>{student.age}</TableCell>
                   <TableCell>{student.year}</TableCell>
-                  <TableCell>
-                    <Button
-                      size="small"
-                      variant="outlined"
-                      sx={{ mr: 1 }}
-                      onClick={() => handleEdit(student)}
-                    >
-                      Edit
-                    </Button>
-                    <Button
-                      size="small"
-                      variant="outlined"
-                      color="error"
-                      onClick={() => handleDelete(index)}
-                    >
-                      Delete
-                    </Button>
+                  <TableCell align="center">
+                    <Stack direction="row" spacing={0.5} justifyContent="center">
+                      <IconButton color="info" onClick={() => handleEdit(student)}>
+                        <EditIcon fontSize="small" />
+                      </IconButton>
+                      <IconButton color="error" onClick={() => handleDelete(index)}>
+                        <DeleteIcon fontSize="small" />
+                      </IconButton>
+                    </Stack>
                   </TableCell>
                 </TableRow>
               ))
