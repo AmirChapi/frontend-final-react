@@ -155,8 +155,8 @@ export default function StudentsForm() {
             fullWidth
             error={errors.age}
             helperText={errors.age ? 'Must be a whole number greater than 18' : ''}
-            inputProps={{ min: 19 }}
-          />
+            slotProps={{ input: { min: 19 } }}
+            />
 
           <FormControl component="fieldset" fullWidth error={errors.gender} required>
             <FormLabel component="legend">Gender</FormLabel>
@@ -186,8 +186,8 @@ export default function StudentsForm() {
             fullWidth
             error={errors.year}
             helperText={errors.year ? 'Year must be after 2020 and not in the future' : ''}
-            inputProps={{ min: 2021 }}
-          />
+            slotProps={{ input: { min: 2021 } }}
+            />
 
           <Stack direction="row" spacing={2} justifyContent="space-between" sx={{ mt: 2 }}>
             <Button variant="outlined" onClick={handleCancel} color="secondary">
