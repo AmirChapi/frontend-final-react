@@ -8,7 +8,7 @@ import InfoPage from './components/InfoPage';
 import MSGManage from './components/MSGManage';
 import StudentsManage from './components/StudentsManage'; // Make sure this is imported
 import CoursesManage from './components/CoursesManage';   // Make sure this is imported
-import MSGForms from './components/MSGForms';
+import MSGForm from './components/MSGForm';
 import StudentsForm from './components/StudentsForm';
 import CourseForm from './components/CourseForm';
 import TaskManage from './components/TaskManage';
@@ -24,7 +24,7 @@ export default function App() {
 
       <Routes>
         {/* Add the route for the login simulation page */}
-        <Route path='/MSGFForms' element={<MSGForms />} />
+        <Route path='/MSGForm' element={<MSGForm />} />
         <Route path='/StudentsForm' element={<StudentsForm />} />
         <Route path='/CourseForm' element={<CourseForm />} />
         <Route path='/StudentsManage' element={<StudentsManage />} />

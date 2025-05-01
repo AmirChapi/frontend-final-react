@@ -35,7 +35,7 @@ export default function MSGManage() {
   }, []);
 
   const handleEdit = (msg) => {
-    navigate('/MSGFForms', { state: { messageToEdit: msg } });
+    navigate('/MSGForm', { state: { messageToEdit: msg } });
   };
 
   const handleDeleteClick = (id) => {
@@ -51,7 +51,7 @@ export default function MSGManage() {
   };
 
   const handleAddNewMessage = () => {
-    navigate('/MSGFForms');
+    navigate('/MSGForm');
   };
 
   return (
