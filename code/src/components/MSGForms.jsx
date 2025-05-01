@@ -115,11 +115,6 @@ export default function MSGForms() {
   const handleCloseSnackbar = () => {
     setOpenSnackbar(false);
   };
-
-  const handleHelp = () => {
-    navigate('/help');
-  };
-
   return (
     <>
       <Box
@@ -208,9 +203,6 @@ export default function MSGForms() {
           </Button>
           <Button variant="outlined" color="secondary" onClick={handleCancelClick}>
             Cancel
-          </Button>
-          <Button variant="text" onClick={handleHelp}>
-            Help
           </Button>
         </Stack>
       </Box>

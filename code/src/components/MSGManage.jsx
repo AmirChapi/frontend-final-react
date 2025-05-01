@@ -66,7 +66,6 @@ export default function MSGManage() {
         Message Management
       </Typography>
 
-      {/* ✅ הכפתור הועבר לכאן – מתחת לכותרת ובצד ימין */}
       <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
         <Button variant="contained" onClick={handleAddNewMessage}>
           Add New Message

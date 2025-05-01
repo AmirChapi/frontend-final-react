@@ -8,6 +8,11 @@ import {
   MenuItem,
   Snackbar,
   Alert,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle
 } from "@mui/material";
 import { useNavigate, useLocation } from "react-router-dom";
 
@@ -29,6 +34,7 @@ export default function CourseForm() {
   const [courses, setCourses] = useState([]);
   const [openSnackbar, setOpenSnackbar] = useState(false);
   const [error, setError] = useState("");
+  const [openCancelDialog, setOpenCancelDialog] = useState(false);
 
   useEffect(() => {
     const storedCourses = JSON.parse(localStorage.getItem("coursesList")) || [];
@@ -93,12 +99,26 @@ export default function CourseForm() {
     setOpenSnackbar(false);
   };
 
+  const handleCancelClick = () => {
+    setOpenCancelDialog(true);
+  };
+
+  const handleConfirmCancel = () => {
+    setOpenCancelDialog(false);
+    navigate("/CoursesManage");
+  };
+
+  const handleCloseCancelDialog = () => {
+    setOpenCancelDialog(false);
+  };
+
   return (
     <Box sx={{ minHeight: "60vh", display: "flex", justifyContent: "center", alignItems: "center" }}>
       <Paper elevation={3} sx={{ padding: 4, width: 400, borderRadius: 2 }}>
         <Typography variant="h5" align="center" gutterBottom>
           {courseToEdit ? "Edit Course" : "Add new Course"}
         </Typography>
+
         <Box component="form" onSubmit={handleSubmit} sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
           <TextField
             required
@@ -112,6 +132,7 @@ export default function CourseForm() {
             error={errors.courseCode}
             helperText={errors.courseCode ? "Course code must be a positive 3-digit number" : ""}
           />
+
           <TextField
             required
             id="courseName"
@@ -123,6 +144,7 @@ export default function CourseForm() {
             error={errors.courseName}
             helperText={errors.courseName ? "Course name must not contain numbers and cannot be empty" : ""}
           />
+
           <TextField
             required
             id="lecturer"
@@ -134,6 +156,7 @@ export default function CourseForm() {
             error={errors.lecturer}
             helperText={errors.lecturer ? "Lecturer is required" : ""}
           />
+
           <TextField
             required
             id="year"
@@ -146,6 +169,7 @@ export default function CourseForm() {
             error={errors.year}
             helperText={errors.year ? "Year must be after 2000 and 4 digits" : ""}
           />
+
           <TextField
             required
             id="semester"
@@ -162,21 +186,15 @@ export default function CourseForm() {
             <MenuItem value="B">B</MenuItem>
             <MenuItem value="C">C</MenuItem>
           </TextField>
+
           {error && (
             <Typography color="error" fontSize="0.9rem">
               {error}
             </Typography>
           )}
+
           <Box sx={{ display: "flex", justifyContent: "space-between" }}>
-            <Button
-              variant="outlined"
-              onClick={() => {
-                const confirmCancel = window.confirm(
-                  "Are you sure you want to cancel? Unsaved changes will be lost."
-                );
-                if (confirmCancel) navigate("/CoursesManage");
-              }}
-            >
+            <Button variant="outlined" onClick={handleCancelClick}>
               Cancel
             </Button>
             <Button type="submit" variant="contained">
@@ -185,11 +203,36 @@ export default function CourseForm() {
           </Box>
         </Box>
       </Paper>
+
+      {/* Snackbar – הודעת הצלחה */}
       <Snackbar open={openSnackbar} autoHideDuration={3000} onClose={handleCloseSnackbar}>
-        <Alert severity="success" sx={{ width: '100%' }} onClose={handleCloseSnackbar}>
+        <Alert severity="success" sx={{ width: "100%" }} onClose={handleCloseSnackbar}>
           Course successfully saved!
         </Alert>
       </Snackbar>
+
+      {/* Dialog – אישור ביטול */}
+      <Dialog
+        open={openCancelDialog}
+        onClose={handleCloseCancelDialog}
+        aria-labelledby="cancel-dialog-title"
+        aria-describedby="cancel-dialog-description"
+      >
+        <DialogTitle id="cancel-dialog-title">{"Confirm Cancellation"}</DialogTitle>
+        <DialogContent>
+          <DialogContentText id="cancel-dialog-description">
+            Are you sure you want to cancel? Unsaved changes will be lost.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseCancelDialog} color="primary">
+            No
+          </Button>
+          <Button onClick={handleConfirmCancel} color="secondary" autoFocus>
+            Yes, Cancel
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }

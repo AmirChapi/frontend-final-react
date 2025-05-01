@@ -46,12 +46,12 @@ export default function GradeManage() {
   };
 
   return (
-    <Box sx={{ p: 4 }}>
+    <Box sx={{ p: 3, maxWidth: '1200px', margin: 'auto' }}>
       <Typography variant="h5" gutterBottom>
         Grade Management
       </Typography>
 
-      <Box sx={{ mb: 2, display: "flex", justifyContent: "flex-end" }}>
+      <Box sx={{ mb: 2, display: 'flex', justifyContent: 'flex-end' }}>
         <Button
           variant="contained"
           sx={{ backgroundColor: "#1976d2" }}

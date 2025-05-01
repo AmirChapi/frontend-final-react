@@ -22,12 +22,12 @@ export default function SideDropdownMenu() {
   };
 
   const menuItems = [
+    {text: 'Home Page', path: '/'},
     { text: 'Students Manage', path: '/StudentsManage' },
     { text: 'Courses Manage', path: '/CoursesManage' },
-    { text: 'MSG Manage', path: '/MSGManage' },
     { text: 'Tasks Manage', path: '/TaskManage' },
     { text: 'Grades Manage', path: '/GradeManage' },
-    {text: 'Home Page', path: '/'},
+    { text: 'MSG Manage', path: '/MSGManage' },
     {text: 'Help', path: '/help'},
     {text: 'Info', path: '/info'},
     ];

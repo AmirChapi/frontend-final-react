@@ -194,7 +194,7 @@ export default function StudentsForm() {
               Cancel
             </Button>
             <Button type="submit" variant="contained" color="primary">
-              {studentToEdit ? 'Save Changes' : 'Add Student'}
+              Save
             </Button>
           </Stack>
         </Box>
