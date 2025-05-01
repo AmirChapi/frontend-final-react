@@ -36,7 +36,6 @@ export default function MSGForms() {
   const [courseOptions, setCourseOptions] = useState([]);
   const [openCancelDialog, setOpenCancelDialog] = useState(false);
   const [openSnackbar, setOpenSnackbar] = useState(false);
-  const [error, setError] = useState("");
 
   useEffect(() => {
     const storedCourses = JSON.parse(localStorage.getItem('coursesList')) || [];
@@ -56,9 +55,9 @@ export default function MSGForms() {
     if (name === 'messageCode') {
       const messages = JSON.parse(localStorage.getItem('messages')) || [];
       const exists = messages.some(
-        (msg) => msg.messageCode === value && (!messageToEdit || msg.id !== messageToEdit.id)
+        (msg) => msg.messageCode === value && (messageToEdit ? msg.id !== messageToEdit.id : true)
       );
-      errorField = !(value.length === 3 && /^[0-9]+$/.test(value)) || exists;
+      errorField = exists;
     }
 
     if (name === 'messageContent') {
@@ -75,8 +74,12 @@ export default function MSGForms() {
     const newErrors = {};
     const messages = JSON.parse(localStorage.getItem('messages')) || [];
 
-    if (!(formValues.messageCode.length === 3 && /^[0-9]+$/.test(formValues.messageCode)) ||
-        (!messageToEdit && messages.some(msg => msg.messageCode === formValues.messageCode))) {
+    // בדיקת ייחודיות
+    const exists = messages.some(
+      (msg) => msg.messageCode === formValues.messageCode && (messageToEdit ? msg.id !== messageToEdit.id : true)
+    );
+
+    if (!formValues.messageCode || exists || !/^[a-zA-Z0-9]+$/.test(formValues.messageCode)) {
       newErrors.messageCode = true;
       hasError = true;
     }
@@ -139,7 +142,7 @@ export default function MSGForms() {
             fullWidth
             disabled={!!messageToEdit}
             error={errors.messageCode}
-            helperText={errors.messageCode ? "Message code must be a unique 3-digit number" : ""}
+            helperText={errors.messageCode ? "Message code must be unique " : ""}
           />
 
           <FormControl fullWidth error={errors.courseCode}>
@@ -194,12 +197,6 @@ export default function MSGForms() {
             error={errors.messageContent}
             helperText={errors.messageContent ? "Message content is required" : ""}
           />
-
-          {error && (
-            <Typography color="error" fontSize="0.9rem">
-              {error}
-            </Typography>
-          )}
 
           <Box sx={{ display: "flex", justifyContent: "space-between" }}>
             <Button variant="outlined" onClick={handleCancelClick} color="secondary">

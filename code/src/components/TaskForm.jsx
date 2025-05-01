@@ -6,7 +6,6 @@ import {
   Typography,
   Paper,
   MenuItem,
-  Stack,
   Snackbar,
   Alert,
   Dialog,
@@ -80,6 +79,17 @@ export default function TaskForm() {
     let hasError = false;
     const newErrors = {};
 
+    const storedTasks = JSON.parse(localStorage.getItem("tasks") || "[]");
+    const isDuplicate = storedTasks.some(
+      (task) => task.taskCode === formData.taskCode && taskToEdit?.taskCode !== formData.taskCode
+    );
+    
+    if (isDuplicate) {
+      newErrors.taskCode = true;
+      newErrors.taskCodeDuplicate = true;
+      hasError = true;
+    }
+
     if (!(formData.taskCode.length === 3 && /^[0-9]+$/.test(formData.taskCode))) {
       newErrors.taskCode = true;
       hasError = true;
@@ -110,13 +120,11 @@ export default function TaskForm() {
       return;
     }
 
-    const storedTasks = localStorage.getItem("tasks");
-    const existingTasks = storedTasks ? JSON.parse(storedTasks) : [];
-
-    const updatedTasks = taskToEdit ? existingTasks.map((t) =>
+    const updatedTasks = taskToEdit
+      ? storedTasks.map((t) =>
           t.taskCode === taskToEdit.taskCode ? formData : t
         )
-      : [...existingTasks, formData];
+      : [...storedTasks, formData];
 
     localStorage.setItem("tasks", JSON.stringify(updatedTasks));
 
@@ -154,8 +162,8 @@ export default function TaskForm() {
             name="taskCode"
             value={formData.taskCode}
             onChange={handleChange}
-            error={errors.taskCode}
-            helperText={errors.taskCode ? "Task code must be 3 digits" : ""}
+            error={errors.taskCode || errors.taskCodeDuplicate}
+            helperText={errors.taskCodeDuplicate ? "Task code already exists" : errors.taskCode ? "Task code must be 3 digits" : ""}
           />
           <TextField
             select
@@ -224,12 +232,7 @@ export default function TaskForm() {
         </Alert>
       </Snackbar>
 
-      <Dialog
-        open={openCancelDialog}
-        onClose={handleCloseCancelDialog}
-        aria-labelledby="cancel-dialog-title"
-        aria-describedby="cancel-dialog-description"
-      >
+      <Dialog open={openCancelDialog} onClose={handleCloseCancelDialog} aria-labelledby="cancel-dialog-title" aria-describedby="cancel-dialog-description">
         <DialogTitle id="cancel-dialog-title">Confirm Cancellation</DialogTitle>
         <DialogContent>
           <DialogContentText id="cancel-dialog-description">
@@ -237,14 +240,10 @@ export default function TaskForm() {
           </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCloseCancelDialog} color="primary">
-            No
-          </Button>
-          <Button onClick={handleConfirmCancel} color="secondary" autoFocus>
-            Yes, Cancel
-          </Button>
+          <Button onClick={handleCloseCancelDialog} color="primary">No</Button>
+          <Button onClick={handleConfirmCancel} color="secondary" autoFocus>Yes, Cancel</Button>
         </DialogActions>
       </Dialog>
     </Box>
   );
-} 
+}

@@ -78,7 +78,7 @@ export default function StudentsForm() {
 
     if (name === 'year') {
       const year = Number(value);
-      errorField = !(value.length === 4 && Number.isInteger(year) && year > 2020 && year <= currentYear);
+      errorField = !(value.length === 4 && Number.isInteger(year) && year > 2019 && year <= currentYear);
     }
 
     setErrors((prev) => ({ ...prev, [name]: errorField }));

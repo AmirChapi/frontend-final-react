@@ -68,6 +68,7 @@ export default function StudentsManage() {
               <TableCell sx={{ color: "white", fontWeight: "bold" }}>Full Name</TableCell>
               <TableCell sx={{ color: "white", fontWeight: "bold" }}>Age</TableCell>
               <TableCell sx={{ color: "white", fontWeight: "bold" }}>Registration Year</TableCell>
+              <TableCell sx={{ color: "white", fontWeight: "bold" }}>Gender</TableCell>
               <TableCell sx={{ color: "white", fontWeight: "bold", textAlign: 'center' }}>Actions</TableCell>
             </TableRow>
           </TableHead>
@@ -85,6 +86,7 @@ export default function StudentsManage() {
                   <TableCell>{student.fullName}</TableCell>
                   <TableCell>{student.age}</TableCell>
                   <TableCell>{student.year}</TableCell>
+                  <TableCell>{student.gender}</TableCell>
                   <TableCell align="center">
                     <Stack direction="row" spacing={0.5} justifyContent="center">
                       <IconButton color="info" onClick={() => handleEdit(student)}>

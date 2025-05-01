@@ -71,9 +71,7 @@ export default function TasksManage() {
               <TableCell sx={{ color: "white", fontWeight: "bold" }}>Task Name</TableCell>
               <TableCell sx={{ color: "white", fontWeight: "bold" }}>Submission Date</TableCell>
               <TableCell sx={{ color: "white", fontWeight: "bold" }}>Description</TableCell>
-              <TableCell sx={{ color: "white", fontWeight: "bold", textAlign: "center" }}>
-                Actions
-              </TableCell>
+              <TableCell sx={{ color: "white", fontWeight: "bold", textAlign: "center" }}>Actions</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
