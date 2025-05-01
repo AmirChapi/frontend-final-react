@@ -1,4 +1,3 @@
-// src/components/MSGManage.jsx
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -35,12 +34,8 @@ export default function MSGManage() {
     setMessages(storedMessages);
   }, []);
 
-  const handleEdit = (id) => {
-    const message = messages.find((msg) => msg.id === id);
-    if (message) {
-      localStorage.setItem('editMessage', JSON.stringify(message));
-      navigate('/MSGFForms');
-    }
+  const handleEdit = (msg) => {
+    navigate('/MSGFForms', { state: { messageToEdit: msg } });
   };
 
   const handleDeleteClick = (id) => {
@@ -56,7 +51,6 @@ export default function MSGManage() {
   };
 
   const handleAddNewMessage = () => {
-    localStorage.removeItem('editMessage');
     navigate('/MSGFForms');
   };
 
@@ -95,7 +89,7 @@ export default function MSGManage() {
                   <TableCell>{msg.messageContent}</TableCell>
                   <TableCell align="center">
                     <Stack direction="row" spacing={0.5} justifyContent="center">
-                      <IconButton color="info" onClick={() => handleEdit(msg.id)}>
+                      <IconButton color="info" onClick={() => handleEdit(msg)}>
                         <EditIcon fontSize="small" />
                       </IconButton>
                       <IconButton color="error" onClick={() => handleDeleteClick(msg.id)}>

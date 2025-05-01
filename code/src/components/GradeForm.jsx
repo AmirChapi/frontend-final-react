@@ -8,6 +8,11 @@ import {
   MenuItem,
   Snackbar,
   Alert,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle
 } from "@mui/material";
 import { useNavigate, useLocation } from "react-router-dom";
 
@@ -29,6 +34,7 @@ export default function GradeForm() {
   const [errors, setErrors] = useState({});
   const [openSnackbar, setOpenSnackbar] = useState(false);
   const [error, setError] = useState("");
+  const [openCancelDialog, setOpenCancelDialog] = useState(false);
 
   useEffect(() => {
     const storedStudents = JSON.parse(localStorage.getItem("students")) || [];
@@ -44,7 +50,6 @@ export default function GradeForm() {
     const { name, value } = event.target;
     let newFormData = { ...formData, [name]: value };
 
-    // When taskName changes, update taskCode automatically
     if (name === "taskName") {
       const selectedTask = tasks.find(task => task.taskName === value);
       if (selectedTask) {
@@ -60,7 +65,7 @@ export default function GradeForm() {
 
     if (name === "taskGrade") {
       const num = Number(value);
-      errorField = !(value && !isNaN(num) && num >= 0 && num <= 100);
+      errorField = value !== "" && (!Number.isInteger(num) || num < 0 || num > 100);
     }
 
     if (name === "idNumber") {
@@ -76,6 +81,31 @@ export default function GradeForm() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+
+    let hasError = false;
+    const newErrors = {};
+
+    const grade = Number(formData.taskGrade);
+
+    if (!formData.idNumber) {
+      newErrors.idNumber = true;
+      hasError = true;
+    }
+
+    if (!formData.taskName) {
+      newErrors.taskName = true;
+      hasError = true;
+    }
+
+    if (!(formData.taskGrade !== "" && !isNaN(grade) && grade >= 0 && grade <= 100)) {
+      newErrors.taskGrade = true;
+      hasError = true;
+    }
+
+    if (hasError) {
+      setErrors(newErrors);
+      return;
+    }
 
     const existingGrades = JSON.parse(localStorage.getItem("grades")) || [];
 
@@ -110,8 +140,21 @@ export default function GradeForm() {
     setOpenSnackbar(false);
   };
 
+  const handleCancelClick = () => {
+    setOpenCancelDialog(true);
+  };
+
+  const handleConfirmCancel = () => {
+    setOpenCancelDialog(false);
+    navigate("/GradeManage");
+  };
+
+  const handleCloseCancelDialog = () => {
+    setOpenCancelDialog(false);
+  };
+
   return (
-    <Box sx={{ minHeight: "60vh", display: "flex", justifyContent: "center", alignItems: "center" }}>
+    <Box sx={{ minHeight: "70vh", display: "flex", justifyContent: "center", alignItems: "center" }}>
       <Paper elevation={3} sx={{ padding: 4, width: 400, borderRadius: 2 }}>
         <Typography variant="h5" align="center" gutterBottom>
           {gradeToEdit ? "Edit Grade" : "New Grade Entry"}
@@ -119,7 +162,6 @@ export default function GradeForm() {
         <Box component="form" onSubmit={handleSubmit} sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
           <TextField
             select
-            required
             id="idNumber"
             name="idNumber"
             label="Student ID"
@@ -138,7 +180,6 @@ export default function GradeForm() {
           </TextField>
 
           <TextField
-            required
             id="taskGrade"
             name="taskGrade"
             label="Task Grade"
@@ -152,7 +193,6 @@ export default function GradeForm() {
 
           <TextField
             select
-            required
             id="taskName"
             name="taskName"
             label="Task Name"
@@ -171,7 +211,6 @@ export default function GradeForm() {
           </TextField>
 
           <TextField
-            required
             id="taskCode"
             name="taskCode"
             label="Task Code"
@@ -188,18 +227,10 @@ export default function GradeForm() {
           )}
 
           <Box sx={{ display: "flex", justifyContent: "space-between" }}>
-            <Button
-              variant="outlined"
-              onClick={() => {
-                const confirmCancel = window.confirm(
-                  "Are you sure you want to cancel? Unsaved changes will be lost."
-                );
-                if (confirmCancel) navigate("/GradeManage");
-              }}
-            >
+            <Button variant="outlined" onClick={handleCancelClick} color="secondary">
               Cancel
             </Button>
-            <Button type="submit" variant="contained">
+            <Button type="submit" variant="contained" color="primary">
               Save
             </Button>
           </Box>
@@ -210,6 +241,27 @@ export default function GradeForm() {
           Grade successfully saved!
         </Alert>
       </Snackbar>
+      <Dialog
+        open={openCancelDialog}
+        onClose={handleCloseCancelDialog}
+        aria-labelledby="cancel-dialog-title"
+        aria-describedby="cancel-dialog-description"
+      >
+        <DialogTitle id="cancel-dialog-title">Confirm Cancellation</DialogTitle>
+        <DialogContent>
+          <DialogContentText id="cancel-dialog-description">
+            Are you sure you want to cancel? Unsaved changes will be lost.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseCancelDialog} color="primary">
+            No
+          </Button>
+          <Button onClick={handleConfirmCancel} color="secondary" autoFocus>
+            Yes, Cancel
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }

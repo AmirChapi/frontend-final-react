@@ -49,13 +49,14 @@ export default function CourseForm() {
     setFormData((prev) => ({ ...prev, [name]: value }));
 
     let errorField = false;
+    const currentYear = new Date().getFullYear();
 
     if (name === "courseCode") {
       errorField = !(value.length === 3 && /^[0-9]+$/.test(value) && parseInt(value) > 0);
     }
 
     if (name === "courseName") {
-      errorField = !value.trim() || /\d/.test(value);
+      errorField = !value.trim() || !/^[A-Za-z\s]+$/.test(value);
     }
 
     if (name === "lecturer") {
@@ -63,7 +64,8 @@ export default function CourseForm() {
     }
 
     if (name === "year") {
-      errorField = !(value.length === 4 && parseInt(value) > 2000);
+      const year = parseInt(value);
+      errorField = !(value.length === 4 && year > 2000 && year <= currentYear);
     }
 
     if (name === "semester") {
@@ -75,6 +77,42 @@ export default function CourseForm() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+
+    let hasError = false;
+    const newErrors = {};
+    const currentYear = new Date().getFullYear();
+
+    const year = parseInt(formData.year);
+
+    if (!(formData.courseCode.length === 3 && /^[0-9]+$/.test(formData.courseCode) && parseInt(formData.courseCode) > 0)) {
+      newErrors.courseCode = true;
+      hasError = true;
+    }
+
+    if (!formData.courseName.trim() || !/^[A-Za-z\s]+$/.test(formData.courseName)) {
+      newErrors.courseName = true;
+      hasError = true;
+    }
+
+    if (!formData.lecturer.trim()) {
+      newErrors.lecturer = true;
+      hasError = true;
+    }
+
+    if (!(formData.year.length === 4 && year > 2000 && year <= currentYear)) {
+      newErrors.year = true;
+      hasError = true;
+    }
+
+    if (!formData.semester.trim()) {
+      newErrors.semester = true;
+      hasError = true;
+    }
+
+    if (hasError) {
+      setErrors(newErrors);
+      return;
+    }
 
     const storedCourses = JSON.parse(localStorage.getItem("coursesList")) || [];
     const isDuplicate = !courseToEdit && storedCourses.some((course) => course.courseCode === formData.courseCode);
@@ -113,7 +151,7 @@ export default function CourseForm() {
   };
 
   return (
-    <Box sx={{ minHeight: "60vh", display: "flex", justifyContent: "center", alignItems: "center" }}>
+    <Box sx={{ minHeight: "70vh", display: "flex", justifyContent: "center", alignItems: "center" }}>
       <Paper elevation={3} sx={{ padding: 4, width: 400, borderRadius: 2 }}>
         <Typography variant="h5" align="center" gutterBottom>
           {courseToEdit ? "Edit Course" : "Add new Course"}
@@ -121,7 +159,6 @@ export default function CourseForm() {
 
         <Box component="form" onSubmit={handleSubmit} sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
           <TextField
-            required
             id="courseCode"
             name="courseCode"
             label="Course Code"
@@ -134,7 +171,6 @@ export default function CourseForm() {
           />
 
           <TextField
-            required
             id="courseName"
             name="courseName"
             label="Course Name"
@@ -142,11 +178,10 @@ export default function CourseForm() {
             onChange={handleChange}
             fullWidth
             error={errors.courseName}
-            helperText={errors.courseName ? "Course name must not contain numbers and cannot be empty" : ""}
+            helperText={errors.courseName ? "Course name must be only English letters and spaces" : ""}
           />
 
           <TextField
-            required
             id="lecturer"
             name="lecturer"
             label="Lecturer"
@@ -158,7 +193,6 @@ export default function CourseForm() {
           />
 
           <TextField
-            required
             id="year"
             name="year"
             label="Year"
@@ -171,7 +205,6 @@ export default function CourseForm() {
           />
 
           <TextField
-            required
             id="semester"
             name="semester"
             label="Semester"
@@ -194,24 +227,22 @@ export default function CourseForm() {
           )}
 
           <Box sx={{ display: "flex", justifyContent: "space-between" }}>
-            <Button variant="outlined" onClick={handleCancelClick}>
+            <Button variant="outlined" onClick={handleCancelClick} color="secondary">
               Cancel
             </Button>
-            <Button type="submit" variant="contained">
+            <Button type="submit" variant="contained" color="primary">
               Save
             </Button>
           </Box>
         </Box>
       </Paper>
 
-      {/* Snackbar – הודעת הצלחה */}
       <Snackbar open={openSnackbar} autoHideDuration={3000} onClose={handleCloseSnackbar}>
         <Alert severity="success" sx={{ width: "100%" }} onClose={handleCloseSnackbar}>
           Course successfully saved!
         </Alert>
       </Snackbar>
 
-      {/* Dialog – אישור ביטול */}
       <Dialog
         open={openCancelDialog}
         onClose={handleCloseCancelDialog}

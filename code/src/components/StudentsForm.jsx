@@ -10,9 +10,13 @@ import {
   FormLabel,
   FormControl,
   Paper,
-  Stack,
   Snackbar,
   Alert,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle
 } from '@mui/material';
 import { useLocation, useNavigate } from 'react-router-dom';
 
@@ -34,6 +38,7 @@ export default function StudentsForm() {
   const [students, setStudents] = useState([]);
   const [existingIDs, setExistingIDs] = useState([]);
   const [openSnackbar, setOpenSnackbar] = useState(false);
+  const [openCancelDialog, setOpenCancelDialog] = useState(false);
 
   useEffect(() => {
     const storedStudents = JSON.parse(localStorage.getItem('students')) || [];
@@ -64,7 +69,7 @@ export default function StudentsForm() {
 
     if (name === 'age') {
       const age = Number(value);
-      errorField = !(value && Number.isInteger(age) && age > 18);
+      errorField = !(value && Number.isInteger(age) && age >= 18 && age <= 80);
     }
 
     if (name === 'gender') {
@@ -82,6 +87,43 @@ export default function StudentsForm() {
   const handleSubmit = (e) => {
     e.preventDefault();
 
+    let hasError = false;
+    const newErrors = {};
+    const currentYear = new Date().getFullYear();
+
+    if (!(formData.studentId.length === 9 && /^[0-9]+$/.test(formData.studentId)) ||
+        (!studentToEdit && existingIDs.includes(formData.studentId))) {
+      newErrors.studentId = true;
+      hasError = true;
+    }
+
+    if (!formData.fullName.trim() || !/^[A-Za-z\s]+$/.test(formData.fullName)) {
+      newErrors.fullName = true;
+      hasError = true;
+    }
+
+    const age = Number(formData.age);
+    if (!(formData.age && Number.isInteger(age) && age > 18)) {
+      newErrors.age = true;
+      hasError = true;
+    }
+
+    if (!formData.gender) {
+      newErrors.gender = true;
+      hasError = true;
+    }
+
+    const year = Number(formData.year);
+    if (!(formData.year.length === 4 && Number.isInteger(year) && year > 2020 && year <= currentYear)) {
+      newErrors.year = true;
+      hasError = true;
+    }
+
+    if (hasError) {
+      setErrors(newErrors);
+      return;
+    }
+
     const storedStudents = JSON.parse(localStorage.getItem('students')) || [];
 
     const updatedStudents = studentToEdit
@@ -95,8 +137,17 @@ export default function StudentsForm() {
     setTimeout(() => navigate('/StudentsManage'), 1000);
   };
 
-  const handleCancel = () => {
+  const handleCancelClick = () => {
+    setOpenCancelDialog(true);
+  };
+
+  const handleConfirmCancel = () => {
+    setOpenCancelDialog(false);
     navigate('/StudentsManage');
+  };
+
+  const handleCloseCancelDialog = () => {
+    setOpenCancelDialog(false);
   };
 
   const handleCloseSnackbar = () => {
@@ -104,17 +155,13 @@ export default function StudentsForm() {
   };
 
   return (
-    <Box sx={{ maxWidth: 500, mx: 'auto', mt: 4 }}>
-      <Paper elevation={3} sx={{ p: 3, borderRadius: 2 }}>
+    <Box sx={{ minHeight: '70vh', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+      <Paper elevation={3} sx={{ padding: 4, width: 400, borderRadius: 2 }}>
         <Typography variant="h5" gutterBottom align="center">
           {studentToEdit ? 'Edit Student' : 'Add New Student'}
         </Typography>
-        <Box
-          component="form"
-          onSubmit={handleSubmit}
-          noValidate
-          sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}
-        >
+
+        <Box component="form" onSubmit={handleSubmit} noValidate sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
           <TextField
             required
             label="Student ID"
@@ -154,9 +201,8 @@ export default function StudentsForm() {
             onChange={handleChange}
             fullWidth
             error={errors.age}
-            helperText={errors.age ? 'Must be a whole number greater than 18' : ''}
-            slotProps={{ input: { min: 19 } }}
-            />
+            helperText={errors.age ? 'Must be a whole number greater than 18 or less than 80' : ''}
+          />
 
           <FormControl component="fieldset" fullWidth error={errors.gender} required>
             <FormLabel component="legend">Gender</FormLabel>
@@ -186,25 +232,48 @@ export default function StudentsForm() {
             fullWidth
             error={errors.year}
             helperText={errors.year ? 'Year must be after 2020 and not in the future' : ''}
-            slotProps={{ input: { min: 2021 } }}
-            />
+          />
 
-          <Stack direction="row" spacing={2} justifyContent="space-between" sx={{ mt: 2 }}>
-            <Button variant="outlined" onClick={handleCancel} color="secondary">
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 2 }}>
+            <Button variant="outlined" onClick={handleCancelClick} color="secondary">
               Cancel
             </Button>
             <Button type="submit" variant="contained" color="primary">
               Save
             </Button>
-          </Stack>
+          </Box>
         </Box>
       </Paper>
 
+      {/* Snackbar */}
       <Snackbar open={openSnackbar} autoHideDuration={3000} onClose={handleCloseSnackbar}>
         <Alert severity="success" sx={{ width: '100%' }} onClose={handleCloseSnackbar}>
           Student successfully saved!
         </Alert>
       </Snackbar>
+
+      {/* Dialog */}
+      <Dialog
+        open={openCancelDialog}
+        onClose={handleCloseCancelDialog}
+        aria-labelledby="cancel-dialog-title"
+        aria-describedby="cancel-dialog-description"
+      >
+        <DialogTitle id="cancel-dialog-title">Confirm Cancellation</DialogTitle>
+        <DialogContent>
+          <DialogContentText id="cancel-dialog-description">
+            Are you sure you want to cancel? Unsaved changes will be lost.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseCancelDialog} color="primary">
+            No
+          </Button>
+          <Button onClick={handleConfirmCancel} color="secondary" autoFocus>
+            Yes, Cancel
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }

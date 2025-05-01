@@ -8,7 +8,12 @@ import {
   MenuItem,
   Stack,
   Snackbar,
-  Alert
+  Alert,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle
 } from "@mui/material";
 import { useNavigate, useLocation } from "react-router-dom";
 import dayjs from "dayjs";
@@ -30,6 +35,7 @@ export default function TaskForm() {
   const [errors, setErrors] = useState({});
   const [courses, setCourses] = useState([]);
   const [openSnackbar, setOpenSnackbar] = useState(false);
+  const [openCancelDialog, setOpenCancelDialog] = useState(false);
 
   useEffect(() => {
     const storedCourses = JSON.parse(localStorage.getItem("coursesList")) || [];
@@ -43,33 +49,66 @@ export default function TaskForm() {
     const { name, value} = event.target;
     setFormData({ ...formData, [name]: value });
 
-    let error = false;
+    let errorField = false;
 
     if (name === "taskCode") {
-      error = !(value.length === 3 && !isNaN(value));
+      errorField = !(value.length === 3 && /^[0-9]+$/.test(value));
     }
 
     if (name === "courseCode") {
-      error = !value;
+      errorField = !value;
     }
 
     if (name === "taskName") {
-      error = !value.trim();
+      errorField = !value.trim();
     }
 
     if (name === "submissionDate") {
-      error = !value || dayjs(value).isBefore(dayjs(), "day");
+      errorField = !value || dayjs(value).isBefore(dayjs(), "day");
     }
 
     if (name === "taskDescription") {
-      error = !value.trim();
+      errorField = !value.trim();
     }
 
-    setErrors({ ...errors, [name]: error });
+    setErrors((prev) => ({ ...prev, [name]: errorField }));
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
+
+    let hasError = false;
+    const newErrors = {};
+
+    if (!(formData.taskCode.length === 3 && /^[0-9]+$/.test(formData.taskCode))) {
+      newErrors.taskCode = true;
+      hasError = true;
+    }
+
+    if (!formData.courseCode) {
+      newErrors.courseCode = true;
+      hasError = true;
+    }
+
+    if (!formData.taskName.trim()) {
+      newErrors.taskName = true;
+      hasError = true;
+    }
+
+    if (!formData.submissionDate || dayjs(formData.submissionDate).isBefore(dayjs(), "day")) {
+      newErrors.submissionDate = true;
+      hasError = true;
+    }
+
+    if (!formData.taskDescription.trim()) {
+      newErrors.taskDescription = true;
+      hasError = true;
+    }
+
+    if (hasError) {
+      setErrors(newErrors);
+      return;
+    }
 
     const storedTasks = localStorage.getItem("tasks");
     const existingTasks = storedTasks ? JSON.parse(storedTasks) : [];
@@ -89,35 +128,44 @@ export default function TaskForm() {
     setOpenSnackbar(false);
   };
 
+  const handleCancelClick = () => {
+    setOpenCancelDialog(true);
+  };
+
+  const handleConfirmCancel = () => {
+    setOpenCancelDialog(false);
+    navigate("/TaskManage");
+  };
+
+  const handleCloseCancelDialog = () => {
+    setOpenCancelDialog(false);
+  };
+
   return (
-    <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
-      <Paper sx={{ p: 4, width: 500 }}>
+    <Box sx={{ minHeight: "70vh", display: "flex", justifyContent: "center", alignItems: "center" }}>
+      <Paper elevation={3} sx={{ padding: 4, width: 500, borderRadius: 2 }}>
         <Typography variant="h5" align="center" gutterBottom>
           {taskToEdit ? "Edit Task" : "New Task Entry"}
         </Typography>
-        <form onSubmit={handleSubmit} noValidate>
+        <Box component="form" onSubmit={handleSubmit} sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
           <TextField
             fullWidth
-            required
             label="Task Code"
             name="taskCode"
             value={formData.taskCode}
             onChange={handleChange}
             error={errors.taskCode}
             helperText={errors.taskCode ? "Task code must be 3 digits" : ""}
-            margin="normal"
           />
           <TextField
             select
             fullWidth
-            required
             label="Course"
             name="courseCode"
             value={formData.courseCode}
             onChange={handleChange}
             error={errors.courseCode}
             helperText={errors.courseCode ? "Please select a course" : ""}
-            margin="normal"
           >
             <MenuItem value="">
               <em>Select a course</em>
@@ -130,18 +178,15 @@ export default function TaskForm() {
           </TextField>
           <TextField
             fullWidth
-            required
             label="Task Name"
             name="taskName"
             value={formData.taskName}
             onChange={handleChange}
             error={errors.taskName}
             helperText={errors.taskName ? "Task name is required" : ""}
-            margin="normal"
           />
           <TextField
             fullWidth
-            required
             label="Submission Date"
             name="submissionDate"
             type="date"
@@ -150,11 +195,9 @@ export default function TaskForm() {
             onChange={handleChange}
             error={errors.submissionDate}
             helperText={errors.submissionDate ? "Date must be today or later" : ""}
-            margin="normal"
           />
           <TextField
             fullWidth
-            required
             label="Task Description"
             name="taskDescription"
             multiline
@@ -163,21 +206,45 @@ export default function TaskForm() {
             onChange={handleChange}
             error={errors.taskDescription}
             helperText={errors.taskDescription ? "Task description is required" : ""}
-            margin="normal"
           />
-          <Stack direction="row" spacing={2} justifyContent="space-between" mt={2}>
-            <Button variant="outlined" color="secondary" onClick={() => navigate("/TaskManage")}>Cancel</Button>
-            <Button type="submit" variant="contained" color="primary">
-              {taskToEdit ? "Save Changes" : "Add Task"}
+          <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+            <Button variant="outlined" onClick={handleCancelClick} color="secondary">
+              Cancel
             </Button>
-          </Stack>
-        </form>
+            <Button type="submit" variant="contained" color="primary">
+              Save
+            </Button>
+          </Box>
+        </Box>
       </Paper>
+
       <Snackbar open={openSnackbar} autoHideDuration={3000} onClose={handleCloseSnackbar}>
         <Alert severity="success" sx={{ width: '100%' }} onClose={handleCloseSnackbar}>
           Task successfully saved!
         </Alert>
       </Snackbar>
+
+      <Dialog
+        open={openCancelDialog}
+        onClose={handleCloseCancelDialog}
+        aria-labelledby="cancel-dialog-title"
+        aria-describedby="cancel-dialog-description"
+      >
+        <DialogTitle id="cancel-dialog-title">Confirm Cancellation</DialogTitle>
+        <DialogContent>
+          <DialogContentText id="cancel-dialog-description">
+            Are you sure you want to cancel? Unsaved changes will be lost.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseCancelDialog} color="primary">
+            No
+          </Button>
+          <Button onClick={handleConfirmCancel} color="secondary" autoFocus>
+            Yes, Cancel
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
-}
+} 
