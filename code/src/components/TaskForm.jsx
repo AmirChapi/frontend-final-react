@@ -90,10 +90,11 @@ export default function TaskForm() {
       hasError = true;
     }
 
-    if (!(formData.taskCode.length === 3 && /^[0-9]+$/.test(formData.taskCode))) {
+    if (!taskToEdit && !(formData.taskCode.length === 3 && /^[0-9]+$/.test(formData.taskCode))) {
       newErrors.taskCode = true;
       hasError = true;
     }
+    
 
     if (!formData.courseCode) {
       newErrors.courseCode = true;
@@ -162,6 +163,7 @@ export default function TaskForm() {
             name="taskCode"
             value={formData.taskCode}
             onChange={handleChange}
+            disabled={!!taskToEdit}
             error={errors.taskCode || errors.taskCodeDuplicate}
             helperText={errors.taskCodeDuplicate ? "Task code already exists" : errors.taskCode ? "Task code must be 3 digits" : ""}
           />

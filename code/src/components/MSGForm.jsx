@@ -1,3 +1,4 @@
+// ✅ MSGForms.jsx - טופס הוספה / עריכה להודעות (לפי קורסים, ללא ID)
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
@@ -28,6 +29,7 @@ export default function MSGForms() {
     messageCode: '',
     courseCode: '',
     courseName: '',
+    assignmentName: '',
     messageContent: '',
   };
 
@@ -48,23 +50,23 @@ export default function MSGForms() {
 
   const handleChange = (event) => {
     const { name, value } = event.target;
-    setFormValues(prev => ({ ...prev, [name]: value }));
+    setFormValues((prev) => ({ ...prev, [name]: value }));
 
     let errorField = false;
 
     if (name === 'messageCode') {
       const messages = JSON.parse(localStorage.getItem('messages')) || [];
       const exists = messages.some(
-        (msg) => msg.messageCode === value && (messageToEdit ? msg.id !== messageToEdit.id : true)
+        (msg) => msg.messageCode === value && (messageToEdit ? msg.messageCode !== messageToEdit.messageCode : true)
       );
-      errorField = exists;
+      errorField = exists || !/^[a-zA-Z0-9]+$/.test(value);
     }
 
     if (name === 'messageContent') {
       errorField = !value.trim();
     }
 
-    setErrors(prev => ({ ...prev, [name]: errorField }));
+    setErrors((prev) => ({ ...prev, [name]: errorField }));
   };
 
   const handleSubmit = (e) => {
@@ -74,9 +76,8 @@ export default function MSGForms() {
     const newErrors = {};
     const messages = JSON.parse(localStorage.getItem('messages')) || [];
 
-    // בדיקת ייחודיות
     const exists = messages.some(
-      (msg) => msg.messageCode === formValues.messageCode && (messageToEdit ? msg.id !== messageToEdit.id : true)
+      (msg) => msg.messageCode === formValues.messageCode && (messageToEdit ? msg.messageCode !== messageToEdit.messageCode : true)
     );
 
     if (!formValues.messageCode || exists || !/^[a-zA-Z0-9]+$/.test(formValues.messageCode)) {
@@ -100,8 +101,10 @@ export default function MSGForms() {
     }
 
     const updatedMessages = messageToEdit
-      ? messages.map((msg) => msg.id === messageToEdit.id ? { ...formValues, id: messageToEdit.id } : msg)
-      : [...messages, { ...formValues, id: `msg${Date.now()}` }];
+      ? messages.map((msg) =>
+          msg.messageCode === messageToEdit.messageCode ? formValues : msg
+        )
+      : [...messages, formValues];
 
     localStorage.setItem('messages', JSON.stringify(updatedMessages));
     setOpenSnackbar(true);
@@ -126,7 +129,7 @@ export default function MSGForms() {
   };
 
   return (
-    <Box sx={{ minHeight: "70vh", display: "flex", justifyContent: "center", alignItems: "center" }}>
+    <Box sx={{ minHeight: '70vh', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
       <Paper elevation={3} sx={{ padding: 4, width: 400, borderRadius: 2 }}>
         <Typography variant="h5" align="center" gutterBottom>
           {messageToEdit ? 'Edit Message' : 'Add New Message'}
@@ -142,7 +145,7 @@ export default function MSGForms() {
             fullWidth
             disabled={!!messageToEdit}
             error={errors.messageCode}
-            helperText={errors.messageCode ? "Message code must be unique " : ""}
+            helperText={errors.messageCode ? 'Message code must be unique and alphanumeric' : ''}
           />
 
           <FormControl fullWidth error={errors.courseCode}>
@@ -153,13 +156,13 @@ export default function MSGForms() {
               value={formValues.courseCode}
               label="Course Code"
               onChange={(e) => {
-                const selected = courseOptions.find(c => c.courseCode === e.target.value);
+                const selected = courseOptions.find((c) => c.courseCode === e.target.value);
                 setFormValues({
                   ...formValues,
                   courseCode: selected?.courseCode || '',
-                  courseName: selected?.courseName || ''
+                  courseName: selected?.courseName || '',
                 });
-                setErrors(prev => ({ ...prev, courseCode: false }));
+                setErrors((prev) => ({ ...prev, courseCode: false }));
               }}
               disabled={!!messageToEdit}
             >
@@ -186,6 +189,15 @@ export default function MSGForms() {
           />
 
           <TextField
+            id="assignmentName"
+            name="assignmentName"
+            label="Assignment Name"
+            value={formValues.assignmentName}
+            onChange={handleChange}
+            fullWidth
+          />
+
+          <TextField
             id="messageContent"
             name="messageContent"
             label="Message Content"
@@ -195,10 +207,10 @@ export default function MSGForms() {
             multiline
             rows={4}
             error={errors.messageContent}
-            helperText={errors.messageContent ? "Message content is required" : ""}
+            helperText={errors.messageContent ? 'Message content is required' : ''}
           />
 
-          <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
             <Button variant="outlined" onClick={handleCancelClick} color="secondary">
               Cancel
             </Button>
@@ -210,7 +222,7 @@ export default function MSGForms() {
       </Paper>
 
       <Snackbar open={openSnackbar} autoHideDuration={3000} onClose={handleCloseSnackbar}>
-        <Alert severity="success" sx={{ width: "100%" }} onClose={handleCloseSnackbar}>
+        <Alert severity="success" sx={{ width: '100%' }} onClose={handleCloseSnackbar}>
           Message successfully saved!
         </Alert>
       </Snackbar>

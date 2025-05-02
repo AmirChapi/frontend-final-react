@@ -103,7 +103,7 @@ export default function StudentsForm() {
     }
 
     const age = Number(formData.age);
-    if (!(formData.age && Number.isInteger(age) && age > 18)) {
+    if (!(formData.age && Number.isInteger(age) && age >= 18 && age <= 80)) {
       newErrors.age = true;
       hasError = true;
     }
@@ -114,7 +114,7 @@ export default function StudentsForm() {
     }
 
     const year = Number(formData.year);
-    if (!(formData.year.length === 4 && Number.isInteger(year) && year > 2020 && year <= currentYear)) {
+    if (!(formData.year.length === 4 && Number.isInteger(year) && year >= 2020 && year <= currentYear)) {
       newErrors.year = true;
       hasError = true;
     }
@@ -178,7 +178,7 @@ export default function StudentsForm() {
                   : 'ID must be exactly 9 digits'
                 : ''
             }
-            inputProps={{ maxLength: 9 }}
+            slotProps={{input: {maxLength: 9,},}}
           />
 
           <TextField
@@ -231,7 +231,7 @@ export default function StudentsForm() {
             onChange={handleChange}
             fullWidth
             error={errors.year}
-            helperText={errors.year ? 'Year must be after 2020 and not in the future' : ''}
+            helperText={errors.year ? 'Year must be after 2019 and not in the future' : ''}
           />
 
           <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 2 }}>

@@ -20,9 +20,9 @@ export default function HomePage() {
     if (!students) {
       students = Array.from({ length: 10 }, (_, i) => ({
         studentId: `12345678${i}`,
-        fullName: `Student ${i + 1}`,
+        fullName: `Student`,
         age: `${18 + i}`,
-        gender: ["Female", "Male", "Other"][i % 3],
+        gender: ["Female", "Male"][i % 2],
         year: `20${20 + (i % 5)}`,
       }));
       localStorage.setItem("students", JSON.stringify(students));

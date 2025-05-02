@@ -1,3 +1,4 @@
+// ✅ MSGManage.jsx - דף הצגת ההודעות (ללא שימוש ב-id)
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -34,24 +35,26 @@ export default function MSGManage() {
     setMessages(storedMessages);
   }, []);
 
-  const handleEdit = (msg) => {
-    navigate('/MSGForm', { state: { messageToEdit: msg } });
+  const handleAddNewMessage = () => {
+    navigate('/MSGForm');
   };
 
-  const handleDeleteClick = (id) => {
-    setMessageToDelete(id);
+  const handleEdit = (message) => {
+    navigate('/MSGForm', { state: { messageToEdit: message } });
+  };
+
+  const handleDeleteClick = (message) => {
+    setMessageToDelete(message);
     setOpenDeleteDialog(true);
   };
 
   const handleConfirmDelete = () => {
-    const updated = messages.filter((msg) => msg.id !== messageToDelete);
+    if (!messageToDelete) return;
+    const updated = messages.filter((msg) => msg.messageCode !== messageToDelete.messageCode);
     setMessages(updated);
     localStorage.setItem('messages', JSON.stringify(updated));
     setOpenDeleteDialog(false);
-  };
-
-  const handleAddNewMessage = () => {
-    navigate('/MSGForm');
+    setMessageToDelete(null);
   };
 
   return (
@@ -71,7 +74,10 @@ export default function MSGManage() {
           <TableHead sx={{ backgroundColor: 'primary.main' }}>
             <TableRow>
               {['Message Code', 'Course Code', 'Course Name', 'Assignment Name', 'Message Content', 'Actions'].map((header) => (
-                <TableCell key={header} sx={{ color: 'white', fontWeight: 'bold', textAlign: header === 'Actions' ? 'center' : 'left' }}>
+                <TableCell
+                  key={header}
+                  sx={{ color: 'white', fontWeight: 'bold', textAlign: header === 'Actions' ? 'center' : 'left' }}
+                >
                   {header}
                 </TableCell>
               ))}
@@ -81,7 +87,7 @@ export default function MSGManage() {
           <TableBody>
             {messages.length ? (
               messages.map((msg) => (
-                <TableRow key={msg.id}>
+                <TableRow key={msg.messageCode}>
                   <TableCell>{msg.messageCode}</TableCell>
                   <TableCell>{msg.courseCode}</TableCell>
                   <TableCell>{msg.courseName}</TableCell>
@@ -92,13 +98,10 @@ export default function MSGManage() {
                       <IconButton color="info" onClick={() => handleEdit(msg)}>
                         <EditIcon fontSize="small" />
                       </IconButton>
-                      <IconButton color="error" onClick={() => handleDeleteClick(msg.id)}>
+                      <IconButton color="error" onClick={() => handleDeleteClick(msg)}>
                         <DeleteIcon fontSize="small" />
                       </IconButton>
-                      <IconButton
-                        color="secondary"
-                        onClick={() => navigate('/TaskManage')}
-                      >
+                      <IconButton color="secondary" onClick={() => navigate('/TaskManage')}>
                         <AssignmentIcon fontSize="small" />
                       </IconButton>
                     </Stack>
@@ -119,7 +122,9 @@ export default function MSGManage() {
       <Dialog open={openDeleteDialog} onClose={() => setOpenDeleteDialog(false)}>
         <DialogTitle>Confirm Deletion</DialogTitle>
         <DialogContent>
-          <DialogContentText>Are you sure you want to delete this message?</DialogContentText>
+          <DialogContentText>
+            Are you sure you want to delete this message?
+          </DialogContentText>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setOpenDeleteDialog(false)}>Cancel</Button>
