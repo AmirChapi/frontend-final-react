@@ -126,13 +126,8 @@ export default function StudentsForm() {
       return;
     }
 
-    //זה מה ששינתי
-
-    // addStudent(student).then(() => {
-    //   navigate("/StudentsManage");
-    // });
-
-    addStudent(formData).then(() => {
+  
+  addStudent(formData).then(() => {
       navigate("/StudentsManage");
     });
 
