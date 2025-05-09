@@ -19,6 +19,8 @@ import {
   DialogTitle
 } from '@mui/material';
 import { useLocation, useNavigate } from 'react-router-dom';
+  
+
 
 export default function StudentsForm() {
   const location = useLocation();
@@ -123,17 +125,16 @@ export default function StudentsForm() {
       setErrors(newErrors);
       return;
     }
-
+    
      //זה מה ששינתי
-    const handleSubmit = (event) => {
-      event.preventDefault();
-      addStudent(values).then(() => {
-      navigate("/students");
+   
+      addStudent(student).then(() => {
+      navigate("/StudentsManage");
       });
-      };
+      
     setOpenSnackbar(true);
     setTimeout(() => navigate('/StudentsManage'), 1000);
-  };  
+  };
 
   const handleCancelClick = () => {
     setOpenCancelDialog(true);
