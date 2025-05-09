@@ -19,7 +19,8 @@ import {
   DialogTitle
 } from '@mui/material';
 import { useLocation, useNavigate } from 'react-router-dom';
-  
+import { addStudent } from '../firebase/student';
+
 
 
 export default function StudentsForm() {
@@ -94,7 +95,7 @@ export default function StudentsForm() {
     const currentYear = new Date().getFullYear();
 
     if (!(formData.studentId.length === 9 && /^[0-9]+$/.test(formData.studentId)) ||
-        (!studentToEdit && existingIDs.includes(formData.studentId))) {
+      (!studentToEdit && existingIDs.includes(formData.studentId))) {
       newErrors.studentId = true;
       hasError = true;
     }
@@ -125,13 +126,13 @@ export default function StudentsForm() {
       setErrors(newErrors);
       return;
     }
-    
-     //זה מה ששינתי
-   
-      addStudent(student).then(() => {
+
+    //זה מה ששינתי
+
+    addStudent(student).then(() => {
       navigate("/StudentsManage");
-      });
-      
+    });
+
     setOpenSnackbar(true);
     setTimeout(() => navigate('/StudentsManage'), 1000);
   };
@@ -177,7 +178,7 @@ export default function StudentsForm() {
                   : 'ID must be exactly 9 digits'
                 : ''
             }
-            slotProps={{input: {maxLength: 9,},}}
+            slotProps={{ input: { maxLength: 9, }, }}
           />
 
           <TextField
