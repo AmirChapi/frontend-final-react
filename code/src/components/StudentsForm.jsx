@@ -124,18 +124,16 @@ export default function StudentsForm() {
       return;
     }
 
-    const storedStudents = JSON.parse(localStorage.getItem('students')) || [];
-
-    const updatedStudents = studentToEdit
-      ? storedStudents.map((s) =>
-          s.studentId === formData.studentId ? { ...formData } : s
-        )
-      : [...storedStudents, { ...formData }];
-
-    localStorage.setItem('students', JSON.stringify(updatedStudents));
+     //זה מה ששינתי
+    const handleSubmit = (event) => {
+      event.preventDefault();
+      addStudent(values).then(() => {
+      navigate("/students");
+      });
+      };
     setOpenSnackbar(true);
     setTimeout(() => navigate('/StudentsManage'), 1000);
-  };
+  };  
 
   const handleCancelClick = () => {
     setOpenCancelDialog(true);
