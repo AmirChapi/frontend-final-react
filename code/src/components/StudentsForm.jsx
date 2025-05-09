@@ -22,7 +22,6 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { addStudent } from '../firebase/student';
 
 
-
 export default function StudentsForm() {
   const location = useLocation();
   const navigate = useNavigate();
@@ -129,9 +128,15 @@ export default function StudentsForm() {
 
     //זה מה ששינתי
 
-    addStudent(student).then(() => {
+    // addStudent(student).then(() => {
+    //   navigate("/StudentsManage");
+    // });
+
+    addStudent(formData).then(() => {
       navigate("/StudentsManage");
     });
+
+
 
     setOpenSnackbar(true);
     setTimeout(() => navigate('/StudentsManage'), 1000);
