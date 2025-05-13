@@ -129,12 +129,8 @@ export default function StudentsForm() {
   
   addStudent(formData).then(() => {
       navigate("/StudentsManage");
+      setOpenSnackbar(true);
     });
-
-
-
-    setOpenSnackbar(true);
-    setTimeout(() => navigate('/StudentsManage'), 1000);
   };
 
   const handleCancelClick = () => {
