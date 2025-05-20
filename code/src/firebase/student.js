@@ -10,3 +10,9 @@ export async function listStudent() {
 }
 
 
+export async function getStudent(id) {
+    const studentDocRef = doc(firestore, "students", id);
+  const studentDocSnap = await getDoc(studentDocRef);
+  return { ...studentDocSnap.data(), id: studentDocSnap.id };
+
+}
