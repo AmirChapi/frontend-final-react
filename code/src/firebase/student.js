@@ -16,3 +16,9 @@ export async function getStudent(id) {
   return { ...studentDocSnap.data(), id: studentDocSnap.id };
 
 }
+
+export async function updateStudent(student) {
+  const { studentId, ...studentData } = student;
+  const studentRef = doc(firestore, "students", studentId);
+  return updateDoc(studentRef, studentData);
+}
