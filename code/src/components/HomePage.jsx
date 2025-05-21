@@ -77,7 +77,7 @@
 //     </div>
 //   );
 // }
-
+// HomePage.jsx - כולל הצגת מטלות לפי קורסים
 import React, { useEffect, useState } from "react";
 import {
   Box,
@@ -140,8 +140,8 @@ export default function HomePage() {
     const courseCodes = localStudent?.courses || [];
 
     const studentCourses = courses.filter(c => courseCodes.includes(c.courseCode));
+    const studentTasks = tasks.filter(t => courseCodes.includes(t.courseCode));
     const studentGrades = grades.filter(g => g.idNumber === selectedStudentId);
-    const studentTasks = tasks.filter(t => studentGrades.some(g => g.taskCode === t.taskCode));
     const studentMessages = messages.filter(m => studentTasks.some(t => t.taskCode === m.assignmentCode));
 
     setStudentInfo({
@@ -191,6 +191,16 @@ export default function HomePage() {
             ))
           ) : (
             <p>No courses assigned.</p>
+          )}
+
+          <Divider sx={{ my: 2 }} />
+          <Typography variant="h6">Tasks:</Typography>
+          {studentInfo.tasks.length > 0 ? (
+            studentInfo.tasks.map((t, i) => (
+              <p key={i}>📝 {t.taskName} ({t.courseCode}) - Due: {t.submissionDate}</p>
+            ))
+          ) : (
+            <p>No tasks available.</p>
           )}
 
           <Divider sx={{ my: 2 }} />
