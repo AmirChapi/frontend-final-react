@@ -79,6 +79,7 @@
 // }
 // HomePage.jsx - כולל הצגת מטלות לפי קורסים
 
+// HomePage.jsx - מציג מידע מלא כולל הודעות לפי קורס ומטלה
 import React, { useEffect, useState } from "react";
 import {
   Box,
@@ -104,7 +105,7 @@ export default function HomePage() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    let coursesList = JSON.parse(localStorage.getItem("coursesList"));
+    const coursesList = JSON.parse(localStorage.getItem("coursesList"));
     setCourses(coursesList || []);
   }, []);
 
@@ -143,7 +144,17 @@ export default function HomePage() {
     const studentCourses = courses.filter(c => courseCodes.includes(c.courseCode));
     const studentTasks = tasks.filter(t => courseCodes.includes(t.courseCode));
     const studentGrades = grades.filter(g => g.idNumber === selectedStudentId);
-    const studentMessages = messages.filter(m => studentTasks.some(t => t.taskCode === m.assignmentCode));
+
+    const studentMessages = messages.filter(m => {
+      const taskMatch = m.assignmentCode
+        ? studentTasks.some(t => t.taskCode === m.assignmentCode)
+        : true;
+      const courseMatch = m.courseCode
+        ? courseCodes.includes(m.courseCode)
+        : true;
+      const studentMatch = !m.studentId || m.studentId === selectedStudentId;
+      return taskMatch && courseMatch && studentMatch;
+    });
 
     setStudentInfo({
       ...firestoreStudent,
@@ -217,9 +228,19 @@ export default function HomePage() {
           <Divider sx={{ my: 2 }} />
           <Typography variant="h6">Messages:</Typography>
           {studentInfo.messages.length > 0 ? (
-            studentInfo.messages.map((m, i) => (
-              <p key={i}>✉️ {m.messageContent}</p>
-            ))
+            studentInfo.messages.map((m, i) => {
+              const course = courses.find(c => c.courseCode === m.courseCode);
+              const task = tasks.find(t => t.taskCode === m.assignmentCode);
+              return (
+                <Box key={i} sx={{ mb: 1, p: 1, border: '1px solid #ccc', borderRadius: 1 }}>
+                  <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
+                    📩message in the course of {course ? course.courseName : m.courseCode}
+                    {task ? ` |assignment ${task.taskName}` : ""}
+                  </Typography>
+                  <Typography>{m.messageContent}</Typography>
+                </Box>
+              );
+            })
           ) : (
             <p>No messages.</p>
           )}

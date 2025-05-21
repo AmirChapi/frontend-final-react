@@ -267,6 +267,7 @@
 // }
 
 // GradeForm.jsx - הוספת/עריכת ציון לפי סטודנט ומטלה
+// GradeForm.jsx - טופס ציון עם בדיקה של שיוך לקורס
 import React, { useState, useEffect } from "react";
 import {
   Box,
@@ -336,6 +337,9 @@ export default function GradeForm() {
     const newErrors = {};
     let hasError = false;
 
+    const student = students.find(s => s.studentId === formData.idNumber);
+    const task = tasks.find(t => t.taskCode === formData.taskCode);
+
     if (!formData.idNumber) {
       newErrors.idNumber = true;
       hasError = true;
@@ -350,6 +354,12 @@ export default function GradeForm() {
     if (formData.taskGrade === "" || isNaN(grade) || grade < 0 || grade > 100) {
       newErrors.taskGrade = true;
       hasError = true;
+    }
+
+    // ✅ בדיקה האם הסטודנט משוייך לקורס של המטלה
+    if (student && task && !(student.courses || []).includes(task.courseCode)) {
+      setError("This student is not assigned to the course of this task.");
+      return;
     }
 
     if (hasError) {
