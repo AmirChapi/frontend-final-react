@@ -8,6 +8,7 @@ import {
   Paper,
   Snackbar,
   Alert,
+  Stack,
 } from "@mui/material";
 import { useNavigate, useLocation } from "react-router-dom";
 import { addCourse, updateCourse } from "../firebase/course";
@@ -61,11 +62,15 @@ export default function CourseForm() {
         await addCourse(formData);
         setSnackbar({ open: true, message: "Course added successfully", severity: "success" });
       }
-      setTimeout(() => navigate("/courses"), 1000);
+      setTimeout(() => navigate("/coursesManage"), 1000);
     } catch (err) {
       console.error("Error saving course:", err);
       setSnackbar({ open: true, message: "Error saving course", severity: "error" });
     }
+  };
+
+  const handleCancel = () => {
+    navigate("/coursesManage");
   };
 
   return (
@@ -83,7 +88,7 @@ export default function CourseForm() {
           helperText={errors.courseCode}
           fullWidth
           margin="normal"
-          disabled={!!formData.id} // מניעת שינוי קוד בקורס קיים
+          disabled={!!formData.id}
         />
         <TextField
           name="courseName"
@@ -126,9 +131,16 @@ export default function CourseForm() {
           fullWidth
           margin="normal"
         />
-        <Button type="submit" variant="contained" color="primary" fullWidth>
-          {courseToEdit ? "Update Course" : "Add Course"}
-        </Button>
+
+        {/* כפתורים: שליחה וביטול */}
+        <Stack direction="row" spacing={2} mt={2}>
+          <Button type="submit" variant="contained" color="primary" fullWidth>
+            {courseToEdit ? "Update Course" : "Add Course"}
+          </Button>
+          <Button onClick={handleCancel} variant="outlined" color="secondary" fullWidth>
+            Cancel
+          </Button>
+        </Stack>
       </form>
 
       <Snackbar
