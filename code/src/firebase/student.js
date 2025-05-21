@@ -1,5 +1,6 @@
 import { addDoc, collection, getDocs,updateDoc, doc, getDoc, deleteDoc} from "firebase/firestore";
 import {firestore} from "./config";
+
 export async function addStudent(student) {
     return addDoc(collection(firestore, "students") , student);
 }
