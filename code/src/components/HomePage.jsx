@@ -77,6 +77,7 @@
 //     </div>
 //   );
 // }
+
 import React, { useEffect, useState } from "react";
 import {
   Box,
@@ -101,30 +102,15 @@ export default function HomePage() {
   const [messages, setMessages] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // יצירת קורסים אקראיים אם אין ב-localStorage
   useEffect(() => {
     let coursesList = JSON.parse(localStorage.getItem("coursesList"));
-    if (!coursesList) {
-      coursesList = Array.from({ length: 3 }, (_, i) => ({
-        courseId: `course-${i + 1}`,
-        courseCode: `${100 + i}`,
-        courseName: ['React', 'Angular', 'Vue'][i % 3],
-        lecturer: `Dr. Lecturer ${i + 1}`,
-        year: `20${22 + (i % 3)}`,
-        semester: ['A', 'B', 'C'][i % 3],
-      }));
-      localStorage.setItem("coursesList", JSON.stringify(coursesList));
-    }
-    setCourses(coursesList);
+    setCourses(coursesList || []);
   }, []);
 
-  console.log(courses);
-  
   useEffect(() => {
     const fetchAllData = async () => {
       try {
         const firestoreStudents = await listStudent();
-
         const gradesData = JSON.parse(localStorage.getItem("grades")) || [];
         const tasksData = JSON.parse(localStorage.getItem("tasks")) || [];
         const messagesData = JSON.parse(localStorage.getItem("messages")) || [];
@@ -146,21 +132,17 @@ export default function HomePage() {
   useEffect(() => {
     if (!selectedStudentId) return;
 
-    const firestoreStudent = students.find((s) => s.studentId === selectedStudentId);
+    const firestoreStudent = students.find(s => s.studentId === selectedStudentId);
     if (!firestoreStudent) return;
 
     const storedStudents = JSON.parse(localStorage.getItem("students")) || [];
-    const localStudent = storedStudents.find((s) => s.studentId === selectedStudentId);
-    const courseIds = localStudent?.courses || [];
+    const localStudent = storedStudents.find(s => s.studentId === selectedStudentId);
+    const courseCodes = localStudent?.courses || [];
 
-    const studentCourses = courses.filter((c) => courseIds.includes(c.courseId));
-    const studentGrades = grades.filter((g) => g.idNumber === selectedStudentId);
-    const studentTasks = tasks.filter((t) =>
-      studentGrades.some((g) => g.taskCode === t.taskCode)
-    );
-    const studentMessages = messages.filter((m) =>
-      studentTasks.some((t) => t.taskCode === m.assignmentCode)
-    );
+    const studentCourses = courses.filter(c => courseCodes.includes(c.courseCode));
+    const studentGrades = grades.filter(g => g.idNumber === selectedStudentId);
+    const studentTasks = tasks.filter(t => studentGrades.some(g => g.taskCode === t.taskCode));
+    const studentMessages = messages.filter(m => studentTasks.some(t => t.taskCode === m.assignmentCode));
 
     setStudentInfo({
       ...firestoreStudent,
@@ -171,15 +153,11 @@ export default function HomePage() {
     });
   }, [selectedStudentId, students, courses, grades, tasks, messages]);
 
-  if (isLoading) {
-    return <LinearProgress />;
-  }
+  if (isLoading) return <LinearProgress />;
 
   return (
     <Box sx={{ p: 4 }}>
-      <Typography variant="h4" gutterBottom>
-        Welcome to the System
-      </Typography>
+      <Typography variant="h4" gutterBottom>Welcome to the System</Typography>
 
       <FormControl fullWidth sx={{ mb: 3 }}>
         <InputLabel>Select Student</InputLabel>
@@ -188,7 +166,7 @@ export default function HomePage() {
           onChange={(e) => setSelectedStudentId(e.target.value)}
           label="Select Student"
         >
-          {students.map((s) => (
+          {students.map(s => (
             <MenuItem key={s.studentId} value={s.studentId}>
               {s.fullName} ({s.studentId})
             </MenuItem>
