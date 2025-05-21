@@ -78,6 +78,7 @@
 //   );
 // }
 // HomePage.jsx - כולל הצגת מטלות לפי קורסים
+
 import React, { useEffect, useState } from "react";
 import {
   Box,
@@ -205,13 +206,13 @@ export default function HomePage() {
 
           <Divider sx={{ my: 2 }} />
           <Typography variant="h6">Grades:</Typography>
-          {studentInfo.grades.length > 0 ? (
-            studentInfo.grades.map((g, i) => (
-              <p key={i}>📘 {g.taskName}: {g.taskGrade}</p>
-            ))
-          ) : (
-            <p>No grades available.</p>
-          )}
+          {studentInfo.grades.map((g, i) => {
+            const task = studentInfo.tasks.find(t => t.taskCode === g.taskCode);
+            const taskName = task ? task.taskName : "Unknown Task";
+            return (
+              <p key={i}>📘 {taskName} ({g.taskCode}): {g.taskGrade}</p>
+            );
+          })}
 
           <Divider sx={{ my: 2 }} />
           <Typography variant="h6">Messages:</Typography>
