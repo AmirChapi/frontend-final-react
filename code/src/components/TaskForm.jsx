@@ -16,85 +16,67 @@ import {
 } from "@mui/material";
 import { useNavigate, useLocation } from "react-router-dom";
 import dayjs from "dayjs";
+import { addTask, updateTask, isTaskCodeExists } from "../firebase/task";
+import { listCourses } from "../firebase/course";
 
 export default function TaskForm() {
   const navigate = useNavigate();
   const location = useLocation();
   const taskToEdit = location.state?.taskToEdit || null;
 
-  const initialValues = {
+  const [formData, setFormData] = useState({
     taskCode: "",
     courseCode: "",
     taskName: "",
     submissionDate: "",
     taskDescription: "",
-  };
+  });
 
-  const [formData, setFormData] = useState(initialValues);
   const [errors, setErrors] = useState({});
   const [courses, setCourses] = useState([]);
   const [openSnackbar, setOpenSnackbar] = useState(false);
   const [openCancelDialog, setOpenCancelDialog] = useState(false);
 
   useEffect(() => {
-    const storedCourses = JSON.parse(localStorage.getItem("coursesList")) || [];
-    setCourses(storedCourses);
+    async function fetchCourses() {
+      const fetchedCourses = await listCourses();
+      setCourses(fetchedCourses);
+    }
+
+    fetchCourses();
+
     if (taskToEdit) {
-      setFormData({ ...taskToEdit });
+      setFormData(taskToEdit);
     }
   }, [taskToEdit]);
 
   const handleChange = (event) => {
-    const { name, value} = event.target;
-    setFormData({ ...formData, [name]: value });
+    const { name, value } = event.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
 
     let errorField = false;
 
     if (name === "taskCode") {
       errorField = !(value.length === 3 && /^[0-9]+$/.test(value));
     }
-
-    if (name === "courseCode") {
-      errorField = !value;
-    }
-
-    if (name === "taskName") {
-      errorField = !value.trim();
-    }
-
-    if (name === "submissionDate") {
-      errorField = !value || dayjs(value).isBefore(dayjs(), "day");
-    }
-
-    if (name === "taskDescription") {
-      errorField = !value.trim();
-    }
+    if (name === "courseCode") errorField = !value;
+    if (name === "taskName") errorField = !value.trim();
+    if (name === "submissionDate") errorField = !value || dayjs(value).isBefore(dayjs(), "day");
+    if (name === "taskDescription") errorField = !value.trim();
 
     setErrors((prev) => ({ ...prev, [name]: errorField }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
-    let hasError = false;
     const newErrors = {};
+    let hasError = false;
 
-    const storedTasks = JSON.parse(localStorage.getItem("tasks") || "[]");
-    const isDuplicate = storedTasks.some(
-      (task) => task.taskCode === formData.taskCode && taskToEdit?.taskCode !== formData.taskCode
-    );
-    
-    if (isDuplicate) {
-      newErrors.taskCode = true;
-      newErrors.taskCodeDuplicate = true;
-      hasError = true;
-    }
-
-    if (!taskToEdit && !(formData.taskCode.length === 3 && /^[0-9]+$/.test(formData.taskCode))) {
+    if (!formData.taskCode || !(formData.taskCode.length === 3 && /^[0-9]+$/.test(formData.taskCode))) {
       newErrors.taskCode = true;
       hasError = true;
     }
-    
 
     if (!formData.courseCode) {
       newErrors.courseCode = true;
@@ -116,38 +98,41 @@ export default function TaskForm() {
       hasError = true;
     }
 
+    // בדיקת קוד מטלה קיים (רק במצב הוספה)
+    if (!taskToEdit && !hasError) {
+      const exists = await isTaskCodeExists(formData.taskCode);
+      if (exists) {
+        newErrors.taskCode = true;
+        newErrors.taskCodeDuplicate = true;
+        hasError = true;
+      }
+    }
+
     if (hasError) {
       setErrors(newErrors);
       return;
     }
 
-    const updatedTasks = taskToEdit
-      ? storedTasks.map((t) =>
-          t.taskCode === taskToEdit.taskCode ? formData : t
-        )
-      : [...storedTasks, formData];
+    try {
+      if (taskToEdit?.id) {
+        await updateTask(formData);
+      } else {
+        await addTask(formData);
+      }
 
-    localStorage.setItem("tasks", JSON.stringify(updatedTasks));
-
-    setOpenSnackbar(true);
-    setTimeout(() => navigate("/TaskManage"), 1000);
+      setOpenSnackbar(true);
+      setTimeout(() => navigate("/TaskManage"), 1000);
+    } catch (error) {
+      console.error("Error saving task:", error);
+    }
   };
 
-  const handleCloseSnackbar = () => {
-    setOpenSnackbar(false);
-  };
-
-  const handleCancelClick = () => {
-    setOpenCancelDialog(true);
-  };
-
+  const handleCloseSnackbar = () => setOpenSnackbar(false);
+  const handleCancelClick = () => setOpenCancelDialog(true);
+  const handleCloseCancelDialog = () => setOpenCancelDialog(false);
   const handleConfirmCancel = () => {
     setOpenCancelDialog(false);
     navigate("/TaskManage");
-  };
-
-  const handleCloseCancelDialog = () => {
-    setOpenCancelDialog(false);
   };
 
   return (
@@ -165,7 +150,13 @@ export default function TaskForm() {
             onChange={handleChange}
             disabled={!!taskToEdit}
             error={errors.taskCode || errors.taskCodeDuplicate}
-            helperText={errors.taskCodeDuplicate ? "Task code already exists" : errors.taskCode ? "Task code must be 3 digits" : ""}
+            helperText={
+              errors.taskCodeDuplicate
+                ? "Task code already exists"
+                : errors.taskCode
+                ? "Task code must be 3 digits"
+                : ""
+            }
           />
           <TextField
             select
@@ -174,14 +165,14 @@ export default function TaskForm() {
             name="courseCode"
             value={formData.courseCode}
             onChange={handleChange}
-            error={errors.courseCode}
+            error={!!errors.courseCode}
             helperText={errors.courseCode ? "Please select a course" : ""}
           >
             <MenuItem value="">
               <em>Select a course</em>
             </MenuItem>
             {courses.map((course) => (
-              <MenuItem key={course.courseCode} value={course.courseCode}>
+              <MenuItem key={course.id} value={course.courseCode}>
                 {course.courseCode} - {course.courseName}
               </MenuItem>
             ))}
@@ -192,7 +183,7 @@ export default function TaskForm() {
             name="taskName"
             value={formData.taskName}
             onChange={handleChange}
-            error={errors.taskName}
+            error={!!errors.taskName}
             helperText={errors.taskName ? "Task name is required" : ""}
           />
           <TextField
@@ -203,7 +194,7 @@ export default function TaskForm() {
             InputLabelProps={{ shrink: true }}
             value={formData.submissionDate}
             onChange={handleChange}
-            error={errors.submissionDate}
+            error={!!errors.submissionDate}
             helperText={errors.submissionDate ? "Date must be today or later" : ""}
           />
           <TextField
@@ -214,7 +205,7 @@ export default function TaskForm() {
             rows={4}
             value={formData.taskDescription}
             onChange={handleChange}
-            error={errors.taskDescription}
+            error={!!errors.taskDescription}
             helperText={errors.taskDescription ? "Task description is required" : ""}
           />
           <Box sx={{ display: "flex", justifyContent: "space-between" }}>
@@ -234,10 +225,10 @@ export default function TaskForm() {
         </Alert>
       </Snackbar>
 
-      <Dialog open={openCancelDialog} onClose={handleCloseCancelDialog} aria-labelledby="cancel-dialog-title" aria-describedby="cancel-dialog-description">
-        <DialogTitle id="cancel-dialog-title">Confirm Cancellation</DialogTitle>
+      <Dialog open={openCancelDialog} onClose={handleCloseCancelDialog}>
+        <DialogTitle>Confirm Cancellation</DialogTitle>
         <DialogContent>
-          <DialogContentText id="cancel-dialog-description">
+          <DialogContentText>
             Are you sure you want to cancel? Unsaved changes will be lost.
           </DialogContentText>
         </DialogContent>

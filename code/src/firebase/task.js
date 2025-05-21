@@ -1,42 +1,39 @@
 import {
   collection,
   getDocs,
+  addDoc,
   updateDoc,
-  doc,
-  getDoc,
   deleteDoc,
-  setDoc
+  doc,
 } from "firebase/firestore";
 import { firestore } from "./config";
 
+// 📥 הוספת מטלה חדשה עם מזהה אוטומטי
 export async function addTask(task) {
-  const taskRef = doc(firestore, "tasks", task.taskCode); // set with taskCode as ID
-  return setDoc(taskRef, task);
+  return addDoc(collection(firestore, "tasks"), task);
 }
 
+// 📄 קבלת כל המטלות
 export async function listTasks() {
   const snapshot = await getDocs(collection(firestore, "tasks"));
-  return snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
+  return snapshot.docs.map((doc) => ({ ...doc.data(), id: doc.id }));
 }
 
-export async function getTask(taskCode) {
-  const taskDocRef = doc(firestore, "tasks", taskCode);
-  const taskDocSnap = await getDoc(taskDocRef);
-
-  if (taskDocSnap.exists()) {
-    return { ...taskDocSnap.data(), id: taskDocSnap.id };
-  } else {
-    return null;
-  }
-}
-
+// ✏️ עדכון מטלה לפי מזהה (id)
 export async function updateTask(task) {
-  const { taskCode, ...taskData } = task;
-  const taskRef = doc(firestore, "tasks", taskCode);
-  return updateDoc(taskRef, taskData);
+  const { id, ...data } = task;
+  const taskRef = doc(firestore, "tasks", id);
+  return updateDoc(taskRef, data);
 }
 
-export async function deleteTask(taskCode) {
-  const taskRef = doc(firestore, "tasks", taskCode);
+// ❌ מחיקת מטלה לפי מזהה (id)
+export async function deleteTask(taskId) {
+  const taskRef = doc(firestore, "tasks", taskId);
   return deleteDoc(taskRef);
+}
+
+// 🔍 בדיקה אם קוד מטלה קיים (למניעת כפילויות)
+export async function isTaskCodeExists(taskCode) {
+  const snapshot = await getDocs(collection(firestore, "tasks"));
+  return snapshot.docs.some((doc) => doc.data().taskCode === taskCode);
 }

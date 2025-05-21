@@ -1,4 +1,3 @@
-// CourseForm.jsx
 import React, { useEffect, useState } from "react";
 import {
   Box,
@@ -11,7 +10,11 @@ import {
   Stack,
 } from "@mui/material";
 import { useNavigate, useLocation } from "react-router-dom";
-import { addCourse, updateCourse } from "../firebase/course";
+import {
+  addCourse,
+  updateCourse,
+  isCourseCodeExists,
+} from "../firebase/course";
 
 export default function CourseForm() {
   const navigate = useNavigate();
@@ -27,7 +30,11 @@ export default function CourseForm() {
   });
 
   const [errors, setErrors] = useState({});
-  const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "success" });
+  const [snackbar, setSnackbar] = useState({
+    open: false,
+    message: "",
+    severity: "success",
+  });
 
   useEffect(() => {
     if (courseToEdit) {
@@ -37,17 +44,18 @@ export default function CourseForm() {
 
   const validate = () => {
     const newErrors = {};
-    if (!formData.courseCode) newErrors.courseCode = "Required";
-    if (!formData.courseName) newErrors.courseName = "Required";
-    if (!formData.lecturer) newErrors.lecturer = "Required";
-    if (!formData.semester) newErrors.semester = "Required";
+    if (!formData.courseCode.trim()) newErrors.courseCode = "Course code is required";
+    if (!formData.courseName.trim()) newErrors.courseName = "Course name is required";
+    if (!formData.lecturer.trim()) newErrors.lecturer = "Lecturer is required";
+    if (!formData.semester.trim()) newErrors.semester = "Semester is required";
     if (!formData.year || isNaN(formData.year)) newErrors.year = "Year must be a number";
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (e) => {
@@ -55,17 +63,38 @@ export default function CourseForm() {
     if (!validate()) return;
 
     try {
-      if (formData.id) {
-        await updateCourse(formData);
-        setSnackbar({ open: true, message: "Course updated successfully", severity: "success" });
-      } else {
+      if (!formData.id) {
+        const exists = await isCourseCodeExists(formData.courseCode);
+        if (exists) {
+          setErrors((prev) => ({
+            ...prev,
+            courseCode: "Course code already exists",
+          }));
+          return;
+        }
         await addCourse(formData);
-        setSnackbar({ open: true, message: "Course added successfully", severity: "success" });
+        setSnackbar({
+          open: true,
+          message: "Course added successfully",
+          severity: "success",
+        });
+      } else {
+        await updateCourse(formData);
+        setSnackbar({
+          open: true,
+          message: "Course updated successfully",
+          severity: "success",
+        });
       }
+
       setTimeout(() => navigate("/coursesManage"), 1000);
-    } catch (err) {
-      console.error("Error saving course:", err);
-      setSnackbar({ open: true, message: "Error saving course", severity: "error" });
+    } catch (error) {
+      console.error("Error saving course:", error);
+      setSnackbar({
+        open: true,
+        message: "Error saving course",
+        severity: "error",
+      });
     }
   };
 
@@ -88,7 +117,7 @@ export default function CourseForm() {
           helperText={errors.courseCode}
           fullWidth
           margin="normal"
-          disabled={!!formData.id}
+          disabled={!!formData.id} // למנוע שינוי קוד בקורס קיים
         />
         <TextField
           name="courseName"
@@ -132,10 +161,9 @@ export default function CourseForm() {
           margin="normal"
         />
 
-        {/* כפתורים: שליחה וביטול */}
         <Stack direction="row" spacing={2} mt={2}>
           <Button type="submit" variant="contained" color="primary" fullWidth>
-            {courseToEdit ? "Update Course" : "Add Course"}
+            {formData.id ? "Update Course" : "Add Course"}
           </Button>
           <Button onClick={handleCancel} variant="outlined" color="secondary" fullWidth>
             Cancel
@@ -146,12 +174,16 @@ export default function CourseForm() {
       <Snackbar
         open={snackbar.open}
         autoHideDuration={3000}
-        onClose={() => setSnackbar({ ...snackbar, open: false })}
+        onClose={() => setSnackbar((prev) => ({ ...prev, open: false }))}
       >
-        <Alert severity={snackbar.severity} onClose={() => setSnackbar({ ...snackbar, open: false })}>
+        <Alert
+          severity={snackbar.severity}
+          onClose={() => setSnackbar((prev) => ({ ...prev, open: false }))}
+        >
           {snackbar.message}
         </Alert>
       </Snackbar>
     </Box>
   );
 }
+
