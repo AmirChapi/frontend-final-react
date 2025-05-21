@@ -1,227 +1,192 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Box,
-  Button,
   TextField,
+  Button,
   Typography,
   Paper,
   MenuItem,
   Snackbar,
   Alert,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogContentText,
-  DialogTitle
+  Stack,
 } from "@mui/material";
-import { useNavigate, useLocation } from "react-router-dom";import {
-  addGrade,
-  updateGrade,
-  listGrades,
-  getGrade
-} from "../firebase/grade";
+import { useNavigate, useLocation } from "react-router-dom";
+
+import { listStudent } from "../firebase/student";
+import { listTasks } from "../firebase/task";
+import { addGrade, updateGrade } from "../firebase/grade";
 
 export default function GradeForm() {
   const navigate = useNavigate();
   const location = useLocation();
   const gradeToEdit = location.state?.gradeToEdit || null;
 
-  const initialValues = {
+  const [formData, setFormData] = useState({
     idNumber: "",
     taskCode: "",
     taskGrade: "",
-  };
+  });
 
-  const [formData, setFormData] = useState(initialValues);
-  const [grades, setGrades] = useState([]);
   const [students, setStudents] = useState([]);
   const [tasks, setTasks] = useState([]);
   const [errors, setErrors] = useState({});
-  const [openSnackbar, setOpenSnackbar] = useState(false);
-  const [error, setError] = useState("");
-  const [openCancelDialog, setOpenCancelDialog] = useState(false);
+  const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "success" });
 
-  // ניגש ל-Firestore ומביא את הנתונים
   useEffect(() => {
-    const fetchGrades = async () => {
-      const fetchedGrades = await listGrades();
-      setGrades(fetchedGrades);
-    };
+    async function fetchData() {
+      const studentsData = await listStudent();
+      const tasksData = await listTasks();
+      setStudents(studentsData);
+      setTasks(tasksData);
+    }
 
-    const fetchStudentsAndTasks = async () => {
-      // יש להוסיף פונקציות Firebase המתאימות כדי למשוך את רשימות הסטודנטים והמטלות
-      const fetchedStudents = await listStudents(); // פונקציה שמשיגה את כל הסטודנטים
-      const fetchedTasks = await listTasks(); // פונקציה שמשיגה את כל המטלות
-      setStudents(fetchedStudents);
-      setTasks(fetchedTasks);
-    };
-
-    fetchGrades();
-    fetchStudentsAndTasks();
+    fetchData();
 
     if (gradeToEdit) {
-      setFormData({ ...gradeToEdit });
+      setFormData(gradeToEdit);
     }
   }, [gradeToEdit]);
 
-  const handleChange = (event) => {
-    const { name, value } = event.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-
-    let errorField = false;
-    const grade = Number(value);
-
-    if (name === "taskGrade") {
-      errorField = value === "" || isNaN(grade) || grade < 0 || grade > 100;
-    } else {
-      errorField = !value;
+  const validate = () => {
+    const newErrors = {};
+    if (!formData.idNumber) newErrors.idNumber = "Student is required";
+    if (!formData.taskCode) newErrors.taskCode = "Task is required";
+    if (formData.taskGrade === "" || isNaN(formData.taskGrade)) {
+      newErrors.taskGrade = "Grade must be a number";
     }
 
-    setErrors(prev => ({ ...prev, [name]: errorField }));
+    // בדיקת התאמה בין סטודנט לקורס של המטלה
+    const student = students.find(s => s.studentId === formData.idNumber);
+    const task = tasks.find(t => t.taskCode === formData.taskCode);
+    if (student && task && !student.courses?.includes(task.courseCode)) {
+      newErrors.taskCode = "Student is not enrolled in the course for this task";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: name === "taskGrade" ? value.replace(/[^\d]/g, "") : value,
+    }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!validate()) return;
 
-    const newErrors = {};
-    let hasError = false;
+    try {
+      if (formData.id) {
+        await updateGrade(formData);
+        setSnackbar({ open: true, message: "Grade updated successfully", severity: "success" });
+      } else {
+        await addGrade(formData);
+        setSnackbar({ open: true, message: "Grade added successfully", severity: "success" });
+      }
 
-    const grade = Number(formData.taskGrade);
-    if (formData.taskGrade === "" || isNaN(grade) || grade < 0 || grade > 100) {
-      newErrors.taskGrade = true;
-      hasError = true;
+      setTimeout(() => navigate("/GradeManage"), 1000);
+    } catch (err) {
+      console.error("Error saving grade:", err);
+      setSnackbar({ open: true, message: "Error saving grade", severity: "error" });
     }
-
-    if (hasError) {
-      setErrors(newErrors);
-      return;
-    }
-
-    // בדיקה אם הסטודנט משוייך למטלה
-    const student = students.find(s => s.studentId === formData.idNumber);
-    const task = tasks.find(t => t.taskCode === formData.taskCode);
-    if (student && task && !(student.courses || []).includes(task.courseCode)) {
-      setError("This student is not assigned to the course of this task.");
-      return;
-    }
-
-    if (gradeToEdit) {
-      // עדכון ציון
-      await updateGrade(formData);
-    } else {
-      // יצירת ציון חדש
-      await addGrade(formData);
-    }
-
-    setOpenSnackbar(true);
-    setTimeout(() => navigate("/GradeManage"), 1000);
   };
 
-  const handleCancelClick = () => {
-    setOpenCancelDialog(true);
-  };
-
-  const handleConfirmCancel = () => {
-    setOpenCancelDialog(false);
+  const handleCancel = () => {
     navigate("/GradeManage");
   };
 
-  const handleCloseCancelDialog = () => {
-    setOpenCancelDialog(false);
+  // ✅ הצגת רק מטלות שרלוונטיות לסטודנט הנבחר
+  const getFilteredTasks = () => {
+    const student = students.find(s => s.studentId === formData.idNumber);
+    if (!student || !Array.isArray(student.courses)) return [];
+    return tasks.filter(task => student.courses.includes(task.courseCode));
   };
 
   return (
     <Box sx={{ minHeight: "70vh", display: "flex", justifyContent: "center", alignItems: "center" }}>
-      <Paper elevation={3} sx={{ padding: 4, width: 400, borderRadius: 2 }}>
+      <Paper elevation={3} sx={{ padding: 4, width: 500, borderRadius: 2 }}>
         <Typography variant="h5" align="center" gutterBottom>
           {gradeToEdit ? "Edit Grade" : "Add New Grade"}
         </Typography>
 
         <Box component="form" onSubmit={handleSubmit} sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+          {/* בחירת סטודנט */}
           <TextField
             select
-            label="Student ID"
             name="idNumber"
+            label="Student"
             value={formData.idNumber}
             onChange={handleChange}
+            error={!!errors.idNumber}
+            helperText={errors.idNumber}
             fullWidth
-            disabled={!!gradeToEdit}
-            error={errors.idNumber}
-            helperText={errors.idNumber ? "Student is required" : ""}
           >
-            {students.map((student) => (
-              <MenuItem key={student.studentId} value={student.studentId}>
-                {student.studentId} - {student.fullName}
+            <MenuItem value="">
+              <em>Select a student</em>
+            </MenuItem>
+            {students.map((s) => (
+              <MenuItem key={s.id} value={s.studentId}>
+                {s.studentId} - {s.fullName}
               </MenuItem>
             ))}
           </TextField>
 
+          {/* בחירת מטלה מתאימה לקורסים של הסטודנט */}
           <TextField
             select
-            label="Task"
             name="taskCode"
+            label="Task"
             value={formData.taskCode}
             onChange={handleChange}
+            error={!!errors.taskCode}
+            helperText={errors.taskCode}
             fullWidth
-            disabled={!!gradeToEdit}
-            error={errors.taskCode}
-            helperText={errors.taskCode ? "Task is required" : ""}
           >
-            {tasks.map((task) => (
-              <MenuItem key={task.taskCode} value={task.taskCode}>
-                {task.taskCode} - {task.taskName}
+            <MenuItem value="">
+              <em>Select a task</em>
+            </MenuItem>
+            {getFilteredTasks().map((t) => (
+              <MenuItem key={t.id} value={t.taskCode}>
+                {t.taskCode} - {t.taskName}
               </MenuItem>
             ))}
           </TextField>
 
+          {/* ציון */}
           <TextField
-            label="Grade (0-100)"
             name="taskGrade"
+            label="Grade"
             type="number"
             value={formData.taskGrade}
             onChange={handleChange}
+            error={!!errors.taskGrade}
+            helperText={errors.taskGrade}
             fullWidth
-            error={errors.taskGrade}
-            helperText={errors.taskGrade ? "Enter a valid grade between 0-100" : ""}
           />
 
-          {error && (
-            <Typography color="error" fontSize="0.9rem">
-              {error}
-            </Typography>
-          )}
-
-          <Box sx={{ display: "flex", justifyContent: "space-between" }}>
-            <Button variant="outlined" onClick={handleCancelClick} color="secondary">
+          <Stack direction="row" spacing={2} mt={2}>
+            <Button type="submit" variant="contained" color="primary" fullWidth>
+              {formData.id ? "Update" : "Save"}
+            </Button>
+            <Button variant="outlined" color="secondary" fullWidth onClick={handleCancel}>
               Cancel
             </Button>
-            <Button type="submit" variant="contained" color="primary">
-              Save
-            </Button>
-          </Box>
+          </Stack>
         </Box>
       </Paper>
 
-      <Snackbar open={openSnackbar} autoHideDuration={3000} onClose={() => setOpenSnackbar(false)}>
-        <Alert severity="success" sx={{ width: "100%" }}>
-          Grade saved successfully!
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={3000}
+        onClose={() => setSnackbar((prev) => ({ ...prev, open: false }))}
+      >
+        <Alert severity={snackbar.severity} onClose={() => setSnackbar((prev) => ({ ...prev, open: false }))}>
+          {snackbar.message}
         </Alert>
       </Snackbar>
-
-      <Dialog open={openCancelDialog} onClose={handleCloseCancelDialog}>
-        <DialogTitle>Confirm Cancellation</DialogTitle>
-        <DialogContent>
-          <DialogContentText>
-            Are you sure you want to cancel? Unsaved changes will be lost.
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseCancelDialog}>No</Button>
-          <Button onClick={handleConfirmCancel} color="error" autoFocus>
-            Yes, Cancel
-          </Button>
-        </DialogActions>
-      </Dialog>
     </Box>
   );
 }

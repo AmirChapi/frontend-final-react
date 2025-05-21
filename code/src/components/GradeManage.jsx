@@ -11,14 +11,15 @@ import {
   TableRow,
   Paper,
   IconButton,
-  Stack
+  Stack,
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
-import { listGrades, deleteGrade } from "../firebase/grade"; // פונקציות פיירסטור
-import { listTasks } from "../firebase/task"; // אם יש צורך במטלות
-import { listStudents } from "../firebase/student"; // אם יש צורך במטלות}
+
+import { listGrades, deleteGrade , updateGrade, addGrade} from "../firebase/grade";
+import { listStudent } from "../firebase/student";
+import { listTasks } from "../firebase/task";
 
 export default function GradesManage() {
   const [grades, setGrades] = useState([]);
@@ -26,48 +27,44 @@ export default function GradesManage() {
   const [tasks, setTasks] = useState([]);
   const navigate = useNavigate();
 
-  // טוען את הנתונים מ-Firestore
   useEffect(() => {
-    const fetchData = async () => {
-      const gradesData = await listGrades();
-      const studentsData = await listStudents();
-      const tasksData = await listTasks();
+    async function fetchData() {
+      const [gradesData, studentsData, tasksData] = await Promise.all([
+        listGrades(),
+        listStudent(),
+        listTasks(),
+      ]);
       setGrades(gradesData);
       setStudents(studentsData);
       setTasks(tasksData);
-    };
+    }
 
     fetchData();
   }, []);
 
-  // הוספת ציון חדש
   const handleAddGrade = () => {
     navigate("/GradeForm");
   };
 
-  // עריכת ציון
   const handleEdit = (grade) => {
     navigate("/GradeForm", { state: { gradeToEdit: grade } });
   };
 
-  // מחיקת ציון
-  const handleDelete = async (gradeId) => {
-    const confirmDelete = window.confirm("Are you sure you want to delete this grade?");
-    if (confirmDelete) {
-      await deleteGrade(gradeId);
-      setGrades(prev => prev.filter(grade => grade.id !== gradeId));
+  const handleDelete = async (id) => {
+    const confirm = window.confirm("Are you sure you want to delete this grade?");
+    if (confirm) {
+      await deleteGrade(id);
+      setGrades((prev) => prev.filter((grade) => grade.id !== id));
     }
   };
 
-  // מחפש את שם הסטודנט לפי תעודת זהות
   const getStudentName = (idNumber) => {
-    const student = students.find(s => s.studentId === idNumber);
+    const student = students.find((s) => s.studentId === idNumber);
     return student ? student.fullName : idNumber;
   };
 
-  // מחפש את שם המטלה לפי קוד מטלה
   const getTaskName = (taskCode) => {
-    const task = tasks.find(t => t.taskCode === taskCode);
+    const task = tasks.find((t) => t.taskCode === taskCode);
     return task ? task.taskName : taskCode;
   };
 
@@ -96,26 +93,27 @@ export default function GradesManage() {
             </TableRow>
           </TableHead>
           <TableBody>
-            {grades.map((grade) => (
-              <TableRow key={grade.id}>
-                <TableCell>{grade.idNumber}</TableCell>
-                <TableCell>{getStudentName(grade.idNumber)}</TableCell>
-                <TableCell>{grade.taskCode}</TableCell>
-                <TableCell>{getTaskName(grade.taskCode)}</TableCell>
-                <TableCell>{grade.taskGrade}</TableCell>
-                <TableCell align="center">
-                  <Stack direction="row" spacing={0.5} justifyContent="center">
-                    <IconButton color="info" onClick={() => handleEdit(grade)}>
-                      <EditIcon fontSize="small" />
-                    </IconButton>
-                    <IconButton color="error" onClick={() => handleDelete(grade.id)}>
-                      <DeleteIcon fontSize="small" />
-                    </IconButton>
-                  </Stack>
-                </TableCell>
-              </TableRow>
-            ))}
-            {grades.length === 0 && (
+            {grades.length > 0 ? (
+              grades.map((grade) => (
+                <TableRow key={grade.id}>
+                  <TableCell>{grade.idNumber}</TableCell>
+                  <TableCell>{getStudentName(grade.idNumber)}</TableCell>
+                  <TableCell>{grade.taskCode}</TableCell>
+                  <TableCell>{getTaskName(grade.taskCode)}</TableCell>
+                  <TableCell>{grade.taskGrade}</TableCell>
+                  <TableCell align="center">
+                    <Stack direction="row" spacing={1} justifyContent="center">
+                      <IconButton color="info" onClick={() => handleEdit(grade)}>
+                        <EditIcon fontSize="small" />
+                      </IconButton>
+                      <IconButton color="error" onClick={() => handleDelete(grade.id)}>
+                        <DeleteIcon fontSize="small" />
+                      </IconButton>
+                    </Stack>
+                  </TableCell>
+                </TableRow>
+              ))
+            ) : (
               <TableRow>
                 <TableCell colSpan={6} align="center">
                   לא נמצאו ציונים.
