@@ -1,470 +1,181 @@
-// // ✅ MSGForms.jsx - טופס הוספה / עריכה להודעות (לפי קורסים, ללא ID)
-// import React, { useEffect, useState } from 'react';
-// import { useNavigate, useLocation } from 'react-router-dom';
-// import {
-//   Box,
-//   TextField,
-//   Button,
-//   Dialog,
-//   DialogActions,
-//   DialogContent,
-//   DialogContentText,
-//   DialogTitle,
-//   Typography,
-//   Select,
-//   MenuItem,
-//   InputLabel,
-//   FormControl,
-//   Snackbar,
-//   Alert,
-//   Paper,
-// } from '@mui/material';
-
-// export default function MSGForms() {
-//   const navigate = useNavigate();
-//   const location = useLocation();
-//   const messageToEdit = location.state?.messageToEdit || null;
-
-//   const initialValues = {
-//     messageCode: '',
-//     courseCode: '',
-//     courseName: '',
-//     assignmentName: '',
-//     messageContent: '',
-//   };
-
-//   const [formValues, setFormValues] = useState(initialValues);
-//   const [errors, setErrors] = useState({});
-//   const [courseOptions, setCourseOptions] = useState([]);
-//   const [openCancelDialog, setOpenCancelDialog] = useState(false);
-//   const [openSnackbar, setOpenSnackbar] = useState(false);
-
-//   useEffect(() => {
-//     const storedCourses = JSON.parse(localStorage.getItem('coursesList')) || [];
-//     setCourseOptions(storedCourses);
-
-//     if (messageToEdit) {
-//       setFormValues(messageToEdit);
-//     }
-//   }, [messageToEdit]);
-
-//   const handleChange = (event) => {
-//     const { name, value } = event.target;
-//     setFormValues((prev) => ({ ...prev, [name]: value }));
-
-//     let errorField = false;
-
-//     if (name === 'messageCode') {
-//       const messages = JSON.parse(localStorage.getItem('messages')) || [];
-//       const exists = messages.some(
-//         (msg) => msg.messageCode === value && (messageToEdit ? msg.messageCode !== messageToEdit.messageCode : true)
-//       );
-//       errorField = exists || !/^[a-zA-Z0-9]+$/.test(value);
-//     }
-
-//     if (name === 'messageContent') {
-//       errorField = !value.trim();
-//     }
-
-//     setErrors((prev) => ({ ...prev, [name]: errorField }));
-//   };
-
-//   const handleSubmit = (e) => {
-//     e.preventDefault();
-
-//     let hasError = false;
-//     const newErrors = {};
-//     const messages = JSON.parse(localStorage.getItem('messages')) || [];
-
-//     const exists = messages.some(
-//       (msg) => msg.messageCode === formValues.messageCode && (messageToEdit ? msg.messageCode !== messageToEdit.messageCode : true)
-//     );
-
-//     if (!formValues.messageCode || exists || !/^[a-zA-Z0-9]+$/.test(formValues.messageCode)) {
-//       newErrors.messageCode = true;
-//       hasError = true;
-//     }
-
-//     if (!formValues.messageContent.trim()) {
-//       newErrors.messageContent = true;
-//       hasError = true;
-//     }
-
-//     if (!formValues.courseCode) {
-//       newErrors.courseCode = true;
-//       hasError = true;
-//     }
-
-//     if (hasError) {
-//       setErrors(newErrors);
-//       return;
-//     }
-
-//     const updatedMessages = messageToEdit
-//       ? messages.map((msg) =>
-//           msg.messageCode === messageToEdit.messageCode ? formValues : msg
-//         )
-//       : [...messages, formValues];
-
-//     localStorage.setItem('messages', JSON.stringify(updatedMessages));
-//     setOpenSnackbar(true);
-//     setTimeout(() => navigate('/MSGManage'), 1000);
-//   };
-
-//   const handleCancelClick = () => {
-//     setOpenCancelDialog(true);
-//   };
-
-//   const handleCloseCancelDialog = () => {
-//     setOpenCancelDialog(false);
-//   };
-
-//   const handleConfirmCancel = () => {
-//     setOpenCancelDialog(false);
-//     navigate('/MSGManage');
-//   };
-
-//   const handleCloseSnackbar = () => {
-//     setOpenSnackbar(false);
-//   };
-
-//   return (
-//     <Box sx={{ minHeight: '70vh', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-//       <Paper elevation={3} sx={{ padding: 4, width: 400, borderRadius: 2 }}>
-//         <Typography variant="h5" align="center" gutterBottom>
-//           {messageToEdit ? 'Edit Message' : 'Add New Message'}
-//         </Typography>
-
-//         <Box component="form" onSubmit={handleSubmit} sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-//           <TextField
-//             id="messageCode"
-//             name="messageCode"
-//             label="Message Code"
-//             value={formValues.messageCode}
-//             onChange={handleChange}
-//             fullWidth
-//             disabled={!!messageToEdit}
-//             error={errors.messageCode}
-//             helperText={errors.messageCode ? 'Message code must be unique and alphanumeric' : ''}
-//           />
-
-//           <FormControl fullWidth error={errors.courseCode}>
-//             <InputLabel id="course-code-label">Course Code</InputLabel>
-//             <Select
-//               labelId="course-code-label"
-//               name="courseCode"
-//               value={formValues.courseCode}
-//               label="Course Code"
-//               onChange={(e) => {
-//                 const selected = courseOptions.find((c) => c.courseCode === e.target.value);
-//                 setFormValues({
-//                   ...formValues,
-//                   courseCode: selected?.courseCode || '',
-//                   courseName: selected?.courseName || '',
-//                 });
-//                 setErrors((prev) => ({ ...prev, courseCode: false }));
-//               }}
-//               disabled={!!messageToEdit}
-//             >
-//               {courseOptions.map((course) => (
-//                 <MenuItem key={course.courseCode} value={course.courseCode}>
-//                   {course.courseCode} - {course.courseName}
-//                 </MenuItem>
-//               ))}
-//             </Select>
-//             {errors.courseCode && (
-//               <Typography variant="caption" color="error" sx={{ pl: 2 }}>
-//                 Course code is required
-//               </Typography>
-//             )}
-//           </FormControl>
-
-//           <TextField
-//             id="courseName"
-//             name="courseName"
-//             label="Course Name"
-//             value={formValues.courseName}
-//             fullWidth
-//             disabled
-//           />
-
-//           <TextField
-//             id="assignmentName"
-//             name="assignmentName"
-//             label="Assignment Name"
-//             value={formValues.assignmentName}
-//             onChange={handleChange}
-//             fullWidth
-//           />
-
-//           <TextField
-//             id="messageContent"
-//             name="messageContent"
-//             label="Message Content"
-//             value={formValues.messageContent}
-//             onChange={handleChange}
-//             fullWidth
-//             multiline
-//             rows={4}
-//             error={errors.messageContent}
-//             helperText={errors.messageContent ? 'Message content is required' : ''}
-//           />
-
-//           <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-//             <Button variant="outlined" onClick={handleCancelClick} color="secondary">
-//               Cancel
-//             </Button>
-//             <Button type="submit" variant="contained" color="primary">
-//               Save
-//             </Button>
-//           </Box>
-//         </Box>
-//       </Paper>
-
-//       <Snackbar open={openSnackbar} autoHideDuration={3000} onClose={handleCloseSnackbar}>
-//         <Alert severity="success" sx={{ width: '100%' }} onClose={handleCloseSnackbar}>
-//           Message successfully saved!
-//         </Alert>
-//       </Snackbar>
-
-//       <Dialog
-//         open={openCancelDialog}
-//         onClose={handleCloseCancelDialog}
-//         aria-labelledby="cancel-dialog-title"
-//         aria-describedby="cancel-dialog-description"
-//       >
-//         <DialogTitle id="cancel-dialog-title">{"Confirm Cancellation"}</DialogTitle>
-//         <DialogContent>
-//           <DialogContentText id="cancel-dialog-description">
-//             Are you sure you want to cancel? Unsaved changes will be lost.
-//           </DialogContentText>
-//         </DialogContent>
-//         <DialogActions>
-//           <Button onClick={handleCloseCancelDialog} color="primary">
-//             No
-//           </Button>
-//           <Button onClick={handleConfirmCancel} color="secondary" autoFocus>
-//             Yes, Cancel
-//           </Button>
-//         </DialogActions>
-//       </Dialog>
-//     </Box>
-//   );
-// }
-
-// MSGForm.jsx - טופס הוספת / עריכת הודעה עם קורס, מטלה וסטודנט
-import React, { useEffect, useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import React, { useEffect, useState } from "react";
 import {
   Box,
-  TextField,
-  Button,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogContentText,
-  DialogTitle,
+  Paper,
   Typography,
-  Select,
+  TextField,
   MenuItem,
-  InputLabel,
-  FormControl,
+  Button,
   Snackbar,
   Alert,
-  Paper,
-} from '@mui/material';
+  Stack,
+} from "@mui/material";
+import { useLocation, useNavigate } from "react-router-dom";
+import { listCourses } from "../firebase/course";
+import { listTasks } from "../firebase/task";
+import { listStudent } from "../firebase/student";
+import { addMessage, updateMessage } from "../firebase/message";
 
-export default function MSGForm() {
+export default function MessageForm() {
   const navigate = useNavigate();
   const location = useLocation();
   const messageToEdit = location.state?.messageToEdit || null;
 
-  const initialValues = {
-    messageCode: '',
-    courseCode: '',
-    assignmentCode: '',
-    studentId: '',
-    messageContent: '',
-  };
+  const [formData, setFormData] = useState({
+    messageContent: "",
+    courseCode: "",
+    assignmentCode: "",
+    studentId: "",
+  });
 
-  const [formValues, setFormValues] = useState(initialValues);
+  const [courses, setCourses] = useState([]);
+  const [tasks, setTasks] = useState([]);
+  const [students, setStudents] = useState([]);
   const [errors, setErrors] = useState({});
-  const [courseOptions, setCourseOptions] = useState([]);
-  const [taskOptions, setTaskOptions] = useState([]);
-  const [studentOptions, setStudentOptions] = useState([]);
-  const [openCancelDialog, setOpenCancelDialog] = useState(false);
-  const [openSnackbar, setOpenSnackbar] = useState(false);
+  const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "success" });
 
   useEffect(() => {
-    const courses = JSON.parse(localStorage.getItem('coursesList')) || [];
-    const tasks = JSON.parse(localStorage.getItem('tasks')) || [];
-    const students = JSON.parse(localStorage.getItem('students')) || [];
-    setCourseOptions(courses);
-    setTaskOptions(tasks);
-    setStudentOptions(students);
+    async function fetchData() {
+      const [c, t, s] = await Promise.all([
+        listCourses(),
+        listTasks(),
+        listStudent(),
+      ]);
+      setCourses(c);
+      setTasks(t);
+      setStudents(s);
+    }
+
+    fetchData();
 
     if (messageToEdit) {
-      setFormValues(messageToEdit);
+      setFormData(messageToEdit);
     }
   }, [messageToEdit]);
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormValues(prev => ({ ...prev, [name]: value }));
-
-    let errorField = false;
-    if (name === 'messageCode') {
-      const messages = JSON.parse(localStorage.getItem('messages')) || [];
-      const exists = messages.some(
-        (msg) => msg.messageCode === value && (!messageToEdit || msg.messageCode !== messageToEdit.messageCode)
-      );
-      errorField = exists || !value.trim();
-    }
-    if (name === 'messageContent') {
-      errorField = !value.trim();
-    }
-    setErrors(prev => ({ ...prev, [name]: errorField }));
+  const validate = () => {
+    const newErrors = {};
+    if (!formData.messageContent.trim()) newErrors.messageContent = "Message content is required";
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e) => {
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!validate()) return;
 
-    const newErrors = {};
-    let hasError = false;
-    if (!formValues.messageCode || !/^[a-zA-Z0-9]+$/.test(formValues.messageCode)) {
-      newErrors.messageCode = true;
-      hasError = true;
-    }
-    if (!formValues.courseCode) {
-      newErrors.courseCode = true;
-      hasError = true;
-    }
-    if (!formValues.messageContent.trim()) {
-      newErrors.messageContent = true;
-      hasError = true;
-    }
-    if (hasError) {
-      setErrors(newErrors);
-      return;
-    }
+    try {
+      if (formData.id) {
+        await updateMessage(formData);
+        setSnackbar({ open: true, message: "Message updated", severity: "success" });
+      } else {
+        await addMessage(formData);
+        setSnackbar({ open: true, message: "Message added", severity: "success" });
+      }
 
-    const messages = JSON.parse(localStorage.getItem('messages')) || [];
-    const updatedMessages = messageToEdit
-      ? messages.map(m => m.messageCode === messageToEdit.messageCode ? formValues : m)
-      : [...messages, formValues];
+      setTimeout(() => navigate("/MSGManage"), 1000);
+    } catch (err) {
+      setSnackbar({ open: true, message: "Error saving message", severity: "error" });
+    }
+  };
 
-    localStorage.setItem('messages', JSON.stringify(updatedMessages));
-    setOpenSnackbar(true);
-    setTimeout(() => navigate('/MSGManage'), 1000);
+  const handleCancel = () => {
+    navigate("/MSGManage");
   };
 
   return (
-    <Box sx={{ minHeight: '70vh', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-      <Paper elevation={3} sx={{ padding: 4, width: 450, borderRadius: 2 }}>
-        <Typography variant="h5" align="center" gutterBottom>
-          {messageToEdit ? 'Edit Message' : 'Add New Message'}
+    <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
+      <Paper elevation={3} sx={{ p: 4, width: 500 }}>
+        <Typography variant="h6" gutterBottom>
+          {formData.id ? "Edit Message" : "Add Message"}
         </Typography>
-
-        <Box component="form" onSubmit={handleSubmit} sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+        <form onSubmit={handleSubmit}>
           <TextField
-            name="messageCode"
-            label="Message Code"
-            value={formValues.messageCode}
-            onChange={handleChange}
-            disabled={!!messageToEdit}
-            fullWidth
-            error={errors.messageCode}
-            helperText={errors.messageCode ? 'Message code must be unique and alphanumeric' : ''}
-          />
-
-          <FormControl fullWidth error={errors.courseCode}>
-            <InputLabel>Course Code</InputLabel>
-            <Select
-              name="courseCode"
-              value={formValues.courseCode}
-              label="Course Code"
-              onChange={handleChange}
-              disabled={!!messageToEdit}
-            >
-              {courseOptions.map(course => (
-                <MenuItem key={course.courseCode} value={course.courseCode}>
-                  {course.courseCode} - {course.courseName}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-
-          <FormControl fullWidth>
-            <InputLabel>Assignment (Optional)</InputLabel>
-            <Select
-              name="assignmentCode"
-              value={formValues.assignmentCode}
-              label="Assignment"
-              onChange={handleChange}
-            >
-              <MenuItem value="">None</MenuItem>
-              {taskOptions.map(task => (
-                <MenuItem key={task.taskCode} value={task.taskCode}>
-                  {task.taskCode} - {task.taskName}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-
-          <FormControl fullWidth>
-            <InputLabel>Target Student (Optional)</InputLabel>
-            <Select
-              name="studentId"
-              value={formValues.studentId}
-              label="Target Student"
-              onChange={handleChange}
-            >
-              <MenuItem value="">All Students</MenuItem>
-              {studentOptions.map(s => (
-                <MenuItem key={s.studentId} value={s.studentId}>
-                  {s.studentId} - {s.fullName}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-
-          <TextField
-            name="messageContent"
             label="Message Content"
-            value={formValues.messageContent}
+            name="messageContent"
+            value={formData.messageContent}
+            onChange={handleChange}
+            error={!!errors.messageContent}
+            helperText={errors.messageContent}
+            multiline
+            rows={3}
+            fullWidth
+            margin="normal"
+          />
+          <TextField
+            select
+            name="courseCode"
+            label="Course (optional)"
+            value={formData.courseCode}
             onChange={handleChange}
             fullWidth
-            multiline
-            rows={4}
-            error={errors.messageContent}
-            helperText={errors.messageContent ? 'Message content is required' : ''}
-          />
+            margin="normal"
+          >
+            <MenuItem value=""><em>None</em></MenuItem>
+            {courses.map((c) => (
+              <MenuItem key={c.id} value={c.courseCode}>
+                {c.courseCode} - {c.courseName}
+              </MenuItem>
+            ))}
+          </TextField>
+          <TextField
+            select
+            name="assignmentCode"
+            label="Task (optional)"
+            value={formData.assignmentCode}
+            onChange={handleChange}
+            fullWidth
+            margin="normal"
+          >
+            <MenuItem value=""><em>None</em></MenuItem>
+            {tasks.map((t) => (
+              <MenuItem key={t.id} value={t.taskCode}>
+                {t.taskCode} - {t.taskName}
+              </MenuItem>
+            ))}
+          </TextField>
+          <TextField
+            select
+            name="studentId"
+            label="Student ID (optional)"
+            value={formData.studentId}
+            onChange={handleChange}
+            fullWidth
+            margin="normal"
+          >
+            <MenuItem value=""><em>All students</em></MenuItem>
+            {students.map((s) => (
+              <MenuItem key={s.id} value={s.studentId}>
+                {s.studentId} - {s.fullName}
+              </MenuItem>
+            ))}
+          </TextField>
 
-          <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-            <Button variant="outlined" onClick={() => setOpenCancelDialog(true)} color="secondary">
+          <Stack direction="row" spacing={2} mt={2}>
+            <Button type="submit" variant="contained" color="primary" fullWidth>
+              {formData.id ? "Update" : "Save"}
+            </Button>
+            <Button variant="outlined" color="secondary" fullWidth onClick={handleCancel}>
               Cancel
             </Button>
-            <Button type="submit" variant="contained" color="primary">
-              Save
-            </Button>
-          </Box>
-        </Box>
+          </Stack>
+        </form>
       </Paper>
 
-      <Snackbar open={openSnackbar} autoHideDuration={3000} onClose={() => setOpenSnackbar(false)}>
-        <Alert severity="success">Message saved successfully!</Alert>
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={3000}
+        onClose={() => setSnackbar((prev) => ({ ...prev, open: false }))}
+      >
+        <Alert severity={snackbar.severity}>
+          {snackbar.message}
+        </Alert>
       </Snackbar>
-
-      <Dialog open={openCancelDialog} onClose={() => setOpenCancelDialog(false)}>
-        <DialogTitle>Cancel Message</DialogTitle>
-        <DialogContent>
-          <DialogContentText>Are you sure you want to cancel? Unsaved changes will be lost.</DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setOpenCancelDialog(false)}>No</Button>
-          <Button onClick={() => navigate('/MSGManage')} color="error">Yes, Cancel</Button>
-        </DialogActions>
-      </Dialog>
     </Box>
   );
 }
