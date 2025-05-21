@@ -1,118 +1,4 @@
-// import React, { useEffect, useState } from "react";
-// import {
-//   Box,
-//   Button,
-//   Table,
-//   TableBody,
-//   TableCell,
-//   TableContainer,
-//   TableHead,
-//   TableRow,
-//   Paper,
-//   Typography,
-//   IconButton,
-//   Stack,
-// } from "@mui/material";
-// import { useNavigate } from "react-router-dom";
-// import EditIcon from "@mui/icons-material/Edit";
-// import DeleteIcon from "@mui/icons-material/Delete";
-
-// export default function CourseManage() {
-//   const [courses, setCourses] = useState([]);
-//   const navigate = useNavigate();
-
-//   useEffect(() => {
-//     const storedCourses = JSON.parse(localStorage.getItem("coursesList")) || [];
-//     setCourses(storedCourses);
-//   }, []);
-
-//   const handleAddCourse = () => {
-//     navigate("/CourseForm");
-//   };
-
-//   const handleEdit = (course) => {
-//     navigate("/CourseForm", { state: { courseToEdit: course } });
-//   };
-
-//   const handleDelete = (indexToDelete) => {
-//     const confirmDelete = window.confirm("Are you sure you want to delete this course?");
-//     if (confirmDelete) {
-//       const updatedCourses = courses.filter((_, index) => index !== indexToDelete);
-//       setCourses(updatedCourses);
-//       localStorage.setItem("coursesList", JSON.stringify(updatedCourses));
-//     }
-//   };
-
-//   return (
-//     <Box sx={{ p: 3, maxWidth: '1200px', margin: 'auto' }}>
-//       <Typography variant="h5" gutterBottom>
-//         Course Management
-//       </Typography>
-
-//       <Box sx={{ mb: 2, display: 'flex', justifyContent: 'flex-end' }}>
-//           <Button
-//           variant="contained"
-//           sx={{ backgroundColor: "#1976d2" }}
-//           onClick={handleAddCourse}
-//         >
-//           ADD NEW COURSE
-//         </Button>
-//       </Box>
-
-//       <TableContainer component={Paper}>
-//         <Table>
-//           <TableHead sx={{ backgroundColor: "#1976d2" }}>
-//             <TableRow>
-//               <TableCell sx={{ color: "white", fontWeight: "bold" }}>Course Code</TableCell>
-//               <TableCell sx={{ color: "white", fontWeight: "bold" }}>Course Name</TableCell>
-//               <TableCell sx={{ color: "white", fontWeight: "bold" }}>Lecturer</TableCell>
-//               <TableCell sx={{ color: "white", fontWeight: "bold" }}>year</TableCell>
-//               <TableCell sx={{ color: "white", fontWeight: "bold" }}>semester</TableCell>
-//               <TableCell sx={{ color: "white", fontWeight: "bold", textAlign: "center" }}>
-//                 Actions
-//               </TableCell>
-//             </TableRow>
-//           </TableHead>
-//           <TableBody>
-//             {courses.length === 0 ? (
-//               <TableRow>
-//                 <TableCell colSpan={6} align="center">
-//                   No courses found.
-//                 </TableCell>
-//               </TableRow>
-//             ) : (
-//               courses.map((course, index) => (
-//                 <TableRow key={index}>
-//                   <TableCell>{course.courseCode}</TableCell>
-//                   <TableCell>{course.courseName}</TableCell>
-//                   <TableCell>{course.lecturer}</TableCell>
-//                   <TableCell>{course.year}</TableCell>
-//                   <TableCell>{course.semester}</TableCell>
-//                   <TableCell align="center">
-//                     <Stack direction="row" spacing={0.5} justifyContent="center">
-//                       <IconButton color="info" onClick={() => handleEdit(course)}>
-//                         <EditIcon fontSize="small" />
-//                       </IconButton>
-//                       <IconButton color="error" onClick={() => handleDelete(index)}>
-//                         <DeleteIcon fontSize="small" />
-//                       </IconButton>
-//                     </Stack>
-//                   </TableCell>
-//                 </TableRow>
-//               ))
-//             )}
-//           </TableBody>
-//         </Table>
-//       </TableContainer>
-//     </Box>
-//   );
-// }
-// CoursesManage.jsx - ניהול קורסים כולל הוספה, מחיקה, עריכה, שיוך סטודנטים
-// CoursesManage.jsx - ניהול קורסים כולל הוספה, מחיקה, עריכה, שיוך סטודנטים
-// CoursesManage.jsx
-// CoursesManage.jsx - רק טבלה + כפתור להוספת קורס
-
-// CoursesManage.jsx - כולל שיוך והסרה של סטודנטים
+// CoursesManage.jsx - דף ניהול קורסים עם נתונים מ-Firestore
 import React, { useEffect, useState } from "react";
 import {
   Box,
@@ -135,11 +21,13 @@ import {
   IconButton,
   FormControl,
   MenuItem,
-  Select
+  Select,
+  LinearProgress
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { useNavigate } from "react-router-dom";
-import { listStudent } from "../firebase/student";
+import { listStudent, updateStudent } from "../firebase/student";
+import { listCourses, deleteCourse, updateCourse } from "../firebase/course";
 
 export default function CoursesManage() {
   const [courses, setCourses] = useState([]);
@@ -148,37 +36,27 @@ export default function CoursesManage() {
   const [selectedCourse, setSelectedCourse] = useState(null);
   const [selectedCourseStudents, setSelectedCourseStudents] = useState([]);
   const [selectedStudentId, setSelectedStudentId] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
 
   useEffect(() => {
-    const localCourses = JSON.parse(localStorage.getItem("coursesList")) || [];
-    setCourses(localCourses);
-
-    async function fetchStudents() {
-      const fromFS = await listStudent();
-      const local = JSON.parse(localStorage.getItem("students")) || [];
-      const merged = fromFS.map(f => {
-        const match = local.find(l => l.studentId === f.studentId);
-        return match ? { ...f, ...match } : f;
-      });
-      setStudents(merged);
+    async function fetchData() {
+      const courseList = await listCourses();
+      const studentList = await listStudent();
+      setCourses(courseList);
+      setStudents(studentList);
+      setIsLoading(false);
     }
-    fetchStudents();
+    fetchData();
   }, []);
-
-  const updateLocalStorage = (updatedCourses, updatedStudents) => {
-    localStorage.setItem("coursesList", JSON.stringify(updatedCourses));
-    localStorage.setItem("students", JSON.stringify(updatedStudents));
-  };
 
   const handleEditCourse = (course) => {
     navigate("/CourseForm", { state: { courseToEdit: course } });
   };
 
-  const handleDeleteCourse = (courseCode) => {
-    const updatedCourses = courses.filter(c => c.courseCode !== courseCode);
-    setCourses(updatedCourses);
-    localStorage.setItem("coursesList", JSON.stringify(updatedCourses));
+  const handleDeleteCourse = async (courseCode) => {
+    await deleteCourse(courseCode);
+    setCourses(prev => prev.filter(c => c.courseCode !== courseCode));
   };
 
   const handleViewStudents = (course) => {
@@ -188,62 +66,38 @@ export default function CoursesManage() {
     setOpenDialog(true);
   };
 
-  const handleRemoveStudent = (studentId) => {
-    const updatedCourses = courses.map(c => {
-      if (c.courseCode === selectedCourse.courseCode) {
-        return {
-          ...c,
-          assignedStudents: (c.assignedStudents || []).filter(id => id !== studentId)
-        };
-      }
-      return c;
-    });
-
-    const updatedStudents = students.map(s => {
+  const handleRemoveStudent = async (studentId) => {
+    const updatedStudentList = students.map(s => {
       if (s.studentId === studentId) {
-        return {
-          ...s,
-          courses: (s.courses || []).filter(code => code !== selectedCourse.courseCode)
-        };
+        const newCourses = (s.courses || []).filter(code => code !== selectedCourse.courseCode);
+        updateStudent({ ...s, courses: newCourses });
+        return { ...s, courses: newCourses };
       }
       return s;
     });
 
-    setCourses(updatedCourses);
-    setStudents(updatedStudents);
-    updateLocalStorage(updatedCourses, updatedStudents);
+    setStudents(updatedStudentList);
     setSelectedCourseStudents(prev => prev.filter(s => s.studentId !== studentId));
   };
 
-  const handleAssignStudent = () => {
+  const handleAssignStudent = async () => {
     if (!selectedCourse || !selectedStudentId) return;
 
-    const updatedCourses = courses.map(c => {
-      if (c.courseCode === selectedCourse.courseCode) {
-        const assigned = c.assignedStudents || [];
-        if (!assigned.includes(selectedStudentId)) {
-          return { ...c, assignedStudents: [...assigned, selectedStudentId] };
-        }
-      }
-      return c;
-    });
+    const student = students.find(s => s.studentId === selectedStudentId);
+    if (!student) return;
 
-    const updatedStudents = students.map(s => {
-      if (s.studentId === selectedStudentId) {
-        const updated = s.courses || [];
-        if (!updated.includes(selectedCourse.courseCode)) {
-          return { ...s, courses: [...updated, selectedCourse.courseCode] };
-        }
-      }
-      return s;
-    });
+    const updatedCourses = [...(student.courses || []), selectedCourse.courseCode];
+    await updateStudent({ ...student, courses: updatedCourses });
 
-    setCourses(updatedCourses);
-    setStudents(updatedStudents);
-    updateLocalStorage(updatedCourses, updatedStudents);
-    setSelectedStudentId("");
+    setStudents(prev => prev.map(s =>
+      s.studentId === student.studentId ? { ...s, courses: updatedCourses } : s
+    ));
+
     handleViewStudents(selectedCourse);
+    setSelectedStudentId("");
   };
+
+  if (isLoading) return <LinearProgress />;
 
   return (
     <Box sx={{ p: 4 }}>
