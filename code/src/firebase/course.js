@@ -1,3 +1,4 @@
+// firebase/course.js
 import {
   collection,
   getDocs,
@@ -5,14 +6,14 @@ import {
   doc,
   getDoc,
   deleteDoc,
-  setDoc
+  addDoc,
+  setDoc,
 } from "firebase/firestore";
 import { firestore } from "./config";
 
-// הוספת קורס עם מזהה courseCode
+// הוספת קורס - עם ID אוטומטי
 export async function addCourse(course) {
-  const courseRef = doc(firestore, "courses", course);
-  return setDoc(courseRef, course);
+  return addDoc(collection(firestore, "courses"), course);
 }
 
 // קבלת רשימת קורסים
@@ -22,8 +23,8 @@ export async function listCourses() {
 }
 
 // קבלת קורס לפי courseCode
-export async function getCourse(courseCode) {
-  const courseDocRef = doc(firestore, "courses", courseCode);
+export async function getCourse(courseId) {
+  const courseDocRef = doc(firestore, "courses", courseId);
   const courseDocSnap = await getDoc(courseDocRef);
 
   if (courseDocSnap.exists()) {
@@ -33,15 +34,15 @@ export async function getCourse(courseCode) {
   }
 }
 
-// עדכון קורס לפי courseCode
+// עדכון קורס לפי id
 export async function updateCourse(course) {
-  const { courseCode, ...courseData } = course;
+  const { id, ...courseData } = course;
   const courseRef = doc(firestore, "courses", id);
   return updateDoc(courseRef, courseData);
 }
 
-// מחיקת קורס לפי courseCode
-export async function deleteCourse(courseCode) {
-  const courseRef = doc(firestore, "courses", courseCode);
+// מחיקת קורס לפי id
+export async function deleteCourse(courseId) {
+  const courseRef = doc(firestore, "courses", courseId);
   return deleteDoc(courseRef);
 }
