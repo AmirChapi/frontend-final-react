@@ -110,6 +110,9 @@
 // CoursesManage.jsx - ניהול קורסים כולל הוספה, מחיקה, עריכה, שיוך סטודנטים
 // CoursesManage.jsx - ניהול קורסים כולל הוספה, מחיקה, עריכה, שיוך סטודנטים
 // CoursesManage.jsx
+// CoursesManage.jsx - רק טבלה + כפתור להוספת קורס
+
+// CoursesManage.jsx - כולל שיוך והסרה של סטודנטים
 import React, { useEffect, useState } from "react";
 import {
   Box,
@@ -122,95 +125,54 @@ import {
   TableHead,
   TableRow,
   Paper,
-  TextField,
-  Select,
-  MenuItem,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  List,
+  ListItem,
+  ListItemText,
+  IconButton,
   FormControl,
+  MenuItem,
+  Select
 } from "@mui/material";
+import DeleteIcon from "@mui/icons-material/Delete";
+import { useNavigate } from "react-router-dom";
 import { listStudent } from "../firebase/student";
 
 export default function CoursesManage() {
-  const [students, setStudents] = useState([]);
   const [courses, setCourses] = useState([]);
-  const [newCourse, setNewCourse] = useState({
-    courseCode: "",
-    courseName: "",
-    lecturer: "",
-    year: "",
-    semester: "",
-    assignedStudents: [],
-  });
-  const [selectedStudentsPerCourse, setSelectedStudentsPerCourse] = useState({});
+  const [students, setStudents] = useState([]);
+  const [openDialog, setOpenDialog] = useState(false);
+  const [selectedCourse, setSelectedCourse] = useState(null);
+  const [selectedCourseStudents, setSelectedCourseStudents] = useState([]);
+  const [selectedStudentId, setSelectedStudentId] = useState("");
+  const navigate = useNavigate();
 
   useEffect(() => {
-    async function fetchData() {
-      const studentsFromFS = await listStudent();
-      const storedStudents = JSON.parse(localStorage.getItem("students")) || [];
-      const mergedStudents = mergeStudents(studentsFromFS, storedStudents);
+    const localCourses = JSON.parse(localStorage.getItem("coursesList")) || [];
+    setCourses(localCourses);
 
-      setStudents(mergedStudents);
-      localStorage.setItem("students", JSON.stringify(mergedStudents));
-
-      const localCourses = JSON.parse(localStorage.getItem("coursesList")) || [];
-      setCourses(localCourses);
+    async function fetchStudents() {
+      const fromFS = await listStudent();
+      const local = JSON.parse(localStorage.getItem("students")) || [];
+      const merged = fromFS.map(f => {
+        const match = local.find(l => l.studentId === f.studentId);
+        return match ? { ...f, ...match } : f;
+      });
+      setStudents(merged);
     }
-    fetchData();
+    fetchStudents();
   }, []);
 
-  const mergeStudents = (firestoreList, localList) => {
-    return firestoreList.map(f => {
-      const match = localList.find(l => l.studentId === f.studentId);
-      return match ? { ...f, ...match } : f;
-    });
-  };
-
-  const handleAddCourse = () => {
-    if (!newCourse.courseCode || !newCourse.courseName) {
-      alert("יש למלא את כל שדות החובה");
-      return;
-    }
-
-    const exists = courses.some(c => c.courseCode === newCourse.courseCode);
-    if (exists) {
-      alert("קורס עם קוד זה כבר קיים");
-      return;
-    }
-
-    const updatedCourses = [...courses, newCourse];
-    setCourses(updatedCourses);
+  const updateLocalStorage = (updatedCourses, updatedStudents) => {
     localStorage.setItem("coursesList", JSON.stringify(updatedCourses));
-
-    setNewCourse({ courseCode: "", courseName: "", lecturer: "", year: "", semester: "", assignedStudents: [] });
-    alert("קורס נוסף בהצלחה!");
-  };
-
-  const handleStudentAssign = (courseCode, studentId) => {
-    const storedStudents = JSON.parse(localStorage.getItem("students")) || [];
-    const updatedStudents = storedStudents.map((student) => {
-      if (student.studentId === studentId) {
-        const updatedCourses = student.courses || [];
-        if (!updatedCourses.includes(courseCode)) {
-          return { ...student, courses: [...updatedCourses, courseCode] };
-        }
-      }
-      return student;
-    });
     localStorage.setItem("students", JSON.stringify(updatedStudents));
-    setStudents(updatedStudents);
+  };
 
-    const updatedCourses = courses.map((course) => {
-      if (course.courseCode === courseCode) {
-        const assigned = course.assignedStudents || [];
-        if (!assigned.includes(studentId)) {
-          return { ...course, assignedStudents: [...assigned, studentId] };
-        }
-      }
-      return course;
-    });
-    setCourses(updatedCourses);
-    localStorage.setItem("coursesList", JSON.stringify(updatedCourses));
-
-    alert("הסטודנט שויך לקורס בהצלחה!");
+  const handleEditCourse = (course) => {
+    navigate("/CourseForm", { state: { courseToEdit: course } });
   };
 
   const handleDeleteCourse = (courseCode) => {
@@ -219,28 +181,93 @@ export default function CoursesManage() {
     localStorage.setItem("coursesList", JSON.stringify(updatedCourses));
   };
 
+  const handleViewStudents = (course) => {
+    const matchedStudents = students.filter(s => (s.courses || []).includes(course.courseCode));
+    setSelectedCourse(course);
+    setSelectedCourseStudents(matchedStudents);
+    setOpenDialog(true);
+  };
+
+  const handleRemoveStudent = (studentId) => {
+    const updatedCourses = courses.map(c => {
+      if (c.courseCode === selectedCourse.courseCode) {
+        return {
+          ...c,
+          assignedStudents: (c.assignedStudents || []).filter(id => id !== studentId)
+        };
+      }
+      return c;
+    });
+
+    const updatedStudents = students.map(s => {
+      if (s.studentId === studentId) {
+        return {
+          ...s,
+          courses: (s.courses || []).filter(code => code !== selectedCourse.courseCode)
+        };
+      }
+      return s;
+    });
+
+    setCourses(updatedCourses);
+    setStudents(updatedStudents);
+    updateLocalStorage(updatedCourses, updatedStudents);
+    setSelectedCourseStudents(prev => prev.filter(s => s.studentId !== studentId));
+  };
+
+  const handleAssignStudent = () => {
+    if (!selectedCourse || !selectedStudentId) return;
+
+    const updatedCourses = courses.map(c => {
+      if (c.courseCode === selectedCourse.courseCode) {
+        const assigned = c.assignedStudents || [];
+        if (!assigned.includes(selectedStudentId)) {
+          return { ...c, assignedStudents: [...assigned, selectedStudentId] };
+        }
+      }
+      return c;
+    });
+
+    const updatedStudents = students.map(s => {
+      if (s.studentId === selectedStudentId) {
+        const updated = s.courses || [];
+        if (!updated.includes(selectedCourse.courseCode)) {
+          return { ...s, courses: [...updated, selectedCourse.courseCode] };
+        }
+      }
+      return s;
+    });
+
+    setCourses(updatedCourses);
+    setStudents(updatedStudents);
+    updateLocalStorage(updatedCourses, updatedStudents);
+    setSelectedStudentId("");
+    handleViewStudents(selectedCourse);
+  };
+
   return (
     <Box sx={{ p: 4 }}>
       <Typography variant="h4" gutterBottom>ניהול קורסים</Typography>
 
-      <Paper sx={{ p: 2, mb: 4 }}>
-        <Typography variant="h6">הוספת קורס חדש</Typography>
-        <TextField label="Course Code" fullWidth margin="normal" value={newCourse.courseCode} onChange={(e) => setNewCourse({ ...newCourse, courseCode: e.target.value })} />
-        <TextField label="Course Name" fullWidth margin="normal" value={newCourse.courseName} onChange={(e) => setNewCourse({ ...newCourse, courseName: e.target.value })} />
-        <TextField label="Lecturer" fullWidth margin="normal" value={newCourse.lecturer} onChange={(e) => setNewCourse({ ...newCourse, lecturer: e.target.value })} />
-        <TextField label="Year" fullWidth margin="normal" value={newCourse.year} onChange={(e) => setNewCourse({ ...newCourse, year: e.target.value })} />
-        <TextField label="Semester" fullWidth margin="normal" value={newCourse.semester} onChange={(e) => setNewCourse({ ...newCourse, semester: e.target.value })} />
-        <Button variant="contained" color="primary" onClick={handleAddCourse}>הוסף קורס</Button>
-      </Paper>
+      <Button
+        variant="contained"
+        color="primary"
+        sx={{ mb: 3 }}
+        onClick={() => navigate("/CourseForm")}
+      >
+        הוסף קורס חדש
+      </Button>
 
       <Typography variant="h6" gutterBottom>רשימת קורסים קיימים</Typography>
       <TableContainer component={Paper}>
         <Table>
           <TableHead>
             <TableRow>
-              <TableCell>Course Code</TableCell>
-              <TableCell>Course Name</TableCell>
-              <TableCell>שיוך סטודנט</TableCell>
+              <TableCell>קוד קורס</TableCell>
+              <TableCell>שם קורס</TableCell>
+              <TableCell>מרצה</TableCell>
+              <TableCell>שנה</TableCell>
+              <TableCell>סמסטר</TableCell>
               <TableCell>פעולות</TableCell>
             </TableRow>
           </TableHead>
@@ -249,29 +276,65 @@ export default function CoursesManage() {
               <TableRow key={course.courseCode}>
                 <TableCell>{course.courseCode}</TableCell>
                 <TableCell>{course.courseName}</TableCell>
+                <TableCell>{course.lecturer}</TableCell>
+                <TableCell>{course.year}</TableCell>
+                <TableCell>{course.semester}</TableCell>
                 <TableCell>
-                  <FormControl fullWidth>
-                    <Select
-                      value={selectedStudentsPerCourse[course.courseCode] || ""}
-                      onChange={(e) => setSelectedStudentsPerCourse({ ...selectedStudentsPerCourse, [course.courseCode]: e.target.value })}
-                      displayEmpty
-                    >
-                      <MenuItem value="" disabled>בחר סטודנט</MenuItem>
-                      {students.map((student) => (
-                        <MenuItem key={student.studentId} value={student.studentId}>{student.fullName}</MenuItem>
-                      ))}
-                    </Select>
-                    <Button sx={{ mt: 1 }} variant="outlined" onClick={() => handleStudentAssign(course.courseCode, selectedStudentsPerCourse[course.courseCode])}>שיוך</Button>
-                  </FormControl>
-                </TableCell>
-                <TableCell>
-                  <Button color="error" onClick={() => handleDeleteCourse(course.courseCode)}>🗑️ מחק</Button>
+                  <Button size="small" color="info" onClick={() => handleViewStudents(course)}>
+                    סטודנטים משויכים
+                  </Button>
+                  <Button size="small" color="secondary" onClick={() => handleEditCourse(course)}>
+                    ערוך
+                  </Button>
+                  <Button size="small" color="error" onClick={() => handleDeleteCourse(course.courseCode)}>
+                    מחק
+                  </Button>
                 </TableCell>
               </TableRow>
             ))}
           </TableBody>
         </Table>
       </TableContainer>
+
+      <Dialog open={openDialog} onClose={() => setOpenDialog(false)} maxWidth="xs" fullWidth>
+        <DialogTitle>סטודנטים משויכים לקורס</DialogTitle>
+        <DialogContent>
+          {selectedCourseStudents.length > 0 ? (
+            <List>
+              {selectedCourseStudents.map((student) => (
+                <ListItem key={student.studentId} secondaryAction={
+                  <IconButton edge="end" color="error" onClick={() => handleRemoveStudent(student.studentId)}>
+                    <DeleteIcon />
+                  </IconButton>
+                }>
+                  <ListItemText primary={`${student.fullName} (${student.studentId})`} />
+                </ListItem>
+              ))}
+            </List>
+          ) : (
+            <Typography sx={{ my: 2 }}>אין סטודנטים משויכים לקורס זה.</Typography>
+          )}
+
+          <FormControl fullWidth sx={{ mt: 2 }}>
+            <Select
+              displayEmpty
+              value={selectedStudentId}
+              onChange={(e) => setSelectedStudentId(e.target.value)}
+            >
+              <MenuItem value="" disabled>בחר סטודנט לשיוך</MenuItem>
+              {students
+                .filter(s => !(s.courses || []).includes(selectedCourse?.courseCode))
+                .map(s => (
+                  <MenuItem key={s.studentId} value={s.studentId}>{s.fullName}</MenuItem>
+                ))}
+            </Select>
+            <Button sx={{ mt: 1 }} onClick={handleAssignStudent} variant="outlined">שיוך סטודנט</Button>
+          </FormControl>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenDialog(false)} color="primary">סגור</Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }
