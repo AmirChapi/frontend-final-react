@@ -1,3 +1,5 @@
+// TaskForm.jsx - Task Entry/Edit Page Styled Consistently
+
 import React, { useState, useEffect } from "react";
 import {
   Box,
@@ -98,7 +100,6 @@ export default function TaskForm() {
       hasError = true;
     }
 
-    // בדיקת קוד מטלה קיים (רק במצב הוספה)
     if (!taskToEdit && !hasError) {
       const exists = await isTaskCodeExists(formData.taskCode);
       if (exists) {
@@ -113,18 +114,16 @@ export default function TaskForm() {
       return;
     }
 
-    try {
-      if (taskToEdit?.id) {
-        await updateTask(formData);
-      } else {
-        await addTask(formData);
-      }
-
-      setOpenSnackbar(true);
-      setTimeout(() => navigate("/TaskManage"), 1000);
-    } catch (error) {
-      console.error("Error saving task:", error);
+    if (taskToEdit && taskToEdit.id) {
+      await updateTask(formData);
+    } else {
+      await addTask(formData);
     }
+
+    setOpenSnackbar(true);
+    setTimeout(() => {
+      navigate("/TaskManage");
+    }, 1000);
   };
 
   const handleCloseSnackbar = () => setOpenSnackbar(false);
@@ -136,14 +135,14 @@ export default function TaskForm() {
   };
 
   return (
-    <Box sx={{ minHeight: "70vh", display: "flex", justifyContent: "center", alignItems: "center" }}>
-      <Paper elevation={3} sx={{ padding: 4, width: 500, borderRadius: 2 }}>
-        <Typography variant="h5" align="center" gutterBottom>
-          {taskToEdit ? "Edit Task" : "New Task Entry"}
+    <Box sx={{ padding: 4, display: 'flex', justifyContent: 'center' }}>
+      <Paper elevation={3} sx={{ padding: 4, maxWidth: 600, width: '100%' }}>
+        <Typography variant="h4" gutterBottom align="center">
+          {taskToEdit ? "Edit Task" : "Add New Task"}
         </Typography>
-        <Box component="form" onSubmit={handleSubmit} sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+
+        <Box component="form" onSubmit={handleSubmit} sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
           <TextField
-            fullWidth
             label="Task Code"
             name="taskCode"
             value={formData.taskCode}
@@ -158,9 +157,9 @@ export default function TaskForm() {
                 : ""
             }
           />
+
           <TextField
             select
-            fullWidth
             label="Course"
             name="courseCode"
             value={formData.courseCode}
@@ -177,8 +176,8 @@ export default function TaskForm() {
               </MenuItem>
             ))}
           </TextField>
+
           <TextField
-            fullWidth
             label="Task Name"
             name="taskName"
             value={formData.taskName}
@@ -186,8 +185,8 @@ export default function TaskForm() {
             error={!!errors.taskName}
             helperText={errors.taskName ? "Task name is required" : ""}
           />
+
           <TextField
-            fullWidth
             label="Submission Date"
             name="submissionDate"
             type="date"
@@ -197,8 +196,8 @@ export default function TaskForm() {
             error={!!errors.submissionDate}
             helperText={errors.submissionDate ? "Date must be today or later" : ""}
           />
+
           <TextField
-            fullWidth
             label="Task Description"
             name="taskDescription"
             multiline
@@ -208,11 +207,12 @@ export default function TaskForm() {
             error={!!errors.taskDescription}
             helperText={errors.taskDescription ? "Task description is required" : ""}
           />
-          <Box sx={{ display: "flex", justifyContent: "space-between" }}>
-            <Button variant="outlined" onClick={handleCancelClick} color="secondary">
+
+          <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+            <Button variant="outlined" color="secondary" onClick={handleCancelClick}>
               Cancel
             </Button>
-            <Button type="submit" variant="contained" color="primary">
+            <Button variant="contained" color="primary" type="submit">
               Save
             </Button>
           </Box>
