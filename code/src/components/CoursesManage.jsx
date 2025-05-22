@@ -1,3 +1,4 @@
+// CoursesManage.jsx - Course Management Page (Fixed deletion functionality)
 
 import React, { useEffect, useState } from "react";
 import {
@@ -27,7 +28,7 @@ import {
 import DeleteIcon from "@mui/icons-material/Delete";
 import { useNavigate } from "react-router-dom";
 import { listStudent, updateStudent } from "../firebase/student";
-import { listCourses, deleteCourse as deleteCourse, updateCourse } from "../firebase/course";
+import { listCourses, deleteCourse, updateCourse } from "../firebase/course";
 
 export default function CoursesManage() {
   const [courseList, setCourseList] = useState([]);
@@ -54,13 +55,15 @@ export default function CoursesManage() {
     navigate("/CourseForm", { state: { courseToEdit: courseObject } });
   }
 
-  async function deleteSelectedCourse(courseCodeToDelete) {
-    await deleteCourse(courseCodeToDelete);
-    const updatedCourseList = courseList.filter(function(course) {
-      return course.courseCode !== courseCodeToDelete;
-    });
-    setCourseList(updatedCourseList);
-  }
+const deleteSelectedCourse = async (courseId) => {
+const confirm = window.confirm("Are you sure you want to delete this course?");
+
+if (confirm) {
+  await deleteCourse(courseId);
+  const updatedCourseList = courseList.filter(course => course.id !== courseId);
+  setCourseList(updatedCourseList);
+}
+};
 
   function showCourseStudents(courseObject) {
     const matchedStudents = studentList.filter(function(student) {
@@ -72,82 +75,52 @@ export default function CoursesManage() {
     setIsDialogOpen(true);
   }
 
+  async function removeStudentFromCourse(studentIdToRemove) {
+    const updatedStudents = await Promise.all(
+      studentList.map(async function(student) {
+        if (student.studentId === studentIdToRemove) {
+          const updatedCourses = (student.courses || []).filter(function(courseCode) {
+            return courseCode !== courseToView.courseCode;
+          });
+          const updatedStudentObject = {
+            ...student,
+            courses: updatedCourses
+          };
+          await updateStudent(updatedStudentObject);
+          return updatedStudentObject;
+        } else {
+          return student;
+        }
+      })
+    );
 
-// פונקציה שמסירה סטודנט מקורס מסוים
-async function removeStudentFromCourse(studentIdToRemove) {
-  // יצירת רשימה חדשה שתכיל את הסטודנטים לאחר העדכון
-  const updatedStudents = studentList.map(async function(student) {
+    setStudentList(updatedStudents);
 
-    // בדיקה אם זה הסטודנט שצריך להסיר מהקורס
-    if (student.studentId === studentIdToRemove) {
+    const updatedCourseStudents = studentsInCourse.filter(function(student) {
+      return student.studentId !== studentIdToRemove;
+    });
+    setStudentsInCourse(updatedCourseStudents);
+  }
 
-      // מקבל את רשימת הקורסים של הסטודנט (אם קיימת), ומסנן ממנה את הקורס הנוכחי
-      const updatedCourses = (student.courses || []).filter(function(courseCode) {
-        return courseCode !== courseToView.courseCode;
-      });
-
-      // יצירת אובייקט חדש של הסטודנט עם רשימת הקורסים החדשה (בלי הקורס שהוסר)
-      const updatedStudentObject = {
-        ...student,
-        courses: updatedCourses
-      };
-
-      // עדכון הסטודנט במסד הנתונים (Firestore)
-      await updateStudent(updatedStudentObject);
-
-      // החזרת הסטודנט המעודכן לרשימה
-      return updatedStudentObject;
-
-    } else {
-      // אם זה לא הסטודנט שאנחנו מסירים – נחזיר אותו כמו שהוא
-      return student;
-    }
-  });
-
-  // עדכון רשימת כל הסטודנטים ב-state עם הרשימה החדשה
-  setStudentList(updatedStudents);
-
-  // יצירת רשימה חדשה של סטודנטים בקורס הנוכחי – בלי הסטודנט שהוסר
-  const updatedCourseStudents = studentsInCourse.filter(function(student) {
-    return student.studentId !== studentIdToRemove;
-  });
-
-  // עדכון רשימת הסטודנטים של הקורס הנבחר בדיאלוג
-  setStudentsInCourse(updatedCourseStudents);
-}
-
-
-  async function assignStudentToCourse() { // זו פונקציה אסינכרונית שמבצעת את שיוך הסטודנט לקורס הנבחר.
-
-    if (!courseToView || studentIdToAssign === "") return; //אם אין קורס שנבחר לצפייה (courseToView) או שלא נבחר סטודנט – הפונקציה לא ממשיכה
+  async function assignStudentToCourse() {
+    if (!courseToView || studentIdToAssign === "") return;
 
     const selectedStudent = studentList.find(function(student) {
       return student.studentId === studentIdToAssign;
-    }); //מחפש את הסטודנט מתוך רשימת כל הסטודנטים לפי המספר מזהה (studentId) שנבחר.
+    });
 
-    if (!selectedStudent) return; // אם לא נמצא סטודנט מתאים – מפסיקים את הפעולה.
+    if (!selectedStudent) return;
 
-    //לוקחים את כל הקורסים של אותו סטודנט (או מערך ריק אם אין לו עדיין) ומוסיפים אליהם את הקורס שנבחר לצפייה.
     const updatedCourses = [...(selectedStudent.courses || []), courseToView.courseCode];
-
-    //יוצרים אובייקט חדש של הסטודנט עם רשימת הקורסים המעודכנת.
     const updatedStudent = { ...selectedStudent, courses: updatedCourses };
+    await updateStudent(updatedStudent);
 
-    await updateStudent(updatedStudent); // מעדכנים את המידע הזה בפועל במסד הנתונים (Firestore).
-
-
-//מעדכנים את הרשימה המקומית (studentList) – מחליפים את הסטודנט הישן בחדש, וכל השאר נשארים כפי שהם.
     const updatedList = studentList.map(function(student) {
       return student.studentId === updatedStudent.studentId ? updatedStudent : student;
     });
-    
-    setStudentList(updatedList); //📥 שמים את הרשימה החדשה ב־useState של studentList.
-
-    showCourseStudents(courseToView);//👁️ מרעננים את הרשימה של הסטודנטים שמוצגים בדיאלוג לפי הקורס.
-
-    setStudentIdToAssign("");//🔄 מאפסים את השדה של בחירת סטודנט – כך שהשדה יחזור לריק.
-
-
+    setStudentList(updatedList);
+    showCourseStudents(courseToView);
+    setStudentIdToAssign("");
   }
 
   if (loading) {
@@ -184,7 +157,7 @@ async function removeStudentFromCourse(studentIdToRemove) {
           <TableBody>
             {courseList.map(function(courseItem) {
               return (
-                <TableRow key={courseItem.courseCode}>
+                <TableRow key={courseItem.id}>
                   <TableCell>{courseItem.courseCode}</TableCell>
                   <TableCell>{courseItem.courseName}</TableCell>
                   <TableCell>{courseItem.lecturer}</TableCell>
@@ -197,7 +170,7 @@ async function removeStudentFromCourse(studentIdToRemove) {
                     <Button size="small" color="secondary" onClick={() => goToEditCourse(courseItem)}>
                       Edit
                     </Button>
-                    <Button size="small" color="error" onClick={() => deleteSelectedCourse(courseItem.courseCode)}>
+                    <Button size="small" color="error" onClick={() => deleteSelectedCourse(courseItem.id)}>
                       Delete
                     </Button>
                   </TableCell>
@@ -260,4 +233,3 @@ async function removeStudentFromCourse(studentIdToRemove) {
     </Box>
   );
 }
-

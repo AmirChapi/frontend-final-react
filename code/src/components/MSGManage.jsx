@@ -1,3 +1,5 @@
+// MessagesManage.jsx - Message Management Page (Styled to match other admin pages)
+
 import React, { useEffect, useState } from "react";
 import {
   Box,
@@ -69,28 +71,32 @@ export default function MessagesManage() {
   };
 
   return (
-    <Box sx={{ p: 4 }}>
-      <Typography variant="h5" gutterBottom>
-        ניהול הודעות
+    <Box sx={{ padding: 4 }}>
+      <Typography variant="h4" gutterBottom>
+        Message Management
       </Typography>
 
-      <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 2 }}>
-        <Button variant="contained" onClick={handleAdd}>
-          הוסף הודעה חדשה
+      <Box sx={{ mb: 3, display: "flex", justifyContent: "flex-start" }}>
+        <Button variant="contained" color="primary" onClick={handleAdd}>
+          Add New Message
         </Button>
       </Box>
 
+      <Typography variant="h6" gutterBottom>
+        Existing Messages
+      </Typography>
+
       <TableContainer component={Paper}>
         <Table>
-          <TableHead sx={{ backgroundColor: "#1976d2" }}>
+          <TableHead>
             <TableRow>
-              <TableCell sx={{ color: "white", fontWeight: "bold" }}>תוכן</TableCell>
-              <TableCell sx={{ color: "white", fontWeight: "bold" }}>קוד קורס</TableCell>
-              <TableCell sx={{ color: "white", fontWeight: "bold" }}>שם קורס</TableCell>
-              <TableCell sx={{ color: "white", fontWeight: "bold" }}>קוד מטלה</TableCell>
-              <TableCell sx={{ color: "white", fontWeight: "bold" }}>שם מטלה</TableCell>
-              <TableCell sx={{ color: "white", fontWeight: "bold" }}>ת"ז סטודנט (אם יש)</TableCell>
-              <TableCell sx={{ color: "white", fontWeight: "bold" }} align="center">פעולות</TableCell>
+              <TableCell sx={{ fontWeight: "bold" }}>Content</TableCell>
+              <TableCell sx={{ fontWeight: "bold" }}>Course Code</TableCell>
+              <TableCell sx={{ fontWeight: "bold" }}>Course Name</TableCell>
+              <TableCell sx={{ fontWeight: "bold" }}>Task Code</TableCell>
+              <TableCell sx={{ fontWeight: "bold" }}>Task Name</TableCell>
+              <TableCell sx={{ fontWeight: "bold" }}>Student ID</TableCell>
+              <TableCell sx={{ fontWeight: "bold", textAlign: "center" }}>Actions</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -118,7 +124,7 @@ export default function MessagesManage() {
             ) : (
               <TableRow>
                 <TableCell colSpan={7} align="center">
-                  אין הודעות להצגה.
+                  No messages to display.
                 </TableCell>
               </TableRow>
             )}
