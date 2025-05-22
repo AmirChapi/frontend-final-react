@@ -8,6 +8,7 @@ import {
   Snackbar,
   Alert,
   Stack,
+  FormControl, InputLabel, Select, MenuItem
 } from "@mui/material";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
@@ -42,61 +43,102 @@ export default function CourseForm() {
     }
   }, [courseToEdit]);
 
-  const validate = () => {
-    const newErrors = {};
-    if (!formData.courseCode.trim()) newErrors.courseCode = "Course code is required";
-    if (!formData.courseName.trim()) newErrors.courseName = "Course name is required";
-    if (!formData.lecturer.trim()) newErrors.lecturer = "Lecturer is required";
-    if (!formData.semester.trim()) newErrors.semester = "Semester is required";
-    if (!formData.year || isNaN(formData.year)) newErrors.year = "Year must be a number";
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
+  function validate() {
+    const errors = {};
+
+    if (formData.courseCode === "" || formData.courseCode === " ") {
+      errors.courseCode = "Course code is required";
+    }
+
+    if (formData.courseName === "" || formData.courseName === " ") {
+      errors.courseName = "Course name is required";
+    }
+
+    if (formData.lecturer === "" || formData.lecturer === " ") {
+      errors.lecturer = "Lecturer is required";
+    }
+
+    if (formData.semester === "" || formData.semester === " ") {
+      errors.semester = "Semester is required";
+    }
+
+    if (formData.year === "") {
+      errors.year = "Year is required";
+    } else if (isNaN(formData.year)) {
+      errors.year = "Year must be a number";
+    } else {
+      const numericYear = Number(formData.year);
+      if (numericYear < 2023 || numericYear > 2030) {
+        errors.year = "Year must be between 2023 and 2030";
+      }
+    }
+
+    setErrors(errors);
+
+    if (
+      errors.courseCode ||
+      errors.courseName ||
+      errors.lecturer ||
+      errors.semester ||
+      errors.year
+    ) {
+      return false;
+    }
+
+    return true;
+  }
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!validate()) return;
 
-    try {
-      if (!formData.id) {
-        const exists = await isCourseCodeExists(formData.courseCode);
-        if (exists) {
-          setErrors((prev) => ({
-            ...prev,
-            courseCode: "Course code already exists",
-          }));
-          return;
-        }
-        await addCourse(formData);
-        setSnackbar({
-          open: true,
-          message: "Course added successfully",
-          severity: "success",
-        });
-      } else {
-        await updateCourse(formData);
-        setSnackbar({
-          open: true,
-          message: "Course updated successfully",
-          severity: "success",
-        });
+  async function handleSubmit(event) {
+  event.preventDefault(); // עצור את הרענון
+  // עכשיו תמשיך עם מה שאתה רוצה לעשות בעצמך..
+
+    const isValid = validate(); // קורא לפונקציית בדיקת תקינות
+    if (!isValid) {
+      return;
+    }
+
+    const isEditMode = formData.id !== undefined && formData.id !== null;
+
+    if (!isEditMode) {
+      const courseAlreadyExists = await isCourseCodeExists(formData.courseCode);
+
+      if (courseAlreadyExists) {
+        const updatedErrors = {
+          courseCode: "Course code already exists"
+        };
+        setErrors(updatedErrors);
+        return;
       }
 
-      setTimeout(() => navigate("/coursesManage"), 1000);
-    } catch (error) {
-      console.error("Error saving course:", error);
+      await addCourse(formData);
+
       setSnackbar({
         open: true,
-        message: "Error saving course",
-        severity: "error",
+        message: "Course added successfully",
+        severity: "success"
+      });
+
+    } else {
+      await updateCourse(formData);
+
+      setSnackbar({
+        open: true,
+        message: "Course updated successfully",
+        severity: "success"
       });
     }
-  };
+
+    setTimeout(function () {
+      navigate("/coursesManage");
+    }, 1000);
+  }
+
 
   const handleCancel = () => {
     navigate("/coursesManage");
@@ -139,16 +181,27 @@ export default function CourseForm() {
           fullWidth
           margin="normal"
         />
-        <TextField
-          name="semester"
-          label="Semester"
-          value={formData.semester}
-          onChange={handleChange}
-          error={!!errors.semester}
-          helperText={errors.semester}
-          fullWidth
-          margin="normal"
-        />
+
+        <FormControl fullWidth margin="normal" error={!!errors.semester}>
+          <InputLabel id="semester-label">Semester</InputLabel>
+          <Select
+            labelId="semester-label"
+            name="semester"
+            value={formData.semester}
+            label="Semester"
+            onChange={handleChange}
+          >
+            <MenuItem value=""><em>בחר סמסטר</em></MenuItem>
+            <MenuItem value="A">A</MenuItem>
+            <MenuItem value="B">B</MenuItem>
+            <MenuItem value="C">C</MenuItem>
+          </Select>
+          {errors.semester && (
+            <Typography variant="caption" color="error">
+              {errors.semester}
+            </Typography>
+          )}
+        </FormControl>
         <TextField
           name="year"
           label="Year"
@@ -186,4 +239,3 @@ export default function CourseForm() {
     </Box>
   );
 }
-

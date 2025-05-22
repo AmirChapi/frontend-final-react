@@ -27,11 +27,10 @@ export async function updateCourse(course) {
 }
 
 // ❌ מחיקת קורס לפי מזהה (id)
-export async function deleteCourse(courseId) {
-  const courseRef = doc(firestore, "courses", courseId);
-  return deleteDoc(courseRef);
+export async function deleteCourse(courseCode) {
+  const courseRef = doc(firestore, "courses", courseCode);
+  await deleteDoc(courseRef);
 }
-
 // 🔍 בדיקה אם קוד קורס קיים (למניעת כפילויות)
 export async function isCourseCodeExists(courseCode) {
   const snapshot = await getDocs(collection(firestore, "courses"));
