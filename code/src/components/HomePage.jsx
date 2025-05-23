@@ -1,3 +1,5 @@
+// HomePage.jsx - Student Dashboard - מציג את כל ההודעות בצורה פשוטה וברורה
+
 import React, { useEffect, useState } from "react";
 import {
   Box,
@@ -8,7 +10,6 @@ import {
   FormControl,
   Paper,
   Divider,
-  Button,
   LinearProgress
 } from "@mui/material";
 
@@ -16,47 +17,41 @@ import { listStudent } from "../firebase/student";
 import { listCourses } from "../firebase/course";
 import { listTasks } from "../firebase/task";
 import { listGrades } from "../firebase/grade";
-import { listMessages } from "../firebase/message"; // תוודא שהקובץ הזה קיים!
+import { listMessages } from "../firebase/message";
 
 export default function HomePage() {
-  const [students, setStudents] = useState([]);
-  const [selectedStudentId, setSelectedStudentId] = useState("");
-  const [studentInfo, setStudentInfo] = useState(null);
+  const [students, setStudents] = useState([]); // רשימת כל הסטודנטים
+  const [selectedStudentId, setSelectedStudentId] = useState(""); // מזהה הסטודנט הנבחר
+  const [studentInfo, setStudentInfo] = useState(null); // פרטי הסטודנט הנבחר
   const [courses, setCourses] = useState([]);
   const [grades, setGrades] = useState([]);
   const [tasks, setTasks] = useState([]);
   const [messages, setMessages] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true); // מצב טעינה
 
-  // שליפת כל הנתונים מ-Firestore
+  // טוען את כל הנתונים מ-Firestore כשהדף נטען
   useEffect(() => {
     async function fetchAll() {
-      try {
-        const [studentsData, coursesData, tasksData, gradesData, messagesData] =
-          await Promise.all([
-            listStudent(),
-            listCourses(),
-            listTasks(),
-            listGrades(),
-            listMessages(),
-          ]);
+      const [studentsData, coursesData, tasksData, gradesData, messagesData] = await Promise.all([
+        listStudent(),
+        listCourses(),
+        listTasks(),
+        listGrades(),
+        listMessages(),
+      ]);
 
-        setStudents(studentsData);
-        setCourses(coursesData);
-        setTasks(tasksData);
-        setGrades(gradesData);
-        setMessages(messagesData);
-        setIsLoading(false);
-      } catch (err) {
-        console.error("Error fetching data:", err);
-        setIsLoading(false);
-      }
+      setStudents(studentsData);
+      setCourses(coursesData);
+      setTasks(tasksData);
+      setGrades(gradesData);
+      setMessages(messagesData);
+      setIsLoading(false);
     }
 
     fetchAll();
   }, []);
 
-  // עדכון סטודנט נבחר ומידע משויך
+  // מחשב את המידע של הסטודנט שנבחר
   useEffect(() => {
     if (!selectedStudentId || students.length === 0) return;
 
@@ -69,32 +64,23 @@ export default function HomePage() {
     const studentGrades = grades.filter((g) => g.idNumber === selectedStudentId);
 
     const studentMessages = messages.filter((m) => {
-      const taskMatch = m.assignmentCode
-        ? studentTasks.some((t) => t.taskCode === m.assignmentCode)
-        : true;
-      const courseMatch = m.courseCode
-        ? courseCodes.includes(m.courseCode)
-        : true;
+      const taskMatch = m.assignmentCode ? studentTasks.some((t) => t.taskCode === m.assignmentCode) : true;
+      const courseMatch = m.courseCode ? courseCodes.includes(m.courseCode) : true;
       const studentMatch = !m.studentId || m.studentId === selectedStudentId;
       return taskMatch && courseMatch && studentMatch;
     });
+
+    // ממיין את ההודעות כך שהאחרונה תופיע ראשונה
+    const sortedMessages = [...studentMessages].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
 
     setStudentInfo({
       ...student,
       courses: studentCourses,
       grades: studentGrades,
       tasks: studentTasks,
-      messages: studentMessages,
+      messages: sortedMessages,
     });
   }, [selectedStudentId, students, courses, tasks, grades, messages]);
-
-  const handleMarkMessageAsRead = (index) => {
-    setStudentInfo((prev) => {
-      const updatedMessages = [...prev.messages];
-      updatedMessages.splice(index, 1);
-      return { ...prev, messages: updatedMessages };
-    });
-  };
 
   if (isLoading) return <LinearProgress />;
 
@@ -173,9 +159,6 @@ export default function HomePage() {
                     {task ? ` | Task: ${task.taskName}` : ""}
                   </Typography>
                   <Typography sx={{ mb: 1 }}>{m.messageContent}</Typography>
-                  <Button variant="outlined" color="secondary" size="small" onClick={() => handleMarkMessageAsRead(i)}>
-                    נקרא
-                  </Button>
                 </Box>
               );
             })
