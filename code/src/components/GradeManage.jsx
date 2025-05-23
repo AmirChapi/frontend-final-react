@@ -1,4 +1,4 @@
-// GradesManage.jsx - Grade Management Page (Styled to match other admin pages)
+// GradesManage.jsx - Simple Grade Management Page
 
 import React, { useEffect, useState } from "react";
 import {
@@ -14,11 +14,6 @@ import {
   Paper,
   IconButton,
   Stack,
-  FormControl,
-  Select,
-  MenuItem,
-  Snackbar,
-  Alert,
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import EditIcon from "@mui/icons-material/Edit";
@@ -27,14 +22,11 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import { listGrades, deleteGrade } from "../firebase/grade";
 import { listStudent } from "../firebase/student";
 import { listTasks } from "../firebase/task";
-import { addMessage } from "../firebase/message";
 
 export default function GradesManage() {
   const [grades, setGrades] = useState([]);
   const [students, setStudents] = useState([]);
   const [tasks, setTasks] = useState([]);
-  const [selectedTaskCode, setSelectedTaskCode] = useState("");
-  const [snackbarOpen, setSnackbarOpen] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -78,56 +70,15 @@ export default function GradesManage() {
     return task ? task.taskName : taskCode;
   };
 
-  const handleDistributeGrades = async () => {
-    const gradesForTask = grades.filter((g) => g.taskCode === selectedTaskCode);
-    const task = tasks.find((t) => t.taskCode === selectedTaskCode);
-    const taskName = task ? task.taskName : selectedTaskCode;
-
-    for (let i = 0; i < gradesForTask.length; i++) {
-      const grade = gradesForTask[i];
-      await addMessage({
-        messageCode: `${grade.idNumber}_${grade.taskCode}`,
-        messageContent: `Your grade for "${taskName}" (${grade.taskCode}) is ${grade.taskGrade}.`,
-        courseCode: task?.courseCode || "",
-        assignmentCode: grade.taskCode,
-        studentId: grade.idNumber,
-      });
-    }
-    setSnackbarOpen(true);
-  };
-
   return (
     <Box sx={{ padding: 4 }}>
       <Typography variant="h4" gutterBottom>
         Grade Management
       </Typography>
 
-      <Box sx={{ mb: 3, display: "flex", gap: 2, flexWrap: "wrap" }}>
+      <Box sx={{ mb: 3, display: "flex", justifyContent: "flex-start" }}>
         <Button variant="contained" color="primary" onClick={handleAddGrade}>
           Add New Grade
-        </Button>
-
-        <FormControl size="small" sx={{ minWidth: 200 }}>
-          <Select
-            value={selectedTaskCode}
-            displayEmpty
-            onChange={(e) => setSelectedTaskCode(e.target.value)}
-          >
-            <MenuItem value="" disabled>Select task to distribute grades</MenuItem>
-            {tasks.map((task) => (
-              <MenuItem key={task.taskCode} value={task.taskCode}>
-                {task.taskCode} - {task.taskName}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-
-        <Button
-          variant="outlined"
-          disabled={!selectedTaskCode}
-          onClick={handleDistributeGrades}
-        >
-          Distribute Grades
         </Button>
       </Box>
 
@@ -178,16 +129,6 @@ export default function GradesManage() {
           </TableBody>
         </Table>
       </TableContainer>
-
-      <Snackbar
-        open={snackbarOpen}
-        autoHideDuration={3000}
-        onClose={() => setSnackbarOpen(false)}
-      >
-        <Alert severity="success" sx={{ width: "100%" }}>
-          Grades distributed successfully!
-        </Alert>
-      </Snackbar>
     </Box>
   );
 }
