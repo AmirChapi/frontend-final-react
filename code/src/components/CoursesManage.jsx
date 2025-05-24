@@ -1,4 +1,4 @@
-// CoursesManage.jsx - Course Management Page (Fixed deletion functionality)
+// CoursesManage.jsx - Course Management Page (עם שיפורי כפתורים)
 
 import React, { useEffect, useState } from "react";
 import {
@@ -25,10 +25,15 @@ import {
   Select,
   LinearProgress
 } from "@mui/material";
+
+// ✅ הוספתי את האייקונים של MUI במקום מלל בפעולות
 import DeleteIcon from "@mui/icons-material/Delete";
+import EditIcon from "@mui/icons-material/Edit";
+import VisibilityIcon from "@mui/icons-material/Visibility";
+
 import { useNavigate } from "react-router-dom";
 import { listStudent, updateStudent } from "../firebase/student";
-import { listCourses, deleteCourse, updateCourse } from "../firebase/course";
+import { listCourses, deleteCourse } from "../firebase/course";
 
 export default function CoursesManage() {
   const [courseList, setCourseList] = useState([]);
@@ -55,15 +60,14 @@ export default function CoursesManage() {
     navigate("/CourseForm", { state: { courseToEdit: courseObject } });
   }
 
-const deleteSelectedCourse = async (courseId) => {
-const confirm = window.confirm("Are you sure you want to delete this course?");
-
-if (confirm) {
-  await deleteCourse(courseId);
-  const updatedCourseList = courseList.filter(course => course.id !== courseId);
-  setCourseList(updatedCourseList);
-}
-};
+  const deleteSelectedCourse = async (courseId) => {
+    const confirm = window.confirm("Are you sure you want to delete this course?");
+    if (confirm) {
+      await deleteCourse(courseId);
+      const updatedCourseList = courseList.filter(course => course.id !== courseId);
+      setCourseList(updatedCourseList);
+    }
+  };
 
   function showCourseStudents(courseObject) {
     const matchedStudents = studentList.filter(function(student) {
@@ -163,16 +167,18 @@ if (confirm) {
                   <TableCell>{courseItem.lecturer}</TableCell>
                   <TableCell>{courseItem.year}</TableCell>
                   <TableCell>{courseItem.semester}</TableCell>
+
+                  {/* ✅ שינוי: כפתורים עם אייקונים בלבד במקום מלל */}
                   <TableCell>
-                    <Button size="small" color="info" onClick={() => showCourseStudents(courseItem)}>
-                      View Students
-                    </Button>
-                    <Button size="small" color="secondary" onClick={() => goToEditCourse(courseItem)}>
-                      Edit
-                    </Button>
-                    <Button size="small" color="error" onClick={() => deleteSelectedCourse(courseItem.id)}>
-                      Delete
-                    </Button>
+                    <IconButton color="info" onClick={() => showCourseStudents(courseItem)}>
+                      <VisibilityIcon />
+                    </IconButton>
+                    <IconButton color="secondary" onClick={() => goToEditCourse(courseItem)}>
+                      <EditIcon />
+                    </IconButton>
+                    <IconButton color="error" onClick={() => deleteSelectedCourse(courseItem.id)}>
+                      <DeleteIcon />
+                    </IconButton>
                   </TableCell>
                 </TableRow>
               );

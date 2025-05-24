@@ -8,13 +8,16 @@ import {
   Snackbar,
   Alert,
   Stack,
-  FormControl, InputLabel, Select, MenuItem
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem
 } from "@mui/material";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
   addCourse,
   updateCourse,
-  isCourseCodeExists,
+  listCourses
 } from "../firebase/course";
 
 export default function CourseForm() {
@@ -37,6 +40,17 @@ export default function CourseForm() {
     severity: "success",
   });
 
+  // ✅ שינוי: טוען את כל הקורסים לבדיקה של כפילויות
+  const [allCourses, setAllCourses] = useState([]);
+
+  useEffect(() => {
+    async function loadCourses() {
+      const courses = await listCourses();
+      setAllCourses(courses);
+    }
+    loadCourses();
+  }, []);
+
   useEffect(() => {
     if (courseToEdit) {
       setFormData(courseToEdit);
@@ -46,19 +60,19 @@ export default function CourseForm() {
   function validate() {
     const errors = {};
 
-    if (formData.courseCode === "" || formData.courseCode === " ") {
+    if (formData.courseCode.trim() === "") {
       errors.courseCode = "Course code is required";
     }
 
-    if (formData.courseName === "" || formData.courseName === " ") {
+    if (formData.courseName.trim() === "") {
       errors.courseName = "Course name is required";
     }
 
-    if (formData.lecturer === "" || formData.lecturer === " ") {
+    if (formData.lecturer.trim() === "") {
       errors.lecturer = "Lecturer is required";
     }
 
-    if (formData.semester === "" || formData.semester === " ") {
+    if (formData.semester.trim() === "") {
       errors.semester = "Semester is required";
     }
 
@@ -74,59 +88,69 @@ export default function CourseForm() {
     }
 
     setErrors(errors);
-
-    if (
-      errors.courseCode ||
-      errors.courseName ||
-      errors.lecturer ||
-      errors.semester ||
-      errors.year
-    ) {
-      return false;
-    }
-
-    return true;
+    return Object.keys(errors).length === 0;
   }
 
+  // ✅ שינוי: מנקה שגיאה לשדה הספציפי כשמשתמשת מקלידה בו
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value
+    }));
+
+    setErrors((prev) => ({
+      ...prev,
+      [name]: ""
+    }));
   };
 
-
+  // ✅ שינוי: בדיקת שגיאות כפילויות כולל Course Code במצב הוספה בלבד
   async function handleSubmit(event) {
-  event.preventDefault(); // עצור את הרענון
-  // עכשיו תמשיך עם מה שאתה רוצה לעשות בעצמך..
+    event.preventDefault();
 
-    const isValid = validate(); // קורא לפונקציית בדיקת תקינות
-    if (!isValid) {
-      return;
-    }
+    const isValid = validate();
+    if (!isValid) return;
 
     const isEditMode = formData.id !== undefined && formData.id !== null;
 
-    if (!isEditMode) {
-      const courseAlreadyExists = await isCourseCodeExists(formData.courseCode);
+    let duplicateErrors = {};
 
-      if (courseAlreadyExists) {
-        const updatedErrors = {
-          courseCode: "Course code already exists"
-        };
-        setErrors(updatedErrors);
-        return;
+    allCourses.forEach((course) => {
+      const isSameId = course.id === formData.id;
+      const isSameName = course.courseName.trim().toLowerCase() === formData.courseName.trim().toLowerCase();
+      const isSameCode = course.courseCode === formData.courseCode;
+      const isSameSemester = course.semester === formData.semester;
+      const isSameLecturer = course.lecturer.trim().toLowerCase() === formData.lecturer.trim().toLowerCase();
+
+      if (!isSameId) {
+        if (isSameName && isSameCode && isSameSemester) {
+          duplicateErrors.courseName = "Course with this name already exists in the same semester and code";
+        }
+        if (isSameName && isSameLecturer) {
+          duplicateErrors.lecturer = "This lecturer is already assigned to a course with this name";
+        }
+        if (!isEditMode && isSameCode) {
+          duplicateErrors.courseCode = "Course code already exists";
+        }
       }
+    });
 
+    if (Object.keys(duplicateErrors).length > 0) {
+      setErrors((prev) => ({ ...prev, ...duplicateErrors }));
+      return;
+    }
+
+    if (!isEditMode) {
       await addCourse(formData);
-
       setSnackbar({
         open: true,
         message: "Course added successfully",
         severity: "success"
       });
-
     } else {
       await updateCourse(formData);
-
       setSnackbar({
         open: true,
         message: "Course updated successfully",
@@ -134,11 +158,10 @@ export default function CourseForm() {
       });
     }
 
-    setTimeout(function () {
+    setTimeout(() => {
       navigate("/coursesManage");
     }, 1000);
   }
-
 
   const handleCancel = () => {
     navigate("/coursesManage");
@@ -149,6 +172,7 @@ export default function CourseForm() {
       <Typography variant="h5" gutterBottom>
         {courseToEdit ? "Edit Course" : "Add Course"}
       </Typography>
+
       <form onSubmit={handleSubmit}>
         <TextField
           name="courseCode"
@@ -159,8 +183,9 @@ export default function CourseForm() {
           helperText={errors.courseCode}
           fullWidth
           margin="normal"
-          disabled={!!formData.id} // למנוע שינוי קוד בקורס קיים
+          disabled={!!formData.id} // 🔒 נעול במצב עריכה
         />
+
         <TextField
           name="courseName"
           label="Course Name"
@@ -170,7 +195,9 @@ export default function CourseForm() {
           helperText={errors.courseName}
           fullWidth
           margin="normal"
+          disabled={!!formData.id} // 🔒 נעול במצב עריכה
         />
+
         <TextField
           name="lecturer"
           label="Lecturer"
@@ -202,6 +229,7 @@ export default function CourseForm() {
             </Typography>
           )}
         </FormControl>
+
         <TextField
           name="year"
           label="Year"

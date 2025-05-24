@@ -26,13 +26,20 @@ export async function updateCourse(course) {
   return updateDoc(courseRef, data);
 }
 
-// ❌ מחיקת קורס לפי מזהה (id)
-export async function deleteCourse(courseCode) {
-  const courseRef = doc(firestore, "courses", courseCode);
+// ✅ שינוי: מחיקת קורס לפי מזהה אמיתי (id) במקום courseCode
+export async function deleteCourse(courseId) {
+  const courseRef = doc(firestore, "courses", courseId);
   await deleteDoc(courseRef);
 }
-// 🔍 בדיקה אם קוד קורס קיים (למניעת כפילויות)
-export async function isCourseCodeExists(courseCode) {
+
+// ✅ שינוי: בדיקה אם קוד קורס קיים, תוך התחשבות במצב עריכה (excludeId)
+export async function isCourseCodeExists(courseCode, excludeId = null) {
   const snapshot = await getDocs(collection(firestore, "courses"));
-  return snapshot.docs.some((doc) => doc.data().courseCode === courseCode);
+  return snapshot.docs.some((doc) => {
+    const data = doc.data();
+    return (
+      data.courseCode === courseCode &&
+      doc.id !== excludeId // מתעלמים מהקורס הנוכחי (בעת עריכה)
+    );
+  });
 }
