@@ -1,4 +1,4 @@
-// GradesManage.jsx - Simple Grade Management Page
+// GradesManage.jsx - Grade Management Page (Filtered by Task Code from Message)
 
 import React, { useEffect, useState } from "react";
 import {
@@ -15,7 +15,7 @@ import {
   IconButton,
   Stack,
 } from "@mui/material";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 
@@ -24,10 +24,11 @@ import { listStudent } from "../firebase/student";
 import { listTasks } from "../firebase/task";
 
 export default function GradesManage() {
-  const [grades, setGrades] = useState([]);
-  const [students, setStudents] = useState([]);
-  const [tasks, setTasks] = useState([]);
-  const navigate = useNavigate();
+  const [grades, setGrades] = useState([]); // ציונים לסינון והצגה
+  const [students, setStudents] = useState([]); // כל הסטודנטים
+  const [tasks, setTasks] = useState([]); // כל המטלות
+  const navigate = useNavigate(); // מאפשר ניווט לעמודים
+  const location = useLocation(); // משמש לקריאת state מניווט קודם
 
   useEffect(() => {
     async function fetchData() {
@@ -36,13 +37,29 @@ export default function GradesManage() {
         listStudent(),
         listTasks(),
       ]);
-      setGrades(gradesData);
+
+      const selectedStudent = JSON.parse(localStorage.getItem("selectedStudent"));
+      const taskCodeToFilter = location.state?.filterTaskCode || null; // אם עברנו מדף ההודעות, יהיה כאן קוד מטלה
+
+      let filteredGrades = gradesData;
+
+      // אם יש סטודנט נבחר - מסננים רק את הציונים שלו
+      if (selectedStudent) {
+        filteredGrades = filteredGrades.filter(g => g.idNumber === selectedStudent.studentId);
+      }
+
+      // אם עברנו מקוד מטלה ספציפי - נסנן עוד יותר לפי קוד המטלה
+      if (taskCodeToFilter) {
+        filteredGrades = filteredGrades.filter(g => g.taskCode === taskCodeToFilter);
+      }
+
+      setGrades(filteredGrades);
       setStudents(studentsData);
       setTasks(tasksData);
     }
 
     fetchData();
-  }, []);
+  }, [location.state]); // מריץ שוב את הקוד אם location.state משתנה
 
   const handleAddGrade = () => {
     navigate("/GradeForm");
