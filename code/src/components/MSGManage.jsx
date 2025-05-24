@@ -14,6 +14,7 @@ import {
   Paper,
   IconButton,
   Stack,
+  LinearProgress,
 } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -28,6 +29,8 @@ export default function MessagesManage() {
   const [messages, setMessages] = useState([]); // הודעות להצגה בטבלה
   const [courses, setCourses] = useState([]); // קורסים להצגת שמות קורסים
   const [tasks, setTasks] = useState([]); // מטלות להצגת שמות מטלות
+    const [loading, setLoading] = useState(true);
+
   const navigate = useNavigate(); // הפונקציה שתאפשר לנו לנווט לעמודים אחרים
 
   useEffect(() => {
@@ -58,6 +61,7 @@ export default function MessagesManage() {
 
       setCourses(crs); // שמירת הקורסים בסטייט
       setTasks(tks); // שמירת המטלות בסטייט
+      setLoading(false);
     }
 
     fetchData();
@@ -99,6 +103,10 @@ export default function MessagesManage() {
     navigate("/GradeManage", { state: { filterTaskCode: taskCode } });
   };
 
+
+    if (loading) {
+    return <LinearProgress />;
+  }
   return (
     <Box sx={{ padding: 4 }}>
       <Typography variant="h4" gutterBottom>

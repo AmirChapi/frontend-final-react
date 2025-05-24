@@ -14,6 +14,7 @@ import {
   Paper,
   IconButton,
   Stack,
+  LinearProgress,
 } from "@mui/material";
 import { useNavigate, useLocation } from "react-router-dom";
 import EditIcon from "@mui/icons-material/Edit";
@@ -28,6 +29,8 @@ export default function GradesManage() {
   const [students, setStudents] = useState([]); // כל הסטודנטים
   const [tasks, setTasks] = useState([]); // כל המטלות
   const navigate = useNavigate(); // מאפשר ניווט לעמודים
+    const [loading, setLoading] = useState(true);
+
   const location = useLocation(); // משמש לקריאת state מניווט קודם
 
   useEffect(() => {
@@ -36,6 +39,8 @@ export default function GradesManage() {
         listGrades(),
         listStudent(),
         listTasks(),
+              
+
       ]);
 
       const selectedStudent = JSON.parse(localStorage.getItem("selectedStudent"));
@@ -56,6 +61,7 @@ export default function GradesManage() {
       setGrades(filteredGrades);
       setStudents(studentsData);
       setTasks(tasksData);
+      setLoading(false);
     }
 
     fetchData();
@@ -87,6 +93,9 @@ export default function GradesManage() {
     return task ? task.taskName : taskCode;
   };
 
+    if (loading) {
+    return <LinearProgress />;
+  }
   return (
     <Box sx={{ padding: 4 }}>
       <Typography variant="h4" gutterBottom>

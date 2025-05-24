@@ -14,6 +14,7 @@ import {
   Typography,
   IconButton,
   Stack,
+  LinearProgress,
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import EditIcon from "@mui/icons-material/Edit";
@@ -26,6 +27,8 @@ export default function TasksManage() {
   const [tasks, setTasks] = useState([]); // רשימת המטלות שתוצג
   const [courses, setCourses] = useState([]); // רשימת הקורסים
   const [students, setStudents] = useState([]); // רשימת הסטודנטים
+    const [loading, setLoading] = useState(true);
+  
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -52,6 +55,8 @@ export default function TasksManage() {
 
       setCourses(coursesData); // שמירת רשימת הקורסים
       setStudents(studentsData); // שמירת רשימת הסטודנטים
+            setLoading(false);
+
     };
 
     fetchData(); // קריאה לפונקציה כשנטען הדף
@@ -81,6 +86,10 @@ export default function TasksManage() {
     const course = courses.find((c) => c.courseCode === courseCode);
     return course ? course.courseName : courseCode;
   };
+
+    if (loading) {
+      return <LinearProgress />;
+    }
 
   return (
     <Box sx={{ padding: 4 }}>
