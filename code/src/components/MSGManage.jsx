@@ -18,7 +18,7 @@ import {
 } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
-import GradeIcon from '@mui/icons-material/Grade'; // אייקון של כוכב לדילוג לדף הציונים
+import VisibilityIcon from '@mui/icons-material/Visibility';
 
 import { useNavigate } from "react-router-dom";
 import { listMessages, deleteMessage } from "../firebase/message";
@@ -156,7 +156,7 @@ export default function MessagesManage() {
                       </IconButton>
                       {msg.assignmentCode && (
                         <IconButton color="primary" onClick={() => handleGoToGrades(msg.assignmentCode)}>
-                          <GradeIcon fontSize="small" />
+                          <VisibilityIcon fontSize="small" />
                         </IconButton>
                       )}
                     </Stack>
