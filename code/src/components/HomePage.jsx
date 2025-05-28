@@ -20,6 +20,7 @@ import { listTasks } from "../firebase/task";
 import { listGrades } from "../firebase/grade";
 import { listMessages } from "../firebase/message";
 
+
 export default function HomePage() {
   const [students, setStudents] = useState([]); // רשימת הסטודנטים
   const [selectedStudentId, setSelectedStudentId] = useState(""); // ת"ז של הסטודנט שנבחר
@@ -32,6 +33,8 @@ export default function HomePage() {
   const navigate = useNavigate();
 
   useEffect(() => {
+    localStorage.removeItem("selectedStudent");
+
     // טוען את כל הנתונים מה-Database
     async function fetchAll() {
       const [studentsData, coursesData, tasksData, gradesData, messagesData] = await Promise.all([

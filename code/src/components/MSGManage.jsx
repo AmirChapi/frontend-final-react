@@ -1,5 +1,3 @@
-// MessagesManage.jsx - Message Management Page (Student-filtered + Navigate to Grades)
-
 import React, { useEffect, useState } from "react";
 import {
   Box,
@@ -18,20 +16,21 @@ import {
 } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
-import VisibilityIcon from '@mui/icons-material/Visibility';
+import VisibilityIcon from "@mui/icons-material/Visibility";
 
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { listMessages, deleteMessage } from "../firebase/message";
 import { listCourses } from "../firebase/course";
 import { listTasks } from "../firebase/task";
 
 export default function MessagesManage() {
-  const [messages, setMessages] = useState([]); // הודעות להצגה בטבלה
-  const [courses, setCourses] = useState([]); // קורסים להצגת שמות קורסים
-  const [tasks, setTasks] = useState([]); // מטלות להצגת שמות מטלות
-    const [loading, setLoading] = useState(true);
+  const [messages, setMessages] = useState([]);
+  const [courses, setCourses] = useState([]);
+  const [tasks, setTasks] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const navigate = useNavigate(); // הפונקציה שתאפשר לנו לנווט לעמודים אחרים
+  const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     async function fetchData() {
@@ -43,36 +42,43 @@ export default function MessagesManage() {
 
       const selectedStudent = JSON.parse(localStorage.getItem("selectedStudent"));
 
+      let studentMessages = msgs;
+
       if (selectedStudent) {
-        const studentMessages = msgs.filter((m) => {
-          // בודק אם קוד הקורס תואם לקורסים של הסטודנט
-          const courseMatch = m.courseCode ? selectedStudent.courses.some(c => c.courseCode === m.courseCode) : true;
-          // בודק אם קוד המטלה תואם למטלות של הסטודנט
-          const taskMatch = m.assignmentCode ? selectedStudent.tasks.some(t => t.taskCode === m.assignmentCode) : true;
-          // בודק אם ההודעה נשלחה לסטודנט הספציפי או שהיא כללית
-          const studentMatch = !m.studentId || m.studentId === selectedStudent.studentId;
+        studentMessages = msgs.filter((m) => {
+          const courseMatch = m.courseCode
+            ? selectedStudent.courses?.some((c) => c.courseCode === m.courseCode)
+            : true;
+          const taskMatch = m.assignmentCode
+            ? selectedStudent.tasks?.some((t) => t.taskCode === m.assignmentCode)
+            : true;
+          const studentMatch =
+            !m.studentId || m.studentId === selectedStudent.studentId;
           return courseMatch && taskMatch && studentMatch;
         });
-
-        setMessages(studentMessages);
-      } else {
-        setMessages(msgs); // אם לא נבחר סטודנט, מציג את כל ההודעות
       }
 
-      setCourses(crs); // שמירת הקורסים בסטייט
-      setTasks(tks); // שמירת המטלות בסטייט
+      // ✅ הוספת הודעה חדשה אם עברה דרך ניווט
+      if (location.state?.newMessage) {
+        studentMessages = [...studentMessages, location.state.newMessage];
+      }
+
+      setMessages(studentMessages);
+      setCourses(crs);
+      setTasks(tks);
       setLoading(false);
+
+      // ✅ ניקוי ה־state של הניווט כדי למנוע כפילויות
+      window.history.replaceState({}, document.title);
     }
 
     fetchData();
-  }, []);
+  }, [location.state]);
 
-  // ניווט לעריכת הודעה מסוימת
   const handleEdit = (message) => {
     navigate("/MSGForm", { state: { messageToEdit: message } });
   };
 
-  // מחיקת הודעה
   const handleDelete = async (id) => {
     const confirm = window.confirm("Are you sure you want to delete this message?");
     if (confirm) {
@@ -81,32 +87,28 @@ export default function MessagesManage() {
     }
   };
 
-  // מעבר לדף הוספת הודעה
   const handleAdd = () => {
     navigate("/MSGForm");
   };
 
-  // מחזיר את שם הקורס על פי קוד הקורס
   const getCourseName = (courseCode) => {
-    const course = courses.find(c => c.courseCode === courseCode);
+    const course = courses.find((c) => c.courseCode === courseCode);
     return course ? course.courseName : courseCode;
   };
 
-  // מחזיר את שם המטלה על פי קוד המטלה
   const getTaskName = (taskCode) => {
-    const task = tasks.find(t => t.taskCode === taskCode);
+    const task = tasks.find((t) => t.taskCode === taskCode);
     return task ? task.taskName : taskCode;
   };
 
-  // כפתור מעבר לדף הציונים, עם קוד מטלה מסוים (ספציפי)
   const handleGoToGrades = (taskCode) => {
     navigate("/GradeManage", { state: { filterTaskCode: taskCode } });
   };
 
-
-    if (loading) {
+  if (loading) {
     return <LinearProgress />;
   }
+
   return (
     <Box sx={{ padding: 4 }}>
       <Typography variant="h4" gutterBottom>
