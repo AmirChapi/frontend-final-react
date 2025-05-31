@@ -1,3 +1,4 @@
+// MessagesManage.jsx
 import React, { useEffect, useState } from "react";
 import {
   Box,
@@ -44,31 +45,39 @@ export default function MessagesManage() {
 
       let studentMessages = msgs;
 
-      if (selectedStudent) {
-        studentMessages = msgs.filter((m) => {
-          const courseMatch = m.courseCode
-            ? selectedStudent.courses?.some((c) => c.courseCode === m.courseCode)
-            : true;
-          const taskMatch = m.assignmentCode
-            ? selectedStudent.tasks?.some((t) => t.taskCode === m.assignmentCode)
-            : true;
-          const studentMatch =
-            !m.studentId || m.studentId === selectedStudent.studentId;
-          return courseMatch && taskMatch && studentMatch;
-        });
-      }
+    if (selectedStudent) {
+  studentMessages = msgs.filter((m) => {
+    // אם יש courseCode - סטודנט חייב להיות רשום לקורס הזה
+    if (m.courseCode) {
+      return selectedStudent.courses?.some(c => c.courseCode === m.courseCode);
+    }
 
-      // ✅ הוספת הודעה חדשה אם עברה דרך ניווט
+    // אם יש studentId - ההודעה היא אישית לסטודנט
+    if (m.studentId) {
+      return m.studentId === selectedStudent.studentId;
+    }
+
+    // אחרת (למשל הודעה כללית ללא courseCode וללא studentId) - לא להציג
+    return false;
+  });
+}
+
+
+
+
       if (location.state?.newMessage) {
-        studentMessages = [...studentMessages, location.state.newMessage];
-      }
+  const isNew = !studentMessages.some(msg => msg.id === location.state.newMessage.id);
+  if (isNew) {
+    studentMessages = [...studentMessages, location.state.newMessage];
+  }
+}
+
 
       setMessages(studentMessages);
       setCourses(crs);
       setTasks(tks);
       setLoading(false);
 
-      // ✅ ניקוי ה־state של הניווט כדי למנוע כפילויות
       window.history.replaceState({}, document.title);
     }
 

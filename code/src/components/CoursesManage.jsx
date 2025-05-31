@@ -29,7 +29,7 @@ import {
 // ✅ הוספתי את האייקונים של MUI במקום מלל בפעולות
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
-import VisibilityIcon from "@mui/icons-material/Visibility";
+import AddCircleIcon from '@mui/icons-material/AddCircle';
 
 import { useNavigate } from "react-router-dom";
 import { listStudent, updateStudent } from "../firebase/student";
@@ -70,7 +70,7 @@ export default function CoursesManage() {
   };
 
   function showCourseStudents(courseObject) {
-    const matchedStudents = studentList.filter(function(student) {
+    const matchedStudents = studentList.filter(function (student) {
       const courseCodes = student.courses || [];
       return courseCodes.includes(courseObject.courseCode);
     });
@@ -81,9 +81,9 @@ export default function CoursesManage() {
 
   async function removeStudentFromCourse(studentIdToRemove) {
     const updatedStudents = await Promise.all(
-      studentList.map(async function(student) {
+      studentList.map(async function (student) {
         if (student.studentId === studentIdToRemove) {
-          const updatedCourses = (student.courses || []).filter(function(courseCode) {
+          const updatedCourses = (student.courses || []).filter(function (courseCode) {
             return courseCode !== courseToView.courseCode;
           });
           const updatedStudentObject = {
@@ -100,7 +100,7 @@ export default function CoursesManage() {
 
     setStudentList(updatedStudents);
 
-    const updatedCourseStudents = studentsInCourse.filter(function(student) {
+    const updatedCourseStudents = studentsInCourse.filter(function (student) {
       return student.studentId !== studentIdToRemove;
     });
     setStudentsInCourse(updatedCourseStudents);
@@ -109,7 +109,7 @@ export default function CoursesManage() {
   async function assignStudentToCourse() {
     if (!courseToView || studentIdToAssign === "") return;
 
-    const selectedStudent = studentList.find(function(student) {
+    const selectedStudent = studentList.find(function (student) {
       return student.studentId === studentIdToAssign;
     });
 
@@ -119,7 +119,7 @@ export default function CoursesManage() {
     const updatedStudent = { ...selectedStudent, courses: updatedCourses };
     await updateStudent(updatedStudent);
 
-    const updatedList = studentList.map(function(student) {
+    const updatedList = studentList.map(function (student) {
       return student.studentId === updatedStudent.studentId ? updatedStudent : student;
     });
     setStudentList(updatedList);
@@ -159,7 +159,7 @@ export default function CoursesManage() {
             </TableRow>
           </TableHead>
           <TableBody>
-            {courseList.map(function(courseItem) {
+            {courseList.map(function (courseItem) {
               return (
                 <TableRow key={courseItem.id}>
                   <TableCell>{courseItem.courseCode}</TableCell>
@@ -170,8 +170,8 @@ export default function CoursesManage() {
 
                   {/* ✅ שינוי: כפתורים עם אייקונים בלבד במקום מלל */}
                   <TableCell>
-                    <IconButton color="info" onClick={() => showCourseStudents(courseItem)}>
-                      <VisibilityIcon />
+                    <IconButton color="primary" onClick={() => showCourseStudents(courseItem)}>
+                      <AddCircleIcon />
                     </IconButton>
                     <IconButton color="secondary" onClick={() => goToEditCourse(courseItem)}>
                       <EditIcon />
@@ -192,7 +192,7 @@ export default function CoursesManage() {
         <DialogContent>
           {studentsInCourse.length > 0 ? (
             <List>
-              {studentsInCourse.map(function(student) {
+              {studentsInCourse.map(function (student) {
                 return (
                   <ListItem
                     key={student.studentId}
@@ -219,11 +219,11 @@ export default function CoursesManage() {
             >
               <MenuItem value="" disabled>Select a student to assign</MenuItem>
               {studentList
-                .filter(function(student) {
+                .filter(function (student) {
                   const courseCodes = student.courses || [];
                   return courseToView && !courseCodes.includes(courseToView.courseCode);
                 })
-                .map(function(student) {
+                .map(function (student) {
                   return (
                     <MenuItem key={student.studentId} value={student.studentId}>{student.fullName}</MenuItem>
                   );
