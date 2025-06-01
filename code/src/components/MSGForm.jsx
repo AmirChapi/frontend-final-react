@@ -30,7 +30,9 @@ export default function MessageForm() {
 
   const [courses, setCourses] = useState([]);
   const [tasks, setTasks] = useState([]);
+  const [filteredTasks, setFilteredTasks] = useState([]);
   const [students, setStudents] = useState([]);
+  const [filteredStudents, setFilteredStudents] = useState([]);
   const [errors, setErrors] = useState({});
   const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "success" });
 
@@ -44,13 +46,25 @@ export default function MessageForm() {
       setCourses(c);
       setTasks(t);
       setStudents(s);
+      setFilteredTasks(t);
+      setFilteredStudents(s);
+
+      if (messageToEdit) {
+        setFormData(messageToEdit);
+
+        if (messageToEdit.courseCode) {
+          const filteredT = t.filter((task) => task.courseCode === messageToEdit.courseCode);
+          setFilteredTasks(filteredT);
+
+          const filteredS = s.filter((stu) =>
+            Array.isArray(stu.courses) && stu.courses.includes(messageToEdit.courseCode)
+          );
+          setFilteredStudents(filteredS);
+        }
+      }
     }
 
     fetchData();
-
-    if (messageToEdit) {
-      setFormData(messageToEdit);
-    }
   }, [messageToEdit]);
 
   const validate = () => {
@@ -63,6 +77,27 @@ export default function MessageForm() {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+
+    if (name === "courseCode") {
+      const filteredT = tasks.filter((task) => task.courseCode === value);
+      setFilteredTasks(filteredT);
+
+      const filteredS = students.filter((stu) =>
+        Array.isArray(stu.courses) && stu.courses.includes(value)
+      );
+      setFilteredStudents(filteredS);
+
+      setFormData((prev) => ({
+        ...prev,
+        courseCode: value,
+        assignmentCode: "",
+        studentId: ""
+      }));
+    }
+
+    if (name === "studentId") {
+      setErrors((prev) => ({ ...prev, studentId: "" }));
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -74,7 +109,20 @@ export default function MessageForm() {
         await updateMessage(formData);
         setSnackbar({ open: true, message: "Message updated", severity: "success" });
       } else {
-        await addMessage(formData);
+        if (!formData.studentId) {
+          const recipients = formData.courseCode
+            ? students.filter((s) =>
+                Array.isArray(s.courses) && s.courses.includes(formData.courseCode)
+              )
+            : students;
+
+          for (const s of recipients) {
+            await addMessage({ ...formData, studentId: s.studentId });
+          }
+        } else {
+          await addMessage(formData);
+        }
+
         setSnackbar({ open: true, message: "Message added", severity: "success" });
       }
 
@@ -107,6 +155,7 @@ export default function MessageForm() {
             fullWidth
             margin="normal"
           />
+
           <TextField
             select
             name="courseCode"
@@ -123,6 +172,7 @@ export default function MessageForm() {
               </MenuItem>
             ))}
           </TextField>
+
           <TextField
             select
             name="assignmentCode"
@@ -133,28 +183,37 @@ export default function MessageForm() {
             margin="normal"
           >
             <MenuItem value=""><em>None</em></MenuItem>
-            {tasks.map((t) => (
+            {filteredTasks.map((t) => (
               <MenuItem key={t.id} value={t.taskCode}>
                 {t.taskCode} - {t.taskName}
               </MenuItem>
             ))}
           </TextField>
+
           <TextField
             select
             name="studentId"
-            label="Student ID (optional)"
+            label="Student (optional)"
             value={formData.studentId}
             onChange={handleChange}
             fullWidth
             margin="normal"
           >
-            <MenuItem value=""><em>All students</em></MenuItem>
-            {students.map((s) => (
+            <MenuItem value="">
+              <em>All students {formData.courseCode ? "in this course" : "in the system"}</em>
+            </MenuItem>
+            {filteredStudents.map((s) => (
               <MenuItem key={s.id} value={s.studentId}>
                 {s.studentId} - {s.fullName}
               </MenuItem>
             ))}
           </TextField>
+
+          {formData.studentId === "" && (
+            <Typography variant="caption" color="text.secondary" sx={{ ml: 1 }}>
+              This message will be sent to {formData.courseCode ? "all students in this course" : "all students in the system"}.
+            </Typography>
+          )}
 
           <Stack direction="row" spacing={2} mt={2}>
             <Button type="submit" variant="contained" color="primary" fullWidth>

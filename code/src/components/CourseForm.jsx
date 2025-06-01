@@ -40,7 +40,6 @@ export default function CourseForm() {
     severity: "success",
   });
 
-  // ✅ שינוי: טוען את כל הקורסים לבדיקה של כפילויות
   const [allCourses, setAllCourses] = useState([]);
 
   useEffect(() => {
@@ -60,8 +59,11 @@ export default function CourseForm() {
   function validate() {
     const errors = {};
 
+    // ✅ ולידציה ל־courseCode
     if (formData.courseCode.trim() === "") {
       errors.courseCode = "Course code is required";
+    } else if (!/^\d{4}$/.test(formData.courseCode.trim())) {
+      errors.courseCode = "Course code must be a positive 4-digit number";
     }
 
     if (formData.courseName.trim() === "") {
@@ -76,6 +78,7 @@ export default function CourseForm() {
       errors.semester = "Semester is required";
     }
 
+    // ✅ ולידציה ל־year
     if (formData.year === "") {
       errors.year = "Year is required";
     } else if (isNaN(formData.year)) {
@@ -91,7 +94,7 @@ export default function CourseForm() {
     return Object.keys(errors).length === 0;
   }
 
-  // ✅ שינוי: מנקה שגיאה לשדה הספציפי כשמשתמשת מקלידה בו
+  // ✅ ולידציה בלייב ל־courseCode ול־year
   const handleChange = (e) => {
     const { name, value } = e.target;
 
@@ -100,13 +103,39 @@ export default function CourseForm() {
       [name]: value
     }));
 
-    setErrors((prev) => ({
-      ...prev,
-      [name]: ""
-    }));
+    if (name === "courseCode") {
+      if (value.trim() === "") {
+        setErrors((prev) => ({ ...prev, courseCode: "Course code is required" }));
+      } else if (!/^\d{4}$/.test(value.trim())) {
+        setErrors((prev) => ({ ...prev, courseCode: "Course code must be a positive 4-digit number" }));
+      } else {
+        setErrors((prev) => ({ ...prev, courseCode: "" }));
+      }
+    }
+
+    else if (name === "year") {
+      if (value.trim() === "") {
+        setErrors((prev) => ({ ...prev, year: "Year is required" }));
+      } else if (isNaN(value)) {
+        setErrors((prev) => ({ ...prev, year: "Year must be a number" }));
+      } else {
+        const numericYear = Number(value);
+        if (numericYear < 2023 || numericYear > 2030) {
+          setErrors((prev) => ({ ...prev, year: "Year must be between 2023 and 2030" }));
+        } else {
+          setErrors((prev) => ({ ...prev, year: "" }));
+        }
+      }
+    }
+
+    else {
+      setErrors((prev) => ({
+        ...prev,
+        [name]: ""
+      }));
+    }
   };
 
-  // ✅ שינוי: בדיקת שגיאות כפילויות כולל Course Code במצב הוספה בלבד
   async function handleSubmit(event) {
     event.preventDefault();
 
@@ -114,7 +143,6 @@ export default function CourseForm() {
     if (!isValid) return;
 
     const isEditMode = formData.id !== undefined && formData.id !== null;
-
     let duplicateErrors = {};
 
     allCourses.forEach((course) => {
@@ -183,7 +211,7 @@ export default function CourseForm() {
           helperText={errors.courseCode}
           fullWidth
           margin="normal"
-          disabled={!!formData.id} // 🔒 נעול במצב עריכה
+          disabled={!!formData.id}
         />
 
         <TextField
@@ -195,7 +223,7 @@ export default function CourseForm() {
           helperText={errors.courseName}
           fullWidth
           margin="normal"
-          disabled={!!formData.id} // 🔒 נעול במצב עריכה
+          disabled={!!formData.id}
         />
 
         <TextField

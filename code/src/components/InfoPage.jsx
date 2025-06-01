@@ -58,8 +58,10 @@ export default function StudentFullProfile() {
   }, [location]); // ✅ טוען מחדש בכל מעבר לעמוד
 
   useEffect(() => {
-    if (!selectedStudentId || students.length === 0) return;
-
+    if (!selectedStudentId || students.length === 0) {
+      setStudentData(null); // ✅ שורה זו קיימת, אבל כעת נוסף תנאי תצוגה בהמשך
+      return;
+    }
     const student = students.find((s) => s.studentId === selectedStudentId);
     if (!student) return;
 
@@ -70,15 +72,14 @@ export default function StudentFullProfile() {
     const studentTasks = tasks.filter((t) =>
       courseCodes.includes(t.courseCode)
     );
-    const studentGrades = grades.filter((g) => 
-  g.studentId === selectedStudentId || g.idNumber === selectedStudentId
-);
+    const studentGrades = grades.filter(
+      (g) => g.studentId === selectedStudentId || g.idNumber === selectedStudentId
+    );
     const studentMessages = messages.filter((m) => {
       const courseMatch = m.courseCode
         ? courseCodes.includes(m.courseCode)
         : true;
-      const studentMatch =
-        !m.studentId || m.studentId === selectedStudentId;
+      const studentMatch = !m.studentId || m.studentId === selectedStudentId;
       return courseMatch && studentMatch;
     });
 
@@ -91,7 +92,23 @@ export default function StudentFullProfile() {
     });
   }, [selectedStudentId, students, courses, tasks, grades, messages]);
 
-  if (isLoading || !studentData) return <LinearProgress />;
+  // ✅ הוספת תנאי תצוגה: טעינה או אין תלמיד נבחר
+  if (isLoading) return <LinearProgress />;
+
+  if (!selectedStudentId || !studentData) {
+    return (
+      <Box sx={{ p: 4 }}>
+        <Typography variant="h5" color="error">
+          ⚠️ You must select a student on the home page to view the profile.
+        </Typography>
+        <Box mt={2}>
+          <Button variant="contained" onClick={() => navigate("/")}>
+            BACK TO HOME 
+          </Button>
+        </Box>
+      </Box>
+    );
+  }
 
   return (
     <Box sx={{ p: 4 }}>
@@ -132,24 +149,23 @@ export default function StudentFullProfile() {
           )}
         </Paper>
 
-       <Paper elevation={3} sx={{ p: 2, width: 300 }}>
-  <Typography variant="h6">Grades</Typography>
-  <Divider sx={{ my: 1 }} />
-  {studentData.studentGrades.length ? (
-    studentData.studentGrades.map((g, i) => {
-      const task = tasks.find(t => t.taskCode === g.taskCode);
-      const taskName = task ? task.taskName : g.taskCode;
-      return (
-        <Typography key={i} variant="body2">
-          📝 {taskName}: {g.taskGrade}
-        </Typography>
-      );
-    })
-  ) : (
-    <Typography>No grades.</Typography>
-  )}
-</Paper>
-
+        <Paper elevation={3} sx={{ p: 2, width: 300 }}>
+          <Typography variant="h6">Grades</Typography>
+          <Divider sx={{ my: 1 }} />
+          {studentData.studentGrades.length ? (
+            studentData.studentGrades.map((g, i) => {
+              const task = tasks.find((t) => t.taskCode === g.taskCode);
+              const taskName = task ? task.taskName : g.taskCode;
+              return (
+                <Typography key={i} variant="body2">
+                  📝 {taskName}: {g.taskGrade}
+                </Typography>
+              );
+            })
+          ) : (
+            <Typography>No grades.</Typography>
+          )}
+        </Paper>
 
         <Paper elevation={3} sx={{ p: 2, width: 300 }}>
           <Typography variant="h6">Courses</Typography>

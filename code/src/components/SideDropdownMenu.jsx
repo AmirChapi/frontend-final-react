@@ -29,7 +29,7 @@ export default function SideDropdownMenu() {
     { text: 'Grades Manage', path: '/GradeManage' },
     { text: 'MSG Manage', path: '/MSGManage' },
     {text: 'Help', path: '/help'},
-    {text: 'Info', path: '/info'},
+    {text: 'Student Info', path: '/info'},
     ];
 
   const handleMenuItemClick = (path) => {
