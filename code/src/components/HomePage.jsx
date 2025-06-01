@@ -10,7 +10,10 @@ import {
   Paper,
   Divider,
   LinearProgress,
-  Button
+  Button,
+  Card,
+  CardContent,
+  Grid,
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import { listStudent } from "../firebase/student";
@@ -92,10 +95,16 @@ export default function HomePage() {
   if (isLoading) return <LinearProgress />;
 
   return (
-    <Box sx={{ p: 4 }}>
-      <Typography variant="h4" gutterBottom>Welcome to the System</Typography>
+    <Box sx={{ p: 4, maxWidth: 1000, mx: "auto" }}>
+      <Typography variant="h4" gutterBottom textAlign="center">
+        Welcome to the System
+      </Typography>
 
-      <FormControl fullWidth sx={{ mb: 3 }}>
+      <Typography variant="body1" color="text.secondary" textAlign="center" sx={{ mb: 3 }}>
+        This dashboard shows a snapshot of the latest courses, upcoming tasks, and recent messages for the selected student.
+      </Typography>
+
+      <FormControl fullWidth sx={{ mb: 4 }}>
         <InputLabel>Select Student</InputLabel>
         <Select
           value={selectedStudentId}
@@ -111,56 +120,90 @@ export default function HomePage() {
       </FormControl>
 
       {studentInfo && (
-        <Paper elevation={3} sx={{ p: 3 }}>
-          <Typography variant="h6" gutterBottom>Student Info:</Typography>
-          <p><strong>ID:</strong> {studentInfo.studentId}</p>
-          <p><strong>Name:</strong> {studentInfo.fullName}</p>
+        <Grid container spacing={3}>
+          <Grid item xs={12} md={6}>
+            <Card variant="outlined" sx={{ borderRadius: 3 }}>
+              <CardContent>
+                <Typography variant="h6" gutterBottom>Student Info</Typography>
+                <Typography><strong>ID:</strong> {studentInfo.studentId}</Typography>
+                <Typography><strong>Name:</strong> {studentInfo.fullName}</Typography>
+              </CardContent>
+            </Card>
+          </Grid>
 
-          <Divider sx={{ my: 2 }} />
-          <Typography variant="h6">Courses:</Typography>
-          {studentInfo.courses.length > 0 ? (
-            studentInfo.courses.map((c, i) => (
-              <p key={i}>📘 {c.courseName} ({c.courseCode}) - {c.semester} {c.year}</p>
-            ))
-          ) : (
-            <p>No courses assigned.</p>
-          )}
+          <Grid item xs={12} md={6}>
+            <Card variant="outlined" sx={{ borderRadius: 3 }}>
+              <CardContent>
+                <Typography variant="h6" gutterBottom>Courses</Typography>
+                <Typography variant="caption" color="text.secondary">
+                  * Showing currently assigned courses only
+                </Typography>
+                {studentInfo.courses.length > 0 ? (
+                  studentInfo.courses.map((c, i) => (
+                    <Typography key={i} variant="body2">
+                      📘 {c.courseName} ({c.courseCode}) - {c.semester} {c.year}
+                    </Typography>
+                  ))
+                ) : (
+                  <Typography>No courses assigned.</Typography>
+                )}
+              </CardContent>
+            </Card>
+          </Grid>
 
-          <Divider sx={{ my: 2 }} />
-          <Typography variant="h6">Upcoming Tasks:</Typography>
-          {studentInfo.tasks.length > 0 ? (
-            studentInfo.tasks.map((t, i) => (
-              <p key={i}>📝 {t.taskName} ({t.courseCode}) - Due: {t.submissionDate}</p>
-            ))
-          ) : (
-            <p>No tasks available.</p>
-          )}
+          <Grid item xs={12} md={6}>
+            <Card variant="outlined" sx={{ borderRadius: 3 }}>
+              <CardContent>
+                <Typography variant="h6" gutterBottom>Upcoming Tasks</Typography>
+                <Typography variant="caption" color="text.secondary">
+                  * Displaying up to 3 nearest tasks
+                </Typography>
+                {studentInfo.tasks.length > 0 ? (
+                  studentInfo.tasks.map((t, i) => (
+                    <Typography key={i} variant="body2">
+                      📝 {t.taskName} ({t.courseCode}) - Due: {t.submissionDate}
+                    </Typography>
+                  ))
+                ) : (
+                  <Typography>No tasks available.</Typography>
+                )}
+              </CardContent>
+            </Card>
+          </Grid>
 
-          <Divider sx={{ my: 2 }} />
-          <Typography variant="h6">Latest Messages:</Typography>
-          {studentInfo.messages.length > 0 ? (
-            <>
-              {studentInfo.messages.map((m, i) => (
-                <Box key={i} sx={{ mb: 1, p: 1.5, border: '1px solid #ccc', borderRadius: 1 }}>
-                  <Typography sx={{ fontWeight: 'bold' }}>{m.messageContent}</Typography>
-                </Box>
-              ))}
-              <Button
-                variant="outlined"
-                color="primary"
-                onClick={() => {
-                  // נוודא שהסטודנט שמור לפני המעבר
-                  localStorage.setItem("selectedStudent", JSON.stringify(studentInfo));
-                  navigate("/MSGManage");
-                }}
-              >
-                Go to All Messages
-              </Button>
-            </>
-          ) : (
-            <p>No messages.</p>
-          )}
-        </Paper>
+          <Grid item xs={12} md={6}>
+            <Card variant="outlined" sx={{ borderRadius: 3 }}>
+              <CardContent>
+                <Typography variant="h6" gutterBottom>Latest Messages</Typography>
+                <Typography variant="caption" color="text.secondary">
+                  * Displaying 3 most recent messages
+                </Typography>
+                {studentInfo.messages.length > 0 ? (
+                  <>
+                    {studentInfo.messages.map((m, i) => (
+                      <Box key={i} sx={{ mb: 1, p: 1.5, border: '1px solid #ccc', borderRadius: 2 }}>
+                        <Typography sx={{ fontWeight: 'bold' }}>{m.messageContent}</Typography>
+                      </Box>
+                    ))}
+                    <Button
+                      variant="outlined"
+                      color="primary"
+                      sx={{ mt: 1 }}
+                      onClick={() => {
+                        localStorage.setItem("selectedStudent", JSON.stringify(studentInfo));
+                        navigate("/MSGManage");
+                      }}
+                    >
+                      Go to All Messages
+                    </Button>
+                  </>
+                ) : (
+                  <Typography>No messages.</Typography>
+                )}
+              </CardContent>
+            </Card>
+          </Grid>
+        </Grid>
       )}
     </Box>
   );
