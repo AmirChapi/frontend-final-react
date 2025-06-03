@@ -94,7 +94,7 @@ export default function HomePage() {
 
   if (isLoading) return <LinearProgress />;
 
-  return (
+  return(
     <Box sx={{ p: 4, maxWidth: 1000, mx: "auto" }}>
       <Typography variant="h4" gutterBottom textAlign="center">
         Welcome to the System
