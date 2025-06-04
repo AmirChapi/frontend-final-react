@@ -1,14 +1,7 @@
-// HomePage.jsx
 import React, { useEffect, useState } from "react";
 import {
   Box,
   Typography,
-  Select,
-  MenuItem,
-  InputLabel,
-  FormControl,
-  Paper,
-  Divider,
   LinearProgress,
   Button,
   Card,
@@ -16,15 +9,12 @@ import {
   Grid,
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
-import { listStudent } from "../firebase/student";
 import { listCourses } from "../firebase/course";
 import { listTasks } from "../firebase/task";
 import { listGrades } from "../firebase/grade";
 import { listMessages } from "../firebase/message";
 
 export default function HomePage() {
-  const [students, setStudents] = useState([]);
-  const [selectedStudentId, setSelectedStudentId] = useState("");
   const [studentInfo, setStudentInfo] = useState(null);
   const [courses, setCourses] = useState([]);
   const [grades, setGrades] = useState([]);
@@ -33,18 +23,17 @@ export default function HomePage() {
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
 
+  const selectedStudent = JSON.parse(localStorage.getItem("selectedStudent"));
+
   useEffect(() => {
-    localStorage.removeItem("selectedStudent");
     async function fetchAll() {
-      const [studentsData, coursesData, tasksData, gradesData, messagesData] = await Promise.all([
-        listStudent(),
+      const [coursesData, tasksData, gradesData, messagesData] = await Promise.all([
         listCourses(),
         listTasks(),
         listGrades(),
         listMessages(),
       ]);
 
-      setStudents(studentsData);
       setCourses(coursesData);
       setTasks(tasksData);
       setGrades(gradesData);
@@ -56,45 +45,52 @@ export default function HomePage() {
   }, []);
 
   useEffect(() => {
-    if (!selectedStudentId || students.length === 0) return;
+    if (!selectedStudent || !Array.isArray(selectedStudent.courses)) return;
 
-    const student = students.find((s) => s.studentId === selectedStudentId);
-    if (!student) return;
+    const courseCodes = selectedStudent.courses.map(String);
 
-    const courseCodes = student.courses || [];
-    const studentCourses = courses.filter((c) => courseCodes.includes(c.courseCode));
+    const studentCourses = courseCodes
+      .map(code => courses.find(c => c.courseCode.toString() === code))
+      .filter(Boolean);
 
     const now = new Date();
     const studentTasks = tasks
-      .filter((t) => courseCodes.includes(t.courseCode))
-      .filter((t) => new Date(t.submissionDate) >= now)
+      .filter(t => courseCodes.includes(t.courseCode?.toString()))
+      .filter(t => new Date(t.submissionDate) >= now)
       .sort((a, b) => new Date(a.submissionDate) - new Date(b.submissionDate))
       .slice(0, 3);
 
     const studentMessages = messages
-      .filter((m) => {
-        const courseMatch = m.courseCode ? courseCodes.includes(m.courseCode) : true;
-        const studentMatch = !m.studentId || m.studentId === selectedStudentId;
-        return courseMatch && studentMatch;
-      })
+      .filter((m) => m.studentId?.toString() === selectedStudent.studentId.toString())
       .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
       .slice(0, 3);
 
     const studentData = {
-      studentId: student.studentId,
-      fullName: student.fullName,
+      ...selectedStudent,
       courses: studentCourses,
       tasks: studentTasks,
       messages: studentMessages,
     };
 
     setStudentInfo(studentData);
-    localStorage.setItem("selectedStudent", JSON.stringify(studentData));
-  }, [selectedStudentId, students, courses, tasks, messages]);
+  }, [courses, tasks, messages]);
 
   if (isLoading) return <LinearProgress />;
 
-  return(
+  if (!selectedStudent) {
+    return (
+      <Box sx={{ p: 4, textAlign: 'center' }}>
+        <Typography variant="h5" gutterBottom>
+          Please select a student from the top menu
+        </Typography>
+        <Typography variant="body1" color="text.secondary">
+          After selecting a student, you will see a summary of their courses, tasks, and messages here.
+        </Typography>
+      </Box>
+    );
+  }
+
+  return (
     <Box sx={{ p: 4, maxWidth: 1000, mx: "auto" }}>
       <Typography variant="h4" gutterBottom textAlign="center">
         Welcome to the System
@@ -103,21 +99,6 @@ export default function HomePage() {
       <Typography variant="body1" color="text.secondary" textAlign="center" sx={{ mb: 3 }}>
         This dashboard shows a snapshot of the latest courses, upcoming tasks, and recent messages for the selected student.
       </Typography>
-
-      <FormControl fullWidth sx={{ mb: 4 }}>
-        <InputLabel>Select Student</InputLabel>
-        <Select
-          value={selectedStudentId}
-          onChange={(e) => setSelectedStudentId(e.target.value)}
-          label="Select Student"
-        >
-          {students.map((s) => (
-            <MenuItem key={s.studentId} value={s.studentId}>
-              {s.fullName} ({s.studentId})
-            </MenuItem>
-          ))}
-        </Select>
-      </FormControl>
 
       {studentInfo && (
         <Grid container spacing={3}>
@@ -136,12 +117,12 @@ export default function HomePage() {
               <CardContent>
                 <Typography variant="h6" gutterBottom>Courses</Typography>
                 <Typography variant="caption" color="text.secondary">
-                  * Showing currently assigned courses only
+                  * Showing all assigned courses
                 </Typography>
                 {studentInfo.courses.length > 0 ? (
                   studentInfo.courses.map((c, i) => (
                     <Typography key={i} variant="body2">
-                      📘 {c.courseName} ({c.courseCode}) - {c.semester} {c.year}
+                      📘 {c.courseName}
                     </Typography>
                   ))
                 ) : (
@@ -161,7 +142,7 @@ export default function HomePage() {
                 {studentInfo.tasks.length > 0 ? (
                   studentInfo.tasks.map((t, i) => (
                     <Typography key={i} variant="body2">
-                      📝 {t.taskName} ({t.courseCode}) - Due: {t.submissionDate}
+                      📄 {t.taskName}
                     </Typography>
                   ))
                 ) : (
@@ -181,18 +162,15 @@ export default function HomePage() {
                 {studentInfo.messages.length > 0 ? (
                   <>
                     {studentInfo.messages.map((m, i) => (
-                      <Box key={i} sx={{ mb: 1, p: 1.5, border: '1px solid #ccc', borderRadius: 2 }}>
-                        <Typography sx={{ fontWeight: 'bold' }}>{m.messageContent}</Typography>
-                      </Box>
+                      <Typography key={i} variant="body2">
+                        📩 {m.messageContent}
+                      </Typography>
                     ))}
                     <Button
                       variant="outlined"
                       color="primary"
                       sx={{ mt: 1 }}
-                      onClick={() => {
-                        localStorage.setItem("selectedStudent", JSON.stringify(studentInfo));
-                        navigate("/MSGManage");
-                      }}
+                      onClick={() => navigate("/MSGManage")}
                     >
                       Go to All Messages
                     </Button>

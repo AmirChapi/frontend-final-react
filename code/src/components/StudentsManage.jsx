@@ -1,4 +1,4 @@
-// StudentsManage.jsx - Students Management Page (Final Styling)
+// StudentsManage.jsx - Students Management Page (Updated to pass Firestore ID in URL)
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -32,9 +32,6 @@ export default function StudentsManage() {
 
   const loadStudents = async () => {
     const studentList = await listStudent();
-
-    //  בודקת שהתוצאה שחזרה היא באמת מערך ואם כן, היא שומרת את הרשימה .
-    //(זה מגן מפני מצב שבו תחזור שגיאה או משהו אחר לא צפוי.)
     if (Array.isArray(studentList)) {
       setStudents(studentList);
     }
@@ -46,7 +43,7 @@ export default function StudentsManage() {
   };
 
   const handleEdit = (student) => {
-    navigate("/StudentsForm", { state: { studentToEdit: student } });
+    navigate(`/StudentsForm/${student.id}`);
   };
 
   const handleDelete = async (student) => {
@@ -54,9 +51,7 @@ export default function StudentsManage() {
     if (!confirmDelete) return;
 
     const result = await deleteStudent(student.id);
-
-//🔹 יוצרים רשימה חדשה של סטודנטים – שמכילה את כל הסטודנטים חוץ מזה שנמחק.
-    const updatedList = students.filter((s) => s.id !== student.id); 
+    const updatedList = students.filter((s) => s.id !== student.id);
     setStudents(updatedList);
   };
 

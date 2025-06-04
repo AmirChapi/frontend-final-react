@@ -1,34 +1,18 @@
-
-
-// StudentsForm.jsx - טופס הוספת/עריכת סטודנט עם עדכון ב-Firestore
+// StudentsForm.jsx - טופס הוספת/עריכת סטודנט עם URL ID
 import React, { useState, useEffect } from 'react';
 import {
-  Box,
-  TextField,
-  Button,
-  Typography,
-  RadioGroup,
-  FormControlLabel,
-  Radio,
-  FormLabel,
-  FormControl,
-  Paper,
-  Snackbar,
-  Alert,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogContentText,
-  DialogTitle
+  Box, TextField, Button, Typography, RadioGroup,
+  FormControlLabel, Radio, FormLabel, FormControl,
+  Paper, Snackbar, Alert, Dialog, DialogActions,
+  DialogContent, DialogContentText, DialogTitle
 } from '@mui/material';
-import { useLocation, useNavigate } from 'react-router-dom';
-import { addStudent, updateStudent } from '../firebase/student';
+import { useNavigate, useParams } from 'react-router-dom';
+import { addStudent, updateStudent, getStudent } from '../firebase/student';
 
 export default function StudentsForm() {
-  const location = useLocation();
   const navigate = useNavigate();
-
-  const studentToEdit = location.state?.studentToEdit || null;
+  const { id } = useParams();
+  const isEditMode = Boolean(id);
 
   const [formData, setFormData] = useState({
     studentId: '',
@@ -39,219 +23,110 @@ export default function StudentsForm() {
   });
 
   const [errors, setErrors] = useState({});
-  const [students, setStudents] = useState([]);
-  const [existingIDs, setExistingIDs] = useState([]);
   const [openSnackbar, setOpenSnackbar] = useState(false);
   const [openCancelDialog, setOpenCancelDialog] = useState(false);
 
   useEffect(() => {
-    const storedStudents = JSON.parse(localStorage.getItem('students')) || [];
-    setStudents(storedStudents);
-    setExistingIDs(storedStudents.map((s) => s.studentId));
+    const loadStudent = async () => {
+      if (isEditMode) {
+        const student = await getStudent(id);
+        if (student) setFormData(student);
+      }
+    };
+    loadStudent();
+  }, [id, isEditMode]);
 
-    if (studentToEdit) {
-      setFormData({ ...studentToEdit });
-    }
-  }, [studentToEdit]);
-
-  const handleChange = (event) => {
-    const { name, value } = event.target;
+  const handleChange = (e) => {
+    const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+  };
 
-    let errorField = false;
+  const validate = () => {
+    const newErrors = {};
     const currentYear = new Date().getFullYear();
+    const age = Number(formData.age);
+    const year = Number(formData.year);
 
-    if (name === 'studentId') {
-      errorField =
-        !(value.length === 9 && /^[0-9]+$/.test(value)) ||
-        (!studentToEdit && existingIDs.includes(value));
-    }
+    if (!/^\d{9}$/.test(formData.studentId)) newErrors.studentId = true;
+    if (!formData.fullName.trim() || !/^[A-Za-z\s]+$/.test(formData.fullName)) newErrors.fullName = true;
+    if (!age || age < 18 || age > 80) newErrors.age = true;
+    if (!formData.gender) newErrors.gender = true;
+    if (!year || year < 2020 || year > currentYear) newErrors.year = true;
 
-    if (name === 'fullName') {
-      errorField = !value.trim() || !/^[A-Za-z\s]+$/.test(value);
-    }
-
-    if (name === 'age') {
-      const age = Number(value);
-      errorField = !(value && Number.isInteger(age) && age >= 18 && age <= 80);
-    }
-
-    if (name === 'gender') {
-      errorField = !value;
-    }
-
-    if (name === 'year') {
-      const year = Number(value);
-      errorField = !(value.length === 4 && Number.isInteger(year) && year > 2019 && year <= currentYear);
-    }
-
-    setErrors((prev) => ({ ...prev, [name]: errorField }));
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!validate()) return;
 
-    let hasError = false;
-    const newErrors = {};
-    const currentYear = new Date().getFullYear();
-
-    if (!(formData.studentId.length === 9 && /^[0-9]+$/.test(formData.studentId)) ||
-      (!studentToEdit && existingIDs.includes(formData.studentId))) {
-      newErrors.studentId = true;
-      hasError = true;
-    }
-
-    if (!formData.fullName.trim() || !/^[A-Za-z\s]+$/.test(formData.fullName)) {
-      newErrors.fullName = true;
-      hasError = true;
-    }
-
-    const age = Number(formData.age);
-    if (!(formData.age && Number.isInteger(age) && age >= 18 && age <= 80)) {
-      newErrors.age = true;
-      hasError = true;
-    }
-
-    if (!formData.gender) {
-      newErrors.gender = true;
-      hasError = true;
-    }
-
-    const year = Number(formData.year);
-    if (!(formData.year.length === 4 && Number.isInteger(year) && year >= 2020 && year <= currentYear)) {
-      newErrors.year = true;
-      hasError = true;
-    }
-
-    if (hasError) {
-      setErrors(newErrors);
-      return;
-    }
-
-    if (studentToEdit) {
-      await updateStudent(formData);
+    if (isEditMode) {
+      await updateStudent({ ...formData, id });
     } else {
       await addStudent(formData);
     }
-
-    navigate("/StudentsManage");
     setOpenSnackbar(true);
-  };
-
-  const handleCancelClick = () => setOpenCancelDialog(true);
-  const handleConfirmCancel = () => {
-    setOpenCancelDialog(false);
     navigate('/StudentsManage');
   };
-  const handleCloseCancelDialog = () => setOpenCancelDialog(false);
-  const handleCloseSnackbar = () => setOpenSnackbar(false);
 
   return (
     <Box sx={{ minHeight: '70vh', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-      <Paper elevation={3} sx={{ padding: 4, width: 400, borderRadius: 2 }}>
-        <Typography variant="h5" gutterBottom align="center">
-          {studentToEdit ? 'Edit Student' : 'Add New Student'}
+      <Paper elevation={3} sx={{ p: 4, width: 400, borderRadius: 2 }}>
+        <Typography variant="h5" align="center" gutterBottom>
+          {isEditMode ? 'Edit Student' : 'Add New Student'}
         </Typography>
 
-        <Box component="form" onSubmit={handleSubmit} noValidate sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+        <Box component="form" onSubmit={handleSubmit} sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
           <TextField
-            required
-            label="Student ID"
-            name="studentId"
-            value={formData.studentId}
-            onChange={handleChange}
-            fullWidth
-            disabled={!!studentToEdit}
-            error={errors.studentId}
-            helperText={
-              errors.studentId
-                ? existingIDs.includes(formData.studentId) && !studentToEdit
-                  ? 'This ID already exists'
-                  : 'ID must be exactly 9 digits'
-                : ''
-            }
+            label="Student ID" name="studentId" fullWidth required
+            value={formData.studentId} onChange={handleChange}
+            disabled={isEditMode} error={errors.studentId}
+            helperText={errors.studentId && 'Must be exactly 9 digits'}
           />
-
           <TextField
-            required
-            label="Full Name"
-            name="fullName"
-            value={formData.fullName}
-            onChange={handleChange}
-            fullWidth
-            error={errors.fullName}
-            helperText={errors.fullName ? 'Only letters and spaces allowed' : ''}
+            label="Full Name" name="fullName" fullWidth required
+            value={formData.fullName} onChange={handleChange}
+            error={errors.fullName} helperText={errors.fullName && 'Only letters and spaces allowed'}
           />
-
           <TextField
-            required
-            label="Age"
-            name="age"
-            type="number"
-            value={formData.age}
-            onChange={handleChange}
-            fullWidth
-            error={errors.age}
-            helperText={errors.age ? 'Must be a whole number between 18 and 80' : ''}
+            label="Age" name="age" type="number" fullWidth required
+            value={formData.age} onChange={handleChange}
+            error={errors.age} helperText={errors.age && 'Must be 18–80'}
           />
-
-          <FormControl component="fieldset" fullWidth error={errors.gender} required>
-            <FormLabel component="legend">Gender</FormLabel>
+          <FormControl fullWidth required error={errors.gender}>
+            <FormLabel>Gender</FormLabel>
             <RadioGroup row name="gender" value={formData.gender} onChange={handleChange}>
               <FormControlLabel value="Male" control={<Radio />} label="Male" />
               <FormControlLabel value="Female" control={<Radio />} label="Female" />
             </RadioGroup>
-            {errors.gender && (
-              <Typography variant="caption" color="error" sx={{ pl: 2, mt: -1 }}>
-                Please select a gender
-              </Typography>
-            )}
+            {errors.gender && <Typography color="error" variant="caption">Please select gender</Typography>}
           </FormControl>
-
           <TextField
-            required
-            label="Registration Year"
-            name="year"
-            type="number"
-            value={formData.year}
-            onChange={handleChange}
-            fullWidth
-            error={errors.year}
-            helperText={errors.year ? 'Year must be after 2019 and not in the future' : ''}
+            label="Registration Year" name="year" type="number" fullWidth required
+            value={formData.year} onChange={handleChange}
+            error={errors.year} helperText={errors.year && 'Year must be 2020–current'}
           />
 
           <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 2 }}>
-            <Button variant="outlined" onClick={handleCancelClick} color="secondary">
-              Cancel
-            </Button>
-            <Button type="submit" variant="contained" color="primary">
-              Save
-            </Button>
+            <Button variant="outlined" color="secondary" onClick={() => setOpenCancelDialog(true)}>Cancel</Button>
+            <Button type="submit" variant="contained" color="primary">Save</Button>
           </Box>
         </Box>
       </Paper>
 
-      <Snackbar open={openSnackbar} autoHideDuration={3000} onClose={handleCloseSnackbar}>
-        <Alert severity="success" sx={{ width: '100%' }} onClose={handleCloseSnackbar}>
-          Student successfully saved!
-        </Alert>
+      <Snackbar open={openSnackbar} autoHideDuration={3000} onClose={() => setOpenSnackbar(false)}>
+        <Alert severity="success" sx={{ width: '100%' }}>Student successfully saved!</Alert>
       </Snackbar>
 
-      <Dialog
-        open={openCancelDialog}
-        onClose={handleCloseCancelDialog}
-        aria-labelledby="cancel-dialog-title"
-        aria-describedby="cancel-dialog-description"
-      >
-        <DialogTitle id="cancel-dialog-title">Confirm Cancellation</DialogTitle>
+      <Dialog open={openCancelDialog} onClose={() => setOpenCancelDialog(false)}>
+        <DialogTitle>Cancel Changes?</DialogTitle>
         <DialogContent>
-          <DialogContentText id="cancel-dialog-description">
-            Are you sure you want to cancel? Unsaved changes will be lost.
-          </DialogContentText>
+          <DialogContentText>Are you sure? Unsaved changes will be lost.</DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCloseCancelDialog} color="primary">No</Button>
-          <Button onClick={handleConfirmCancel} color="secondary" autoFocus>Yes, Cancel</Button>
+          <Button onClick={() => setOpenCancelDialog(false)} color="primary">No</Button>
+          <Button onClick={() => navigate('/StudentsManage')} color="secondary">Yes, Cancel</Button>
         </DialogActions>
       </Dialog>
     </Box>

@@ -26,7 +26,6 @@ import {
   LinearProgress
 } from "@mui/material";
 
-// ✅ הוספתי את האייקונים של MUI במקום מלל בפעולות
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
 import AddCircleIcon from '@mui/icons-material/AddCircle';
@@ -57,7 +56,7 @@ export default function CoursesManage() {
   }, []);
 
   function goToEditCourse(courseObject) {
-    navigate("/CourseForm", { state: { courseToEdit: courseObject } });
+    navigate(`/CourseForm/${courseObject.id}`);
   }
 
   const deleteSelectedCourse = async (courseId) => {
@@ -167,8 +166,6 @@ export default function CoursesManage() {
                   <TableCell>{courseItem.lecturer}</TableCell>
                   <TableCell>{courseItem.year}</TableCell>
                   <TableCell>{courseItem.semester}</TableCell>
-
-                  {/* ✅ שינוי: כפתורים עם אייקונים בלבד במקום מלל */}
                   <TableCell>
                     <IconButton color="primary" onClick={() => showCourseStudents(courseItem)}>
                       <AddCircleIcon />

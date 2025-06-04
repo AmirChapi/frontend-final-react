@@ -5,6 +5,7 @@ import {
   updateDoc,
   deleteDoc,
   doc,
+  getDoc,
 } from "firebase/firestore";
 import { firestore } from "./config";
 
@@ -26,20 +27,31 @@ export async function updateCourse(course) {
   return updateDoc(courseRef, data);
 }
 
-// ✅ שינוי: מחיקת קורס לפי מזהה אמיתי (id) במקום courseCode
+// ✅ מחיקת קורס לפי מזהה (id)
 export async function deleteCourse(courseId) {
   const courseRef = doc(firestore, "courses", courseId);
   await deleteDoc(courseRef);
 }
 
-// ✅ שינוי: בדיקה אם קוד קורס קיים, תוך התחשבות במצב עריכה (excludeId)
+// ✅ בדיקה אם קוד קורס כבר קיים, תוך התחשבות במקרה של עריכה
 export async function isCourseCodeExists(courseCode, excludeId = null) {
   const snapshot = await getDocs(collection(firestore, "courses"));
   return snapshot.docs.some((doc) => {
     const data = doc.data();
     return (
       data.courseCode === courseCode &&
-      doc.id !== excludeId // מתעלמים מהקורס הנוכחי (בעת עריכה)
+      doc.id !== excludeId
     );
   });
+}
+
+// ✅ קבלת קורס בודד לפי מזהה (id)
+export async function getCourseById(courseId) {
+  const courseRef = doc(firestore, "courses", courseId);
+  const courseSnap = await getDoc(courseRef);
+  if (courseSnap.exists()) {
+    return { ...courseSnap.data(), id: courseSnap.id };
+  } else {
+    return null;
+  }
 }

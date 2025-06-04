@@ -13,17 +13,18 @@ import {
   Select,
   MenuItem
 } from "@mui/material";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation, useParams } from "react-router-dom";
 import {
   addCourse,
   updateCourse,
-  listCourses
+  listCourses,
+  getCourseById,
 } from "../firebase/course";
 
 export default function CourseForm() {
   const navigate = useNavigate();
   const location = useLocation();
-  const courseToEdit = location.state?.courseToEdit || null;
+  const { id } = useParams();
 
   const [formData, setFormData] = useState({
     courseCode: "",
@@ -51,15 +52,21 @@ export default function CourseForm() {
   }, []);
 
   useEffect(() => {
-    if (courseToEdit) {
-      setFormData(courseToEdit);
+    async function loadCourseToEdit() {
+      if (id) {
+        const course = await getCourseById(id);
+        if (course) {
+          setFormData(course);
+        }
+      } else if (location.state?.courseToEdit) {
+        setFormData(location.state.courseToEdit);
+      }
     }
-  }, [courseToEdit]);
+    loadCourseToEdit();
+  }, [id, location.state]);
 
   function validate() {
     const errors = {};
-
-    // ✅ ולידציה ל־courseCode
     if (formData.courseCode.trim() === "") {
       errors.courseCode = "Course code is required";
     } else if (!/^\d{4}$/.test(formData.courseCode.trim())) {
@@ -78,7 +85,6 @@ export default function CourseForm() {
       errors.semester = "Semester is required";
     }
 
-    // ✅ ולידציה ל־year
     if (formData.year === "") {
       errors.year = "Year is required";
     } else if (isNaN(formData.year)) {
@@ -94,51 +100,13 @@ export default function CourseForm() {
     return Object.keys(errors).length === 0;
   }
 
-  // ✅ ולידציה בלייב ל־courseCode ול־year
   const handleChange = (e) => {
     const { name, value } = e.target;
-
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value
-    }));
-
-    if (name === "courseCode") {
-      if (value.trim() === "") {
-        setErrors((prev) => ({ ...prev, courseCode: "Course code is required" }));
-      } else if (!/^\d{4}$/.test(value.trim())) {
-        setErrors((prev) => ({ ...prev, courseCode: "Course code must be a positive 4-digit number" }));
-      } else {
-        setErrors((prev) => ({ ...prev, courseCode: "" }));
-      }
-    }
-
-    else if (name === "year") {
-      if (value.trim() === "") {
-        setErrors((prev) => ({ ...prev, year: "Year is required" }));
-      } else if (isNaN(value)) {
-        setErrors((prev) => ({ ...prev, year: "Year must be a number" }));
-      } else {
-        const numericYear = Number(value);
-        if (numericYear < 2023 || numericYear > 2030) {
-          setErrors((prev) => ({ ...prev, year: "Year must be between 2023 and 2030" }));
-        } else {
-          setErrors((prev) => ({ ...prev, year: "" }));
-        }
-      }
-    }
-
-    else {
-      setErrors((prev) => ({
-        ...prev,
-        [name]: ""
-      }));
-    }
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   async function handleSubmit(event) {
     event.preventDefault();
-
     const isValid = validate();
     if (!isValid) return;
 
@@ -172,18 +140,10 @@ export default function CourseForm() {
 
     if (!isEditMode) {
       await addCourse(formData);
-      setSnackbar({
-        open: true,
-        message: "Course added successfully",
-        severity: "success"
-      });
+      setSnackbar({ open: true, message: "Course added successfully", severity: "success" });
     } else {
       await updateCourse(formData);
-      setSnackbar({
-        open: true,
-        message: "Course updated successfully",
-        severity: "success"
-      });
+      setSnackbar({ open: true, message: "Course updated successfully", severity: "success" });
     }
 
     setTimeout(() => {
@@ -198,7 +158,7 @@ export default function CourseForm() {
   return (
     <Box component={Paper} p={3} maxWidth={600} mx="auto" mt={4}>
       <Typography variant="h5" gutterBottom>
-        {courseToEdit ? "Edit Course" : "Add Course"}
+        {id ? "Edit Course" : "Add Course"}
       </Typography>
 
       <form onSubmit={handleSubmit}>

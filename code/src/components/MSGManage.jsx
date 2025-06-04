@@ -1,4 +1,4 @@
-// MessagesManage.jsx
+// MSGManage.jsx
 import React, { useEffect, useState } from "react";
 import {
   Box,
@@ -19,19 +19,18 @@ import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { listMessages, deleteMessage } from "../firebase/message";
 import { listCourses } from "../firebase/course";
 import { listTasks } from "../firebase/task";
 
-export default function MessagesManage() {
+export default function MSGManage() {
   const [messages, setMessages] = useState([]);
   const [courses, setCourses] = useState([]);
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const navigate = useNavigate();
-  const location = useLocation();
 
   useEffect(() => {
     async function fetchData() {
@@ -45,52 +44,31 @@ export default function MessagesManage() {
 
       let studentMessages = msgs;
 
-    if (selectedStudent) {
-  studentMessages = msgs.filter((m) => {
-    // אם יש courseCode - סטודנט חייב להיות רשום לקורס הזה
-    if (m.courseCode) {
-      return selectedStudent.courses?.some(c => c.courseCode === m.courseCode);
-    }
-
-    // אם יש studentId - ההודעה היא אישית לסטודנט
-    if (m.studentId) {
-      return m.studentId === selectedStudent.studentId;
-    }
-
-    // אחרת (למשל הודעה כללית ללא courseCode וללא studentId) - לא להציג
-    return false;
-  });
-}
-
-
-
-
-      if (location.state?.newMessage) {
-  const isNew = !studentMessages.some(msg => msg.id === location.state.newMessage.id);
-  if (isNew) {
-    studentMessages = [...studentMessages, location.state.newMessage];
-  }
-}
-
+      if (selectedStudent) {
+        studentMessages = msgs.filter((m) =>
+          // הודעה לקורס שהסטודנט רשום אליו
+          (m.courseCode && selectedStudent.courses?.some(c => c.courseCode === m.courseCode)) ||
+          // או הודעה אישית לפי studentId
+          (m.studentId && m.studentId === selectedStudent.studentId)
+        );
+      }
 
       setMessages(studentMessages);
       setCourses(crs);
       setTasks(tks);
       setLoading(false);
-
-      window.history.replaceState({}, document.title);
     }
 
     fetchData();
-  }, [location.state]);
+  }, []);
 
   const handleEdit = (message) => {
     navigate("/MSGForm", { state: { messageToEdit: message } });
   };
 
   const handleDelete = async (id) => {
-    const confirm = window.confirm("Are you sure you want to delete this message?");
-    if (confirm) {
+    const confirmDelete = window.confirm("Are you sure you want to delete this message?");
+    if (confirmDelete) {
       await deleteMessage(id);
       setMessages((prev) => prev.filter((msg) => msg.id !== id));
     }
@@ -114,9 +92,7 @@ export default function MessagesManage() {
     navigate("/GradeManage", { state: { filterTaskCode: taskCode } });
   };
 
-  if (loading) {
-    return <LinearProgress />;
-  }
+  if (loading) return <LinearProgress />;
 
   return (
     <Box sx={{ padding: 4 }}>
