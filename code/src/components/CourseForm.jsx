@@ -156,7 +156,9 @@ export default function CourseForm() {
   };
 
   return (
-    <Box component={Paper} p={3} maxWidth={600} mx="auto" mt={4}>
+    <Box sx={{ minHeight: '100vh', backgroundColor: '#add8e6', p: 4 }}>
+
+    <Box component={Paper} p={3} maxWidth={600} mx="auto" mt={4} >
       <Typography variant="h5" gutterBottom>
         {id ? "Edit Course" : "Add Course"}
       </Typography>
@@ -253,5 +255,7 @@ export default function CourseForm() {
         </Alert>
       </Snackbar>
     </Box>
+        </Box>
+
   );
 }

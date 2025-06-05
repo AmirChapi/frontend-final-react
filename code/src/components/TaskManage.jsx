@@ -107,17 +107,18 @@ export default function TasksManage() {
         Existing Tasks
       </Typography>
 
-      <TableContainer component={Paper}>
+      <TableContainer component={Paper} sx={{
+ border: '1px solid black',}}>
         <Table>
           <TableHead>
             <TableRow>
-              <TableCell sx={{ fontWeight: "bold" }}>Task Code</TableCell>
-              <TableCell sx={{ fontWeight: "bold" }}>Course Code</TableCell>
-              <TableCell sx={{ fontWeight: "bold" }}>Course Name</TableCell>
-              <TableCell sx={{ fontWeight: "bold" }}>Task Name</TableCell>
-              <TableCell sx={{ fontWeight: "bold" }}>Submission Date</TableCell>
-              <TableCell sx={{ fontWeight: "bold" }}>Description</TableCell>
-              <TableCell sx={{ fontWeight: "bold", textAlign: "center" }}>Actions</TableCell>
+              <TableCell sx={{ fontWeight: "bold" , backgroundColor: '#add8e6'}}>Task Code</TableCell>
+              <TableCell sx={{ fontWeight: "bold" , backgroundColor: '#add8e6'}}>Course Code</TableCell>
+              <TableCell sx={{ fontWeight: "bold" , backgroundColor: '#add8e6'}}>Course Name</TableCell>
+              <TableCell sx={{ fontWeight: "bold" , backgroundColor: '#add8e6'}}>Task Name</TableCell>
+              <TableCell sx={{ fontWeight: "bold" , backgroundColor: '#add8e6'}}>Submission Date</TableCell>
+              <TableCell sx={{ fontWeight: "bold" , backgroundColor: '#add8e6'}}>Description</TableCell>
+              <TableCell sx={{ fontWeight: "bold", textAlign: "center" , backgroundColor: '#add8e6'}}>Actions</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>

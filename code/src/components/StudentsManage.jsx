@@ -79,16 +79,17 @@ export default function StudentsManage() {
         Existing Students
       </Typography>
 
-      <TableContainer component={Paper}>
+      <TableContainer component={Paper} sx={{ border: '1px solid black'}}>
         <Table>
           <TableHead>
             <TableRow>
-              <TableCell sx={{ fontWeight: 'bold' }}>Student ID</TableCell>
-              <TableCell sx={{ fontWeight: 'bold' }}>Full Name</TableCell>
-              <TableCell sx={{ fontWeight: 'bold' }}>Age</TableCell>
-              <TableCell sx={{ fontWeight: 'bold' }}>Registration Year</TableCell>
-              <TableCell sx={{ fontWeight: 'bold' }}>Gender</TableCell>
-              <TableCell sx={{ fontWeight: 'bold', textAlign: 'center' }}>Actions</TableCell>
+              <TableCell sx={{ fontWeight: 'bold' , backgroundColor: '#add8e6' }}>Student ID</TableCell>
+              <TableCell sx={{ fontWeight: 'bold' , backgroundColor: '#add8e6'}}>Full Name</TableCell>
+              <TableCell sx={{ fontWeight: 'bold' , backgroundColor: '#add8e6'}}>Age</TableCell>
+              <TableCell sx={{ fontWeight: 'bold' , backgroundColor: '#add8e6'}}>Registration Year</TableCell>
+              <TableCell sx={{ fontWeight: 'bold' , backgroundColor: '#add8e6'}}>Gender</TableCell>
+              <TableCell sx={{ fontWeight: 'bold', textAlign: 'center' , backgroundColor: '#add8e6'}}>Actions</TableCell>
+              
             </TableRow>
           </TableHead>
           <TableBody>

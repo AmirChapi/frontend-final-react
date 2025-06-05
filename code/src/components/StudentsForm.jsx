@@ -71,7 +71,7 @@ export default function StudentsForm() {
   };
 
   return (
-    <Box sx={{ minHeight: '70vh', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+    <Box sx={{ minHeight: '70vh', display: 'flex', justifyContent: 'center', alignItems: 'center' , backgroundColor: '#add8e6' }}>
       <Paper elevation={3} sx={{ p: 4, width: 400, borderRadius: 2 }}>
         <Typography variant="h5" align="center" gutterBottom>
           {isEditMode ? 'Edit Student' : 'Add New Student'}

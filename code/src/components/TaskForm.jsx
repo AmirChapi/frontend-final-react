@@ -135,7 +135,7 @@ export default function TaskForm() {
   };
 
   return (
-    <Box sx={{ padding: 4, display: 'flex', justifyContent: 'center' }}>
+    <Box sx={{ padding: 4, display: 'flex', justifyContent: 'center', backgroundColor: '#add8e6' }}>
       <Paper elevation={3} sx={{ padding: 4, maxWidth: 600, width: '100%' }}>
         <Typography variant="h4" gutterBottom align="center">
           {taskToEdit ? "Edit Task" : "Add New Task"}

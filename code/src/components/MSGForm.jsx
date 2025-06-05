@@ -137,7 +137,7 @@ export default function MessageForm() {
   };
 
   return (
-    <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
+    <Box sx={{ display: "flex", justifyContent: "center", mt: 4, backgroundColor: '#add8e6' }}>
       <Paper elevation={3} sx={{ p: 4, width: 500 }}>
         <Typography variant="h6" gutterBottom>
           {formData.id ? "Edit Message" : "Add Message"}

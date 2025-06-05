@@ -6,7 +6,6 @@ import {
   Button,
   Card,
   CardContent,
-  Grid,
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import { listCourses } from "../firebase/course";
@@ -91,97 +90,148 @@ export default function HomePage() {
   }
 
   return (
-    <Box sx={{ p: 4, maxWidth: 1000, mx: "auto" }}>
-      <Typography variant="h4" gutterBottom textAlign="center">
+<Box sx={{ minHeight: '100vh', backgroundColor: '#f0f0f0', p: 4 }}>
+      <Typography variant="h4" gutterBottom textAlign="center" fontWeight="bold">
         Welcome to the System
       </Typography>
 
-      <Typography variant="body1" color="text.secondary" textAlign="center" sx={{ mb: 3 }}>
+      <Typography variant="body1" color="text.secondary" textAlign="center" sx={{ mb: 4 }}>
         This dashboard shows a snapshot of the latest courses, upcoming tasks, and recent messages for the selected student.
       </Typography>
 
       {studentInfo && (
-        <Grid container spacing={3}>
-          <Grid item xs={12} md={6}>
-            <Card variant="outlined" sx={{ borderRadius: 3 }}>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>Student Info</Typography>
-                <Typography><strong>ID:</strong> {studentInfo.studentId}</Typography>
-                <Typography><strong>Name:</strong> {studentInfo.fullName}</Typography>
-              </CardContent>
-            </Card>
-          </Grid>
+        <Box
+          sx={{
+            display: 'flex',
+            flexWrap: 'wrap',
+            gap: 3,
+            justifyContent: 'space-between',
+          }}
+        >
+          {/* Student Info */}
+          <Card
+            variant="outlined"
+            sx={{
+              flex: '1 1 45%',
+              minWidth: 280,
+              borderRadius: 3,
+              boxShadow: 3,
+              border: '2px solid #81d4fa',
+              backgroundColor: '#e0f7fa',
+            }}
+          >
+            <CardContent>
+              <Typography variant="h6" gutterBottom fontWeight="bold">
+                Student Info
+              </Typography>
+              <Typography><strong>ID:</strong> {studentInfo.studentId}</Typography>
+              <Typography><strong>Name:</strong> {studentInfo.fullName}</Typography>
+            </CardContent>
+          </Card>
 
-          <Grid item xs={12} md={6}>
-            <Card variant="outlined" sx={{ borderRadius: 3 }}>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>Courses</Typography>
-                <Typography variant="caption" color="text.secondary">
-                  * Showing all assigned courses
-                </Typography>
-                {studentInfo.courses.length > 0 ? (
-                  studentInfo.courses.map((c, i) => (
+          {/* Courses */}
+          <Card
+            variant="outlined"
+            sx={{
+              flex: '1 1 45%',
+              minWidth: 280,
+              borderRadius: 3,
+              boxShadow: 3,
+              border: '2px solid #81d4fa',
+              backgroundColor: '#e0f7fa',
+            }}
+          >
+            <CardContent>
+              <Typography variant="h6" gutterBottom fontWeight="bold">
+                Courses
+              </Typography>
+              <Typography variant="caption" color="text.secondary" display="block" mb={1}>
+                * Showing all assigned courses
+              </Typography>
+              {studentInfo.courses.length > 0 ? (
+                studentInfo.courses.map((c, i) => (
+                  <Typography key={i} variant="body2">
+                    📘 {c.courseName}
+                  </Typography>
+                ))
+              ) : (
+                <Typography>No courses assigned.</Typography>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Upcoming Tasks */}
+          <Card
+            variant="outlined"
+            sx={{
+              flex: '1 1 45%',
+              minWidth: 280,
+              borderRadius: 3,
+              boxShadow: 3,
+              border: '2px solid #81d4fa',
+              backgroundColor: '#e0f7fa',
+            }}
+          >
+            <CardContent>
+              <Typography variant="h6" gutterBottom fontWeight="bold">
+                Upcoming Tasks
+              </Typography>
+              <Typography variant="caption" color="text.secondary" display="block" mb={1}>
+                * Displaying up to 3 nearest tasks
+              </Typography>
+              {studentInfo.tasks.length > 0 ? (
+                studentInfo.tasks.map((t, i) => (
+                  <Typography key={i} variant="body2">
+                    📄 {t.taskName}
+                  </Typography>
+                ))
+              ) : (
+                <Typography>No tasks available.</Typography>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Latest Messages */}
+          <Card
+            variant="outlined"
+            sx={{
+              flex: '1 1 45%',
+              minWidth: 280,
+              borderRadius: 3,
+              boxShadow: 3,
+              border: '2px solid #81d4fa',
+              backgroundColor: '#e0f7fa',
+            }}
+          >
+            <CardContent>
+              <Typography variant="h6" gutterBottom fontWeight="bold">
+                Latest Messages
+              </Typography>
+              <Typography variant="caption" color="text.secondary" display="block" mb={1}>
+                * Displaying 3 most recent messages
+              </Typography>
+              {studentInfo.messages.length > 0 ? (
+                <>
+                  {studentInfo.messages.map((m, i) => (
                     <Typography key={i} variant="body2">
-                      📘 {c.courseName}
+                      📩 {m.messageContent}
                     </Typography>
-                  ))
-                ) : (
-                  <Typography>No courses assigned.</Typography>
-                )}
-              </CardContent>
-            </Card>
-          </Grid>
-
-          <Grid item xs={12} md={6}>
-            <Card variant="outlined" sx={{ borderRadius: 3 }}>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>Upcoming Tasks</Typography>
-                <Typography variant="caption" color="text.secondary">
-                  * Displaying up to 3 nearest tasks
-                </Typography>
-                {studentInfo.tasks.length > 0 ? (
-                  studentInfo.tasks.map((t, i) => (
-                    <Typography key={i} variant="body2">
-                      📄 {t.taskName}
-                    </Typography>
-                  ))
-                ) : (
-                  <Typography>No tasks available.</Typography>
-                )}
-              </CardContent>
-            </Card>
-          </Grid>
-
-          <Grid item xs={12} md={6}>
-            <Card variant="outlined" sx={{ borderRadius: 3 }}>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>Latest Messages</Typography>
-                <Typography variant="caption" color="text.secondary">
-                  * Displaying 3 most recent messages
-                </Typography>
-                {studentInfo.messages.length > 0 ? (
-                  <>
-                    {studentInfo.messages.map((m, i) => (
-                      <Typography key={i} variant="body2">
-                        📩 {m.messageContent}
-                      </Typography>
-                    ))}
-                    <Button
-                      variant="outlined"
-                      color="primary"
-                      sx={{ mt: 1 }}
-                      onClick={() => navigate("/MSGManage")}
-                    >
-                      Go to All Messages
-                    </Button>
-                  </>
-                ) : (
-                  <Typography>No messages.</Typography>
-                )}
-              </CardContent>
-            </Card>
-          </Grid>
-        </Grid>
+                  ))}
+                  <Button
+                    variant="outlined"
+                    color="primary"
+                    sx={{ mt: 1 }}
+                    onClick={() => navigate("/MSGManage")}
+                  >
+                    Go to All Messages
+                  </Button>
+                </>
+              ) : (
+                <Typography>No messages.</Typography>
+              )}
+            </CardContent>
+          </Card>
+        </Box>
       )}
     </Box>
   );

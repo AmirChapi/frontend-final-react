@@ -112,16 +112,16 @@ export default function GradesManage() {
         Existing Grades
       </Typography>
 
-      <TableContainer component={Paper}>
+      <TableContainer component={Paper} sx={{ border: '1px solid black'}}>
         <Table>
           <TableHead>
             <TableRow>
-              <TableCell sx={{ fontWeight: "bold" }}>Student ID</TableCell>
-              <TableCell sx={{ fontWeight: "bold" }}>Student Name</TableCell>
-              <TableCell sx={{ fontWeight: "bold" }}>Task Code</TableCell>
-              <TableCell sx={{ fontWeight: "bold" }}>Task Name</TableCell>
-              <TableCell sx={{ fontWeight: "bold" }}>Grade</TableCell>
-              <TableCell sx={{ fontWeight: "bold", textAlign: "center" }}>Actions</TableCell>
+              <TableCell sx={{ fontWeight: "bold" , backgroundColor: '#add8e6'}}>Student ID</TableCell>
+              <TableCell sx={{ fontWeight: "bold" , backgroundColor: '#add8e6'}}>Student Name</TableCell>
+              <TableCell sx={{ fontWeight: "bold" , backgroundColor: '#add8e6'}}>Task Code</TableCell>
+              <TableCell sx={{ fontWeight: "bold" , backgroundColor: '#add8e6'}}>Task Name</TableCell>
+              <TableCell sx={{ fontWeight: "bold" , backgroundColor: '#add8e6'}}>Grade</TableCell>
+              <TableCell sx={{ fontWeight: "bold", textAlign: "center" , backgroundColor: '#add8e6'}}>Actions</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>

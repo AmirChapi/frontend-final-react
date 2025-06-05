@@ -5,14 +5,24 @@ import List from '@mui/material/List';
 import ListItem from '@mui/material/ListItem';
 import ListItemButton from '@mui/material/ListItemButton';
 import ListItemText from '@mui/material/ListItemText';
+import ListItemIcon from '@mui/material/ListItemIcon';
 import IconButton from '@mui/material/IconButton';
 import MenuIcon from '@mui/icons-material/Menu';
-import { useNavigate } from 'react-router-dom'; // Import useNavigate
+import HomeIcon from '@mui/icons-material/Home';          // דוגמאות לאייקונים
+import PeopleIcon from '@mui/icons-material/People';
+import SchoolIcon from '@mui/icons-material/School';
+import AssignmentIcon from '@mui/icons-material/Assignment';
+import GradeIcon from '@mui/icons-material/Grade';
+import MessageIcon from '@mui/icons-material/Message';
+import HelpIcon from '@mui/icons-material/Help';
+import InfoIcon from '@mui/icons-material/Info';
 
+import { useNavigate, useLocation } from 'react-router-dom';
 
 export default function SideDropdownMenu() {
   const [isOpen, setIsOpen] = useState(false);
-  const navigate = useNavigate(); // Initialize useNavigate
+  const navigate = useNavigate();
+  const location = useLocation();
 
   const toggleDrawer = (open) => (event) => {
     if (event.type === 'keydown' && (event.key === 'Tab' || event.key === 'Shift')) {
@@ -22,36 +32,52 @@ export default function SideDropdownMenu() {
   };
 
   const menuItems = [
-    {text: 'Home Page', path: '/'},
-    { text: 'Students Manage', path: '/StudentsManage' },
-    { text: 'Courses Manage', path: '/CoursesManage' },
-    { text: 'Tasks Manage', path: '/TaskManage' },
-    { text: 'Grades Manage', path: '/GradeManage' },
-    { text: 'MSG Manage', path: '/MSGManage' },
-    {text: 'Help', path: '/help'},
-    {text: 'Student Info', path: '/info'},
-    ];
+    { text: 'Home Page', path: '/', icon: <HomeIcon /> },
+    { text: 'Students Manage', path: '/StudentsManage', icon: <PeopleIcon /> },
+    { text: 'Courses Manage', path: '/CoursesManage', icon: <SchoolIcon /> },
+    { text: 'Tasks Manage', path: '/TaskManage', icon: <AssignmentIcon /> },
+    { text: 'Grades Manage', path: '/GradeManage', icon: <GradeIcon /> },
+    { text: 'MSG Manage', path: '/MSGManage', icon: <MessageIcon /> },
+    { text: 'Help', path: '/help', icon: <HelpIcon /> },
+    { text: 'Student Info', path: '/info', icon: <InfoIcon /> },
+  ];
 
   const handleMenuItemClick = (path) => {
     navigate(path);
-    setIsOpen(false); // Close the drawer after navigation
+    setIsOpen(false);
   };
 
   const list = () => (
     <Box
-      sx={{ width: 250 }}
+      sx={{ width: 250, backgroundColor: '#b3e5fc', height: '100%' }} // רקע תכלת בהיר לתפריט
       role="presentation"
       onClick={toggleDrawer(false)}
       onKeyDown={toggleDrawer(false)}
     >
       <List>
-        {menuItems.map((item, index) => (
-          <ListItem key={index} disablePadding>
-            <ListItemButton onClick={() => handleMenuItemClick(item.path)}>
-              <ListItemText primary={item.text} />
-            </ListItemButton>
-          </ListItem>
-        ))}
+        {menuItems.map((item, index) => {
+          const isSelected = location.pathname === item.path;
+
+          return (
+            <ListItem key={index} disablePadding>
+              <ListItemButton
+                onClick={() => handleMenuItemClick(item.path)}
+                sx={{
+                  backgroundColor: isSelected ? '#4fc3f7' : 'transparent', // תכלת כהה לפריט נבחר
+                  color: isSelected ? 'white' : 'black',
+                  '&:hover': {
+                    backgroundColor: isSelected ? '#4fc3f7' : '#e1f5fe',
+                  },
+                }}
+              >
+                <ListItemIcon sx={{ color: isSelected ? 'white' : 'black' }}>
+                  {item.icon}
+                </ListItemIcon>
+                <ListItemText primary={item.text} />
+              </ListItemButton>
+            </ListItem>
+          );
+        })}
       </List>
     </Box>
   );

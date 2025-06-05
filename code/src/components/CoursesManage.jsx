@@ -145,16 +145,17 @@ export default function CoursesManage() {
 
       <Typography variant="h6" gutterBottom>Existing Courses</Typography>
 
-      <TableContainer component={Paper}>
+      <TableContainer component={Paper} sx={{ border: '1px solid black'}}>
+
         <Table>
           <TableHead>
             <TableRow>
-              <TableCell>Course Code</TableCell>
-              <TableCell>Course Name</TableCell>
-              <TableCell>Lecturer</TableCell>
-              <TableCell>Year</TableCell>
-              <TableCell>Semester</TableCell>
-              <TableCell>Actions</TableCell>
+              <TableCell sx={{backgroundColor: '#add8e6'}}>Course Code</TableCell>
+              <TableCell sx={{backgroundColor: '#add8e6'}}>Course Name</TableCell>
+              <TableCell sx={{backgroundColor: '#add8e6'}}>Lecturer</TableCell>
+              <TableCell sx={{backgroundColor: '#add8e6'}}>Year</TableCell>
+              <TableCell sx={{backgroundColor: '#add8e6'}}>Semester</TableCell>
+              <TableCell sx={{backgroundColor: '#add8e6'}}>Actions</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>

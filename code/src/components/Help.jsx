@@ -45,6 +45,7 @@ const ListItemLink = (props) => {
 
 export default function Help() {
   return (
+      <Box sx={{ minHeight: '100vh', backgroundColor: '#add8e6', py: 4 }}>
     <Container maxWidth="md" sx={{ mt: 4, mb: 4 }}>
       <Paper elevation={3} sx={{ p: 3 }}>
         <Typography variant="h4" component="h1" gutterBottom align="center">
@@ -115,5 +116,6 @@ export default function Help() {
         </Typography>
       </Paper>
     </Container>
+    </Box>
   );
 }

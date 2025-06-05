@@ -73,21 +73,23 @@ export default function Header() {
 
         <Box sx={{ flexGrow: 1 }} />
 
-        <FormControl sx={{ minWidth: 200, backgroundColor: 'white', borderRadius: 1 }}>
-          <InputLabel>Select Student</InputLabel>
-          <Select
-            value={selectedStudentId}
-            onChange={handleChange}
-            label="Select Student"
-            size="small"
-          >
-            {students.map((s) => (
-              <MenuItem key={s.studentId} value={s.studentId}>
-                {s.fullName} ({s.studentId})
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
+        <Box sx={{ mb: 0.5, fontWeight: 'bold', fontSize: '1.2rem', color: 'white' }}>
+  Select Student:
+</Box>
+<Select
+  value={selectedStudentId}
+  onChange={handleChange}
+  size="small"
+  sx={{ minWidth: 250, backgroundColor: 'white', borderRadius: 1 }}
+>
+  {students.map((s) => (
+    <MenuItem key={s.studentId} value={s.studentId}>
+      {s.fullName} ({s.studentId})
+    </MenuItem>
+  ))}
+</Select>
+
+
       </Toolbar>
     </AppBar>
   );

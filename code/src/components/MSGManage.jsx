@@ -110,17 +110,17 @@ export default function MSGManage() {
         Existing Messages
       </Typography>
 
-      <TableContainer component={Paper}>
+      <TableContainer component={Paper} sx={{border: '1px solid black'}}>
         <Table>
           <TableHead>
             <TableRow>
-              <TableCell sx={{ fontWeight: "bold" }}>Content</TableCell>
-              <TableCell sx={{ fontWeight: "bold" }}>Course Code</TableCell>
-              <TableCell sx={{ fontWeight: "bold" }}>Course Name</TableCell>
-              <TableCell sx={{ fontWeight: "bold" }}>Task Code</TableCell>
-              <TableCell sx={{ fontWeight: "bold" }}>Task Name</TableCell>
-              <TableCell sx={{ fontWeight: "bold" }}>Student ID</TableCell>
-              <TableCell sx={{ fontWeight: "bold", textAlign: "center" }}>Actions</TableCell>
+              <TableCell sx={{ fontWeight: "bold" , backgroundColor: '#add8e6'}}>Content</TableCell>
+              <TableCell sx={{ fontWeight: "bold" , backgroundColor: '#add8e6'}}>Course Code</TableCell>
+              <TableCell sx={{ fontWeight: "bold" , backgroundColor: '#add8e6'}}>Course Name</TableCell>
+              <TableCell sx={{ fontWeight: "bold" , backgroundColor: '#add8e6'}}>Task Code</TableCell>
+              <TableCell sx={{ fontWeight: "bold" , backgroundColor: '#add8e6'}}>Task Name</TableCell>
+              <TableCell sx={{ fontWeight: "bold" , backgroundColor: '#add8e6'}}>Student ID</TableCell>
+              <TableCell sx={{ fontWeight: "bold", textAlign: "center" , backgroundColor: '#add8e6'}}>Actions</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>

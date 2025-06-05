@@ -106,7 +106,7 @@ export default function GradeForm() {
   };
 
   return (
-    <Box sx={{ minHeight: "70vh", display: "flex", justifyContent: "center", alignItems: "center" }}>
+    <Box sx={{ minHeight: "70vh", display: "flex", justifyContent: "center", alignItems: "center", backgroundColor: '#add8e6' }}>
       <Paper elevation={3} sx={{ padding: 4, width: 500, borderRadius: 2 }}>
         <Typography variant="h5" align="center" gutterBottom>
           {gradeToEdit ? "Edit Grade" : "Add New Grade"}

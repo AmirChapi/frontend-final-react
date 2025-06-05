@@ -2,10 +2,11 @@ import React, { useEffect, useState } from "react";
 import {
   Box,
   Typography,
-  Paper,
   Divider,
   LinearProgress,
   Button,
+  Card,
+  CardContent,
 } from "@mui/material";
 import { useNavigate, useLocation } from "react-router-dom";
 import { listStudent } from "../firebase/student";
@@ -25,7 +26,7 @@ export default function StudentFullProfile() {
   const [isLoading, setIsLoading] = useState(true);
 
   const navigate = useNavigate();
-  const location = useLocation(); // ✅ עוקב אחרי שינוי כתובת
+  const location = useLocation();
 
   useEffect(() => {
     async function fetchAll() {
@@ -55,11 +56,11 @@ export default function StudentFullProfile() {
     }
 
     fetchAll();
-  }, [location]); // ✅ טוען מחדש בכל מעבר לעמוד
+  }, [location]);
 
   useEffect(() => {
     if (!selectedStudentId || students.length === 0) {
-      setStudentData(null); // ✅ שורה זו קיימת, אבל כעת נוסף תנאי תצוגה בהמשך
+      setStudentData(null);
       return;
     }
     const student = students.find((s) => s.studentId === selectedStudentId);
@@ -92,7 +93,6 @@ export default function StudentFullProfile() {
     });
   }, [selectedStudentId, students, courses, tasks, grades, messages]);
 
-  // ✅ הוספת תנאי תצוגה: טעינה או אין תלמיד נבחר
   if (isLoading) return <LinearProgress />;
 
   if (!selectedStudentId || !studentData) {
@@ -103,7 +103,7 @@ export default function StudentFullProfile() {
         </Typography>
         <Box mt={2}>
           <Button variant="contained" onClick={() => navigate("/")}>
-            BACK TO HOME 
+            BACK TO HOME
           </Button>
         </Box>
       </Box>
@@ -116,84 +116,151 @@ export default function StudentFullProfile() {
         Student Full Profile
       </Typography>
 
-      <Box display="flex" flexWrap="wrap" gap={2}>
-        <Paper elevation={3} sx={{ p: 2, width: 300 }}>
-          <Typography variant="h6">Student Info</Typography>
-          <Divider sx={{ my: 1 }} />
-          <Typography>
-            <strong>Name:</strong> {studentData.student.fullName}
-          </Typography>
-          <Typography>
-            <strong>ID:</strong> {studentData.student.studentId}
-          </Typography>
-          <Typography>
-            <strong>Age:</strong> {studentData.student.age}
-          </Typography>
-          <Typography>
-            <strong>Registration Year:</strong>{" "}
-            {studentData.student.registrationYear}
-          </Typography>
-        </Paper>
+      <Box
+        sx={{
+          display: "flex",
+          flexWrap: "wrap",
+          gap: 3,
+          justifyContent: "space-between",
+        }}
+      >
+        <Card
+          variant="outlined"
+          sx={{
+            flex: "1 1 300px",
+            minWidth: 280,
+            borderRadius: 3,
+            boxShadow: 3,
+            border: "2px solid #81d4fa",
+            backgroundColor: "#e0f7fa",
+          }}
+        >
+          <CardContent>
+            <Typography variant="h6">Student Info</Typography>
+            <Divider sx={{ my: 1 }} />
+            <Typography>
+              <strong>Name:</strong> {studentData.student.fullName}
+            </Typography>
+            <Typography>
+              <strong>ID:</strong> {studentData.student.studentId}
+            </Typography>
+            <Typography>
+              <strong>Age:</strong> {studentData.student.age}
+            </Typography>
+            <Typography>
+              <strong>Registration Year:</strong>{" "}
+              {studentData.student.registrationYear}
+            </Typography>
+          </CardContent>
+        </Card>
 
-        <Paper elevation={3} sx={{ p: 2, width: 300 }}>
-          <Typography variant="h6">Messages</Typography>
-          <Divider sx={{ my: 1 }} />
-          {studentData.studentMessages.length ? (
-            studentData.studentMessages.map((m, i) => (
-              <Box key={i} sx={{ mb: 1 }}>
-                <Typography variant="body2">📩 {m.messageContent}</Typography>
-              </Box>
-            ))
-          ) : (
-            <Typography>No messages.</Typography>
-          )}
-        </Paper>
+        <Card
+          variant="outlined"
+          sx={{
+            flex: "1 1 300px",
+            minWidth: 280,
+            borderRadius: 3,
+            boxShadow: 3,
+            border: "2px solid #81d4fa",
+            backgroundColor: "#e0f7fa",
+          }}
+        >
+          <CardContent>
+            <Typography variant="h6">Messages</Typography>
+            <Divider sx={{ my: 1 }} />
+            {studentData.studentMessages.length ? (
+              studentData.studentMessages.map((m, i) => (
+                <Box key={i} sx={{ mb: 1 }}>
+                  <Typography variant="body2">📩 {m.messageContent}</Typography>
+                </Box>
+              ))
+            ) : (
+              <Typography>No messages.</Typography>
+            )}
+          </CardContent>
+        </Card>
 
-        <Paper elevation={3} sx={{ p: 2, width: 300 }}>
-          <Typography variant="h6">Grades</Typography>
-          <Divider sx={{ my: 1 }} />
-          {studentData.studentGrades.length ? (
-            studentData.studentGrades.map((g, i) => {
-              const task = tasks.find((t) => t.taskCode === g.taskCode);
-              const taskName = task ? task.taskName : g.taskCode;
-              return (
+        <Card
+          variant="outlined"
+          sx={{
+            flex: "1 1 300px",
+            minWidth: 280,
+            borderRadius: 3,
+            boxShadow: 3,
+            border: "2px solid #81d4fa",
+            backgroundColor: "#e0f7fa",
+          }}
+        >
+          <CardContent>
+            <Typography variant="h6">Grades</Typography>
+            <Divider sx={{ my: 1 }} />
+            {studentData.studentGrades.length ? (
+              studentData.studentGrades.map((g, i) => {
+                const task = tasks.find((t) => t.taskCode === g.taskCode);
+                const taskName = task ? task.taskName : g.taskCode;
+                return (
+                  <Typography key={i} variant="body2">
+                    📝 {taskName}: {g.taskGrade}
+                  </Typography>
+                );
+              })
+            ) : (
+              <Typography>No grades.</Typography>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card
+          variant="outlined"
+          sx={{
+            flex: "1 1 300px",
+            minWidth: 280,
+            borderRadius: 3,
+            boxShadow: 3,
+            border: "2px solid #81d4fa",
+            backgroundColor: "#e0f7fa",
+          }}
+        >
+          <CardContent>
+            <Typography variant="h6">Courses</Typography>
+            <Divider sx={{ my: 1 }} />
+            {studentData.studentCourses.length ? (
+              studentData.studentCourses.map((c, i) => (
                 <Typography key={i} variant="body2">
-                  📝 {taskName}: {g.taskGrade}
+                  📘 {c.courseName} ({c.courseCode})
                 </Typography>
-              );
-            })
-          ) : (
-            <Typography>No grades.</Typography>
-          )}
-        </Paper>
+              ))
+            ) : (
+              <Typography>No courses.</Typography>
+            )}
+          </CardContent>
+        </Card>
 
-        <Paper elevation={3} sx={{ p: 2, width: 300 }}>
-          <Typography variant="h6">Courses</Typography>
-          <Divider sx={{ my: 1 }} />
-          {studentData.studentCourses.length ? (
-            studentData.studentCourses.map((c, i) => (
-              <Typography key={i} variant="body2">
-                📘 {c.courseName} ({c.courseCode})
-              </Typography>
-            ))
-          ) : (
-            <Typography>No courses.</Typography>
-          )}
-        </Paper>
-
-        <Paper elevation={3} sx={{ p: 2, width: 300 }}>
-          <Typography variant="h6">Tasks</Typography>
-          <Divider sx={{ my: 1 }} />
-          {studentData.studentTasks.length ? (
-            studentData.studentTasks.map((t, i) => (
-              <Typography key={i} variant="body2">
-                📝 {t.taskName} - Due: {t.submissionDate}
-              </Typography>
-            ))
-          ) : (
-            <Typography>No tasks.</Typography>
-          )}
-        </Paper>
+        <Card
+          variant="outlined"
+          sx={{
+            flex: "1 1 300px",
+            minWidth: 280,
+            borderRadius: 3,
+            boxShadow: 3,
+            border: "2px solid #81d4fa",
+            backgroundColor: "#e0f7fa",
+          }}
+        >
+          <CardContent>
+            <Typography variant="h6">Tasks</Typography>
+            <Divider sx={{ my: 1 }} />
+            {studentData.studentTasks.length ? (
+              studentData.studentTasks.map((t, i) => (
+                <Typography key={i} variant="body2">
+                  📝 {t.taskName} - Due: {t.submissionDate}
+                </Typography>
+              ))
+            ) : (
+              <Typography>No tasks.</Typography>
+            )}
+          </CardContent>
+        </Card>
       </Box>
 
       <Box mt={4}>
