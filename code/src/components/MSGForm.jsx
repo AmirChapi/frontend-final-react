@@ -1,3 +1,5 @@
+// ✅ MSGForm.jsx - מתוקן כך שנטען לפי ID מה-URL במקום מ-location.state
+
 import React, { useEffect, useState } from "react";
 import {
   Box,
@@ -10,16 +12,15 @@ import {
   Alert,
   Stack,
 } from "@mui/material";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { listCourses } from "../firebase/course";
 import { listTasks } from "../firebase/task";
 import { listStudent } from "../firebase/student";
-import { addMessage, updateMessage } from "../firebase/message";
+import { addMessage, updateMessage, getMessage } from "../firebase/message";
 
 export default function MessageForm() {
   const navigate = useNavigate();
-  const location = useLocation();
-  const messageToEdit = location.state?.messageToEdit || null;
+  const { id } = useParams();
 
   const [formData, setFormData] = useState({
     messageContent: "",
@@ -46,26 +47,28 @@ export default function MessageForm() {
       setCourses(c);
       setTasks(t);
       setStudents(s);
-      setFilteredTasks(t);
-      setFilteredStudents(s);
 
-      if (messageToEdit) {
-        setFormData(messageToEdit);
+      if (id) {
+        const message = await getMessage(id);
+        if (message) {
+          setFormData(message);
 
-        if (messageToEdit.courseCode) {
-          const filteredT = t.filter((task) => task.courseCode === messageToEdit.courseCode);
+          const filteredT = t.filter((task) => task.courseCode === message.courseCode);
           setFilteredTasks(filteredT);
 
           const filteredS = s.filter((stu) =>
-            Array.isArray(stu.courses) && stu.courses.includes(messageToEdit.courseCode)
+            Array.isArray(stu.courses) && stu.courses.includes(message.courseCode)
           );
           setFilteredStudents(filteredS);
         }
+      } else {
+        setFilteredTasks(t);
+        setFilteredStudents(s);
       }
     }
 
     fetchData();
-  }, [messageToEdit]);
+  }, [id]);
 
   const validate = () => {
     const newErrors = {};
@@ -91,7 +94,7 @@ export default function MessageForm() {
         ...prev,
         courseCode: value,
         assignmentCode: "",
-        studentId: ""
+        studentId: "",
       }));
     }
 
@@ -105,8 +108,8 @@ export default function MessageForm() {
     if (!validate()) return;
 
     try {
-      if (formData.id) {
-        await updateMessage(formData);
+      if (id) {
+        await updateMessage({ ...formData, id });
         setSnackbar({ open: true, message: "Message updated", severity: "success" });
       } else {
         if (!formData.studentId) {
@@ -140,7 +143,7 @@ export default function MessageForm() {
     <Box sx={{ display: "flex", justifyContent: "center", mt: 4, backgroundColor: '#add8e6' }}>
       <Paper elevation={3} sx={{ p: 4, width: 500 }}>
         <Typography variant="h6" gutterBottom>
-          {formData.id ? "Edit Message" : "Add Message"}
+          {id ? "Edit Message" : "Add Message"}
         </Typography>
         <form onSubmit={handleSubmit}>
           <TextField
@@ -217,7 +220,7 @@ export default function MessageForm() {
 
           <Stack direction="row" spacing={2} mt={2}>
             <Button type="submit" variant="contained" color="primary" fullWidth>
-              {formData.id ? "Update" : "Save"}
+              {id ? "Update" : "Save"}
             </Button>
             <Button variant="outlined" color="secondary" fullWidth onClick={handleCancel}>
               Cancel

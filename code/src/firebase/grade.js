@@ -1,3 +1,4 @@
+// src/firebase/grade.js
 import {
   collection,
   getDocs,
@@ -23,13 +24,17 @@ export async function listGrades() {
 // ✏️ עדכון ציון לפי מזהה (id)
 export async function updateGrade(grade) {
   const { id, ...data } = grade;
-  return updateDoc(doc(firestore, "grades", id), data);
+  const gradeRef = doc(firestore, "grades", id);
+  return updateDoc(gradeRef, data);
 }
 
 // ❌ מחיקת ציון לפי מזהה (id)
 export async function deleteGrade(id) {
-  return deleteDoc(doc(firestore, "grades", id));
+  const gradeRef = doc(firestore, "grades", id);
+  return deleteDoc(gradeRef);
 }
+
+// 📄 שליפת ציון לפי מזהה (id) – נדרש למסך העריכה
 export async function getGrade(id) {
   const gradeRef = doc(firestore, "grades", id);
   const snap = await getDoc(gradeRef);

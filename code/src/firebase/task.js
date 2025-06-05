@@ -5,6 +5,7 @@ import {
   updateDoc,
   deleteDoc,
   doc,
+  getDoc,
 } from "firebase/firestore";
 import { firestore } from "./config";
 
@@ -33,7 +34,21 @@ export async function deleteTask(taskId) {
 }
 
 // 🔍 בדיקה אם קוד מטלה קיים (למניעת כפילויות)
-export async function isTaskCodeExists(taskCode) {
+export async function isTaskCodeExists(taskCode, excludeId = null) {
   const snapshot = await getDocs(collection(firestore, "tasks"));
-  return snapshot.docs.some((doc) => doc.data().taskCode === taskCode);
+  return snapshot.docs.some((doc) => {
+    const data = doc.data();
+    return data.taskCode === taskCode && doc.id !== excludeId;
+  });
+}
+
+// 📄 קבלת מטלה לפי מזהה
+export async function getTaskById(taskId) {
+  const taskRef = doc(firestore, "tasks", taskId);
+  const taskSnap = await getDoc(taskRef);
+  if (taskSnap.exists()) {
+    return { ...taskSnap.data(), id: taskSnap.id };
+  } else {
+    return null;
+  }
 }

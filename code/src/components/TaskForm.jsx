@@ -1,5 +1,4 @@
-// TaskForm.jsx - Task Entry/Edit Page Styled Consistently
-
+// TaskForm.jsx
 import React, { useState, useEffect } from "react";
 import {
   Box,
@@ -14,17 +13,21 @@ import {
   DialogActions,
   DialogContent,
   DialogContentText,
-  DialogTitle
+  DialogTitle,
 } from "@mui/material";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import dayjs from "dayjs";
-import { addTask, updateTask, isTaskCodeExists } from "../firebase/task";
+import {
+  addTask,
+  updateTask,
+  isTaskCodeExists,
+  getTaskById,
+} from "../firebase/task";
 import { listCourses } from "../firebase/course";
 
 export default function TaskForm() {
   const navigate = useNavigate();
-  const location = useLocation();
-  const taskToEdit = location.state?.taskToEdit || null;
+  const { id } = useParams(); // נשלף מה-URL
 
   const [formData, setFormData] = useState({
     taskCode: "",
@@ -40,32 +43,34 @@ export default function TaskForm() {
   const [openCancelDialog, setOpenCancelDialog] = useState(false);
 
   useEffect(() => {
-    async function fetchCourses() {
+    const fetchData = async () => {
       const fetchedCourses = await listCourses();
       setCourses(fetchedCourses);
-    }
 
-    fetchCourses();
+      if (id) {
+        const existingTask = await getTaskById(id);
+        if (existingTask) {
+          setFormData(existingTask);
+        }
+      }
+    };
+    fetchData();
+  }, [id]);
 
-    if (taskToEdit) {
-      setFormData(taskToEdit);
-    }
-  }, [taskToEdit]);
-
-  const handleChange = (event) => {
-    const { name, value } = event.target;
+  const handleChange = (e) => {
+    const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
 
     let errorField = false;
-
     if (name === "taskCode") {
       errorField = !(value.length === 3 && /^[0-9]+$/.test(value));
     }
     if (name === "courseCode") errorField = !value;
     if (name === "taskName") errorField = !value.trim();
-    if (name === "submissionDate") errorField = !value || dayjs(value).isBefore(dayjs(), "day");
+    if (name === "submissionDate") {
+      errorField = !value || dayjs(value).isBefore(dayjs(), "day");
+    }
     if (name === "taskDescription") errorField = !value.trim();
-
     setErrors((prev) => ({ ...prev, [name]: errorField }));
   };
 
@@ -100,7 +105,7 @@ export default function TaskForm() {
       hasError = true;
     }
 
-    if (!taskToEdit && !hasError) {
+    if (!id && !hasError) {
       const exists = await isTaskCodeExists(formData.taskCode);
       if (exists) {
         newErrors.taskCode = true;
@@ -114,40 +119,30 @@ export default function TaskForm() {
       return;
     }
 
-    if (taskToEdit && taskToEdit.id) {
-      await updateTask(formData);
+    if (id) {
+      await updateTask({ ...formData, id });
     } else {
       await addTask(formData);
     }
 
     setOpenSnackbar(true);
-    setTimeout(() => {
-      navigate("/TaskManage");
-    }, 1000);
-  };
-
-  const handleCloseSnackbar = () => setOpenSnackbar(false);
-  const handleCancelClick = () => setOpenCancelDialog(true);
-  const handleCloseCancelDialog = () => setOpenCancelDialog(false);
-  const handleConfirmCancel = () => {
-    setOpenCancelDialog(false);
-    navigate("/TaskManage");
+    setTimeout(() => navigate("/TaskManage"), 1000);
   };
 
   return (
-    <Box sx={{ padding: 4, display: 'flex', justifyContent: 'center', backgroundColor: '#add8e6' }}>
-      <Paper elevation={3} sx={{ padding: 4, maxWidth: 600, width: '100%' }}>
+    <Box sx={{ padding: 4, display: "flex", justifyContent: "center", backgroundColor: "#add8e6" }}>
+      <Paper elevation={3} sx={{ padding: 4, maxWidth: 600, width: "100%" }}>
         <Typography variant="h4" gutterBottom align="center">
-          {taskToEdit ? "Edit Task" : "Add New Task"}
+          {id ? "Edit Task" : "Add New Task"}
         </Typography>
 
-        <Box component="form" onSubmit={handleSubmit} sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+        <Box component="form" onSubmit={handleSubmit} sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
           <TextField
             label="Task Code"
             name="taskCode"
             value={formData.taskCode}
             onChange={handleChange}
-            disabled={!!taskToEdit}
+            disabled={!!id}
             error={errors.taskCode || errors.taskCodeDuplicate}
             helperText={
               errors.taskCodeDuplicate
@@ -208,8 +203,8 @@ export default function TaskForm() {
             helperText={errors.taskDescription ? "Task description is required" : ""}
           />
 
-          <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-            <Button variant="outlined" color="secondary" onClick={handleCancelClick}>
+          <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+            <Button variant="outlined" color="secondary" onClick={() => navigate("/TaskManage")}>
               Cancel
             </Button>
             <Button variant="contained" color="primary" type="submit">
@@ -219,24 +214,11 @@ export default function TaskForm() {
         </Box>
       </Paper>
 
-      <Snackbar open={openSnackbar} autoHideDuration={3000} onClose={handleCloseSnackbar}>
-        <Alert severity="success" sx={{ width: '100%' }} onClose={handleCloseSnackbar}>
+      <Snackbar open={openSnackbar} autoHideDuration={3000} onClose={() => setOpenSnackbar(false)}>
+        <Alert severity="success" sx={{ width: "100%" }} onClose={() => setOpenSnackbar(false)}>
           Task successfully saved!
         </Alert>
       </Snackbar>
-
-      <Dialog open={openCancelDialog} onClose={handleCloseCancelDialog}>
-        <DialogTitle>Confirm Cancellation</DialogTitle>
-        <DialogContent>
-          <DialogContentText>
-            Are you sure you want to cancel? Unsaved changes will be lost.
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseCancelDialog} color="primary">No</Button>
-          <Button onClick={handleConfirmCancel} color="secondary" autoFocus>Yes, Cancel</Button>
-        </DialogActions>
-      </Dialog>
     </Box>
   );
 }

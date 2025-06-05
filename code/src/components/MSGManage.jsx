@@ -46,9 +46,7 @@ export default function MSGManage() {
 
       if (selectedStudent) {
         studentMessages = msgs.filter((m) =>
-          // הודעה לקורס שהסטודנט רשום אליו
           (m.courseCode && selectedStudent.courses?.some(c => c.courseCode === m.courseCode)) ||
-          // או הודעה אישית לפי studentId
           (m.studentId && m.studentId === selectedStudent.studentId)
         );
       }
@@ -63,7 +61,7 @@ export default function MSGManage() {
   }, []);
 
   const handleEdit = (message) => {
-    navigate("/MSGForm", { state: { messageToEdit: message } });
+    navigate(`/MSGForm/${message.id}`);
   };
 
   const handleDelete = async (id) => {
@@ -110,17 +108,17 @@ export default function MSGManage() {
         Existing Messages
       </Typography>
 
-      <TableContainer component={Paper} sx={{border: '1px solid black'}}>
+      <TableContainer component={Paper} sx={{ border: '1px solid black' }}>
         <Table>
           <TableHead>
             <TableRow>
-              <TableCell sx={{ fontWeight: "bold" , backgroundColor: '#add8e6'}}>Content</TableCell>
-              <TableCell sx={{ fontWeight: "bold" , backgroundColor: '#add8e6'}}>Course Code</TableCell>
-              <TableCell sx={{ fontWeight: "bold" , backgroundColor: '#add8e6'}}>Course Name</TableCell>
-              <TableCell sx={{ fontWeight: "bold" , backgroundColor: '#add8e6'}}>Task Code</TableCell>
-              <TableCell sx={{ fontWeight: "bold" , backgroundColor: '#add8e6'}}>Task Name</TableCell>
-              <TableCell sx={{ fontWeight: "bold" , backgroundColor: '#add8e6'}}>Student ID</TableCell>
-              <TableCell sx={{ fontWeight: "bold", textAlign: "center" , backgroundColor: '#add8e6'}}>Actions</TableCell>
+              <TableCell sx={{ fontWeight: "bold", backgroundColor: '#add8e6' }}>Content</TableCell>
+              <TableCell sx={{ fontWeight: "bold", backgroundColor: '#add8e6' }}>Course Code</TableCell>
+              <TableCell sx={{ fontWeight: "bold", backgroundColor: '#add8e6' }}>Course Name</TableCell>
+              <TableCell sx={{ fontWeight: "bold", backgroundColor: '#add8e6' }}>Task Code</TableCell>
+              <TableCell sx={{ fontWeight: "bold", backgroundColor: '#add8e6' }}>Task Name</TableCell>
+              <TableCell sx={{ fontWeight: "bold", backgroundColor: '#add8e6' }}>Student ID</TableCell>
+              <TableCell sx={{ fontWeight: "bold", textAlign: "center", backgroundColor: '#add8e6' }}>Actions</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
