@@ -36,8 +36,12 @@ const ListItemLink = (props) => {
   return (
     <li> {/* List item needs to be direct child of List */}
       <ListItemButton component={renderLink}>
-        {icon ? <ListItemIcon>{icon}</ListItemIcon> : null}
-        <ListItemText primary={primary} secondary={secondary} />
+{icon ? (
+  <ListItemIcon>
+    {React.cloneElement(icon, { sx: { color: '#8c6e54' } })}
+  </ListItemIcon>
+) : null}
+    <ListItemText primary={primary} secondary={secondary} />
       </ListItemButton>
     </li>
   );
@@ -45,9 +49,15 @@ const ListItemLink = (props) => {
 
 export default function Help() {
   return (
-      <Box sx={{ minHeight: '100vh', backgroundColor: '#add8e6', py: 4 }}>
+      <Box sx={{ minHeight: '100vh', py: 4 }}>
     <Container maxWidth="md" sx={{ mt: 4, mb: 4 }}>
-      <Paper elevation={3} sx={{ p: 3 }}>
+      <Box sx={{
+  p: 3,
+  borderRadius: 4,
+  border: '2.5px solid #ebdfd1',
+  backgroundColor: '#fff',
+  boxShadow: '0 4px 12px rgba(0,0,0,0.04)',
+}}>
         <Typography variant="h4" component="h1" gutterBottom align="center">
           Help & Guidance
         </Typography>
@@ -114,7 +124,7 @@ export default function Help() {
         <Typography variant="body2" sx={{ mt: 3, fontStyle: 'italic', textAlign: 'center' }}>
           You can also use the navigation bar at the top to access these sections.
         </Typography>
-      </Paper>
+      </Box>
     </Container>
     </Box>
   );

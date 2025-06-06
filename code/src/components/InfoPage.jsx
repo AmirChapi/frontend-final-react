@@ -110,6 +110,19 @@ export default function StudentFullProfile() {
     );
   }
 
+  const cardStyle = {
+    minWidth: 300,
+    minHeight: 200,
+    borderRadius: 4,
+    boxShadow: 3,
+    border: "2px solid #8c6e54",
+    backgroundColor: "#f9f5f2",
+    display: "flex",
+    flexDirection: "column",
+    justifyContent: "space-between",
+    p: 2,
+  };
+
   return (
     <Box sx={{ p: 4 }}>
       <Typography variant="h4" gutterBottom>
@@ -118,23 +131,12 @@ export default function StudentFullProfile() {
 
       <Box
         sx={{
-          display: "flex",
-          flexWrap: "wrap",
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
           gap: 3,
-          justifyContent: "space-between",
         }}
       >
-        <Card
-          variant="outlined"
-          sx={{
-            flex: "1 1 300px",
-            minWidth: 280,
-            borderRadius: 3,
-            boxShadow: 3,
-            border: "2px solid #81d4fa",
-            backgroundColor: "#e0f7fa",
-          }}
-        >
+        <Card variant="outlined" sx={cardStyle}>
           <CardContent>
             <Typography variant="h6">Student Info</Typography>
             <Divider sx={{ my: 1 }} />
@@ -154,17 +156,7 @@ export default function StudentFullProfile() {
           </CardContent>
         </Card>
 
-        <Card
-          variant="outlined"
-          sx={{
-            flex: "1 1 300px",
-            minWidth: 280,
-            borderRadius: 3,
-            boxShadow: 3,
-            border: "2px solid #81d4fa",
-            backgroundColor: "#e0f7fa",
-          }}
-        >
+        <Card variant="outlined" sx={cardStyle}>
           <CardContent>
             <Typography variant="h6">Messages</Typography>
             <Divider sx={{ my: 1 }} />
@@ -180,17 +172,7 @@ export default function StudentFullProfile() {
           </CardContent>
         </Card>
 
-        <Card
-          variant="outlined"
-          sx={{
-            flex: "1 1 300px",
-            minWidth: 280,
-            borderRadius: 3,
-            boxShadow: 3,
-            border: "2px solid #81d4fa",
-            backgroundColor: "#e0f7fa",
-          }}
-        >
+        <Card variant="outlined" sx={cardStyle}>
           <CardContent>
             <Typography variant="h6">Grades</Typography>
             <Divider sx={{ my: 1 }} />
@@ -210,17 +192,7 @@ export default function StudentFullProfile() {
           </CardContent>
         </Card>
 
-        <Card
-          variant="outlined"
-          sx={{
-            flex: "1 1 300px",
-            minWidth: 280,
-            borderRadius: 3,
-            boxShadow: 3,
-            border: "2px solid #81d4fa",
-            backgroundColor: "#e0f7fa",
-          }}
-        >
+        <Card variant="outlined" sx={cardStyle}>
           <CardContent>
             <Typography variant="h6">Courses</Typography>
             <Divider sx={{ my: 1 }} />
@@ -236,17 +208,7 @@ export default function StudentFullProfile() {
           </CardContent>
         </Card>
 
-        <Card
-          variant="outlined"
-          sx={{
-            flex: "1 1 300px",
-            minWidth: 280,
-            borderRadius: 3,
-            boxShadow: 3,
-            border: "2px solid #81d4fa",
-            backgroundColor: "#e0f7fa",
-          }}
-        >
+        <Card variant="outlined" sx={cardStyle}>
           <CardContent>
             <Typography variant="h6">Tasks</Typography>
             <Divider sx={{ my: 1 }} />
@@ -264,7 +226,18 @@ export default function StudentFullProfile() {
       </Box>
 
       <Box mt={4}>
-        <Button variant="contained" onClick={() => navigate("/")}>
+        <Button variant="contained" onClick={() => navigate("/")}
+          sx={{
+            backgroundColor: '#ebdfd1',
+            color: '#000',
+            borderRadius: '20px',
+            textTransform: 'none',
+            fontWeight: 'bold',
+            px: 3,
+            '&:hover': {
+              backgroundColor: '#c0aa92',
+            },
+          }}>
           Back to Home
         </Button>
       </Box>
