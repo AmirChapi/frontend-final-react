@@ -32,14 +32,12 @@ export default function HomePage() {
         listGrades(),
         listMessages(),
       ]);
-
       setCourses(coursesData);
       setTasks(tasksData);
       setGrades(gradesData);
       setMessages(messagesData);
       setIsLoading(false);
     }
-
     fetchAll();
   }, []);
 
@@ -47,7 +45,6 @@ export default function HomePage() {
     if (!selectedStudent || !Array.isArray(selectedStudent.courses)) return;
 
     const courseCodes = selectedStudent.courses.map(String);
-
     const studentCourses = courseCodes
       .map(code => courses.find(c => c.courseCode.toString() === code))
       .filter(Boolean);
@@ -64,14 +61,12 @@ export default function HomePage() {
       .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
       .slice(0, 3);
 
-    const studentData = {
+    setStudentInfo({
       ...selectedStudent,
       courses: studentCourses,
       tasks: studentTasks,
       messages: studentMessages,
-    };
-
-    setStudentInfo(studentData);
+    });
   }, [courses, tasks, messages]);
 
   if (isLoading) return <LinearProgress />;
@@ -82,145 +77,149 @@ export default function HomePage() {
         <Typography variant="h5" gutterBottom>
           Please select a student from the top menu
         </Typography>
-        <Typography variant="body1" color="text.secondary">
-          After selecting a student, you will see a summary of their courses, tasks, and messages here.
-        </Typography>
       </Box>
     );
   }
 
+  // סגנונות
+  const cardStyle = {
+    flex: '1 1 45%',
+    minWidth: 280,
+    borderRadius: 4,
+    boxShadow: '0 4px 12px rgba(0,0,0,0.04)',
+    border: '2.5px solid #ebdfd1', // מסגרת מודגשת
+    backgroundColor: '#fff',
+    p: 2,
+  };
+
+  const sectionTitle = {
+    fontSize: '1.3rem',
+    fontWeight: 600,
+    color: '#5c5470',
+    mb: 1,
+  };
+
+  const labelStyle = {
+    fontWeight: 600,
+    fontSize: '0.95rem',
+    color: '#6a6a6a',
+    mt: 1,
+  };
+
+  const valueStyle = {
+    fontWeight: 500,
+    fontSize: '1.1rem',
+    color: '#333',
+  };
+
   return (
-<Box sx={{ minHeight: '100vh', backgroundColor: '#f0f0f0', p: 4 }}>
-      <Typography variant="h4" gutterBottom textAlign="center" fontWeight="bold">
-        Welcome to the System
+    <Box sx={{ minHeight: '100vh', backgroundColor: '#ffffff', p: 4, fontFamily: 'Rubik, sans-serif' }}>
+      <Typography variant="h4" textAlign="center" sx={{ fontWeight: 700, color: '#221e20', mb: 1 }}>
+        Welcome, {studentInfo.fullName}
       </Typography>
 
-      <Typography variant="body1" color="text.secondary" textAlign="center" sx={{ mb: 4 }}>
-        This dashboard shows a snapshot of the latest courses, upcoming tasks, and recent messages for the selected student.
+      <Typography
+        variant="body1"
+        textAlign="center"
+        sx={{
+          color: "#221e20",
+          mb: 4,
+          fontSize: "1.3rem" // הגדלת טקסט
+        }}
+      >
+        Here’s a quick overview of your courses, upcoming tasks, and messages. Let’s make today productive!
       </Typography>
 
-      {studentInfo && (
-        <Box
-          sx={{
-            display: 'flex',
-            flexWrap: 'wrap',
-            gap: 3,
-            justifyContent: 'space-between',
-          }}
-        >
-          {/* Student Info */}
-          <Card
-            variant="outlined"
-            sx={{
-              flex: '1 1 45%',
-              minWidth: 280,
-              borderRadius: 3,
-              boxShadow: 3,
-              border: '2px solid #81d4fa',
-              backgroundColor: '#e0f7fa',
-            }}
-          >
-            <CardContent>
-              <Typography variant="h6" gutterBottom fontWeight="bold">
-                Student Info
-              </Typography>
-              <Typography><strong>ID:</strong> {studentInfo.studentId}</Typography>
-              <Typography><strong>Name:</strong> {studentInfo.fullName}</Typography>
-            </CardContent>
-          </Card>
+      <Box
+        sx={{
+          display: 'flex',
+          flexWrap: 'wrap',
+          gap: 3,
+          justifyContent: 'space-between',
+        }}
+      >
+        {/* Student Info */}
+        <Card sx={cardStyle}>
+          <CardContent>
+            <Typography sx={sectionTitle}>👩‍🎓 Student Info</Typography>
+            <Box sx={{ mt: 1 }}>
+              <Typography sx={labelStyle}>ID:</Typography>
+              <Typography sx={valueStyle}>{studentInfo.studentId}</Typography>
 
-          {/* Courses */}
-          <Card
-            variant="outlined"
-            sx={{
-              flex: '1 1 45%',
-              minWidth: 280,
-              borderRadius: 3,
-              boxShadow: 3,
-              border: '2px solid #81d4fa',
-              backgroundColor: '#e0f7fa',
-            }}
-          >
-            <CardContent>
-              <Typography variant="h6" gutterBottom fontWeight="bold">
-                Courses
-              </Typography>
-              <Typography variant="caption" color="text.secondary" display="block" mb={1}>
-                * Showing all assigned courses
-              </Typography>
+              <Typography sx={labelStyle}>Name:</Typography>
+              <Typography sx={valueStyle}>{studentInfo.fullName}</Typography>
+            </Box>
+          </CardContent>
+        </Card>
+
+        {/* Courses */}
+        <Card sx={cardStyle}>
+          <CardContent>
+            <Typography sx={sectionTitle}>📚 Courses</Typography>
+            <Typography variant="caption" color="text.secondary" display="block" mb={1}>
+              You are currently enrolled in:
+            </Typography>
+            <Box sx={{ mt: 1 }}>
               {studentInfo.courses.length > 0 ? (
                 studentInfo.courses.map((c, i) => (
-                  <Typography key={i} variant="body2">
-                    📘 {c.courseName}
+                  <Typography key={i} sx={valueStyle}>
+                    • {c.courseName}
                   </Typography>
                 ))
               ) : (
                 <Typography>No courses assigned.</Typography>
               )}
-            </CardContent>
-          </Card>
+            </Box>
+          </CardContent>
+        </Card>
 
-          {/* Upcoming Tasks */}
-          <Card
-            variant="outlined"
-            sx={{
-              flex: '1 1 45%',
-              minWidth: 280,
-              borderRadius: 3,
-              boxShadow: 3,
-              border: '2px solid #81d4fa',
-              backgroundColor: '#e0f7fa',
-            }}
-          >
-            <CardContent>
-              <Typography variant="h6" gutterBottom fontWeight="bold">
-                Upcoming Tasks
-              </Typography>
-              <Typography variant="caption" color="text.secondary" display="block" mb={1}>
-                * Displaying up to 3 nearest tasks
-              </Typography>
+        {/* Tasks */}
+        <Card sx={cardStyle}>
+          <CardContent>
+            <Typography sx={sectionTitle}>📝 Upcoming Tasks</Typography>
+            <Typography variant="caption" color="text.secondary" display="block" mb={1}>
+              Next 3 tasks:
+            </Typography>
+            <Box sx={{ mt: 1 }}>
               {studentInfo.tasks.length > 0 ? (
                 studentInfo.tasks.map((t, i) => (
-                  <Typography key={i} variant="body2">
-                    📄 {t.taskName}
+                  <Typography key={i} sx={valueStyle}>
+                    • {t.taskName}
                   </Typography>
                 ))
               ) : (
-                <Typography>No tasks available.</Typography>
+                <Typography>No upcoming tasks.</Typography>
               )}
-            </CardContent>
-          </Card>
+            </Box>
+          </CardContent>
+        </Card>
 
-          {/* Latest Messages */}
-          <Card
-            variant="outlined"
-            sx={{
-              flex: '1 1 45%',
-              minWidth: 280,
-              borderRadius: 3,
-              boxShadow: 3,
-              border: '2px solid #81d4fa',
-              backgroundColor: '#e0f7fa',
-            }}
-          >
-            <CardContent>
-              <Typography variant="h6" gutterBottom fontWeight="bold">
-                Latest Messages
-              </Typography>
-              <Typography variant="caption" color="text.secondary" display="block" mb={1}>
-                * Displaying 3 most recent messages
-              </Typography>
+        {/* Messages */}
+        <Card sx={cardStyle}>
+          <CardContent>
+            <Typography sx={sectionTitle}>💬 Latest Messages</Typography>
+            <Typography variant="caption" color="text.secondary" display="block" mb={1}>
+              Most recent messages sent to you:
+            </Typography>
+            <Box sx={{ mt: 1 }}>
               {studentInfo.messages.length > 0 ? (
                 <>
                   {studentInfo.messages.map((m, i) => (
-                    <Typography key={i} variant="body2">
-                      📩 {m.messageContent}
+                    <Typography key={i} sx={valueStyle}>
+                      • {m.messageContent}
                     </Typography>
                   ))}
                   <Button
                     variant="outlined"
-                    color="primary"
-                    sx={{ mt: 1 }}
+                    sx={{
+                      mt: 2,
+                      borderColor: '#c084f5',
+                      color: '#944ce0',
+                      '&:hover': {
+                        borderColor: '#944ce0',
+                        backgroundColor: '#f5e9fc',
+                      },
+                    }}
                     onClick={() => navigate("/MSGManage")}
                   >
                     Go to All Messages
@@ -229,10 +228,10 @@ export default function HomePage() {
               ) : (
                 <Typography>No messages.</Typography>
               )}
-            </CardContent>
-          </Card>
-        </Box>
-      )}
+            </Box>
+          </CardContent>
+        </Card>
+      </Box>
     </Box>
   );
 }

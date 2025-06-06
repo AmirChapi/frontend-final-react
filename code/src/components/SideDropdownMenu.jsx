@@ -49,7 +49,7 @@ export default function SideDropdownMenu() {
 
   const list = () => (
     <Box
-      sx={{ width: 250, backgroundColor: '#b3e5fc', height: '100%' }} // רקע תכלת בהיר לתפריט
+      sx={{ width: 250, backgroundColor: '#ebdfd1', height: '100%' }} // רקע תכלת בהיר לתפריט
       role="presentation"
       onClick={toggleDrawer(false)}
       onKeyDown={toggleDrawer(false)}
@@ -63,10 +63,10 @@ export default function SideDropdownMenu() {
               <ListItemButton
                 onClick={() => handleMenuItemClick(item.path)}
                 sx={{
-                  backgroundColor: isSelected ? '#4fc3f7' : 'transparent', // תכלת כהה לפריט נבחר
+                  backgroundColor: isSelected ? '#c0aa92' : 'transparent', // תכלת כהה לפריט נבחר
                   color: isSelected ? 'white' : 'black',
                   '&:hover': {
-                    backgroundColor: isSelected ? '#4fc3f7' : '#e1f5fe',
+                    backgroundColor: isSelected ? '#c0aa92' : '#c0aa92',
                   },
                 }}
               >
@@ -92,7 +92,7 @@ export default function SideDropdownMenu() {
         sx={{ mr: 2 }}
         onClick={toggleDrawer(true)}
       >
-        <MenuIcon />
+        <MenuIcon sx={{ color: '#000' }} />
       </IconButton>
       <Drawer open={isOpen} onClose={toggleDrawer(false)}>
         {list()}

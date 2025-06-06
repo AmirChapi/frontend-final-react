@@ -1,5 +1,3 @@
-// GradeManage.jsx
-
 import React, { useEffect, useState } from "react";
 import {
   Box,
@@ -29,8 +27,8 @@ export default function GradeManage() {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
-const selectedStudent = JSON.parse(localStorage.getItem("selectedStudent"));
-const selectedStudentId = selectedStudent?.studentId;
+  const selectedStudent = JSON.parse(localStorage.getItem("selectedStudent"));
+  const selectedStudentId = selectedStudent?.studentId;
 
   useEffect(() => {
     async function loadData() {
@@ -79,26 +77,66 @@ const selectedStudentId = selectedStudent?.studentId;
 
   return (
     <Box sx={{ padding: 4 }}>
-      <Typography variant="h4" gutterBottom>
+      {/* כותרת ממורכזת */}
+      <Typography
+        variant="h4"
+        gutterBottom
+        sx={{ textAlign: 'center', fontWeight: 'bold', color: '#3d3d3d' }}
+      >
         Grade Management
       </Typography>
 
-      <Button
-        variant="contained"
-        color="primary"
-        sx={{ mb: 3 }}
-        onClick={() => navigate("/GradeForm")}
+      {/* משפט הסבר ממורכז */}
+      <Typography
+        variant="subtitle1"
+        textAlign="center"
+        sx={{
+          mb: 3,
+          color: '#555',
+          fontWeight: 500,
+          fontSize: '1.1rem',
+        }}
       >
-        Add New Grade
-      </Button>
-      <TableContainer component={Paper} sx={{ border: "1px solid black" }}>
+        Grade relevant to the selected student.
+      </Typography>
+
+      {/* כפתור הוספת ציון בצד ימין */}
+      <Box sx={{ mb: 3, display: 'flex', justifyContent: 'flex-end' }}>
+        <Button
+          variant="contained"
+          onClick={() => navigate("/GradeForm")}
+          sx={{
+            backgroundColor: '#ebdfd1',
+            color: '#000',
+            borderRadius: '20px',
+            textTransform: 'none',
+            fontWeight: 'bold',
+            px: 3,
+            '&:hover': {
+              backgroundColor: '#c0aa92',
+            },
+          }}
+        >
+          Add New Grade
+        </Button>
+      </Box>
+
+      {/* טבלה */}
+      <TableContainer
+        component={Paper}
+        sx={{
+          border: '2px solid #c0aa92',
+          borderRadius: 2,
+          boxShadow: '0 2px 10px rgba(0,0,0,0.05)',
+        }}
+      >
         <Table>
           <TableHead>
             <TableRow>
-              <TableCell sx={{ backgroundColor: "#add8e6" }}>Student</TableCell>
-              <TableCell sx={{ backgroundColor: "#add8e6" }}>Task</TableCell>
-              <TableCell sx={{ backgroundColor: "#add8e6" }}>Grade</TableCell>
-              <TableCell sx={{ backgroundColor: "#add8e6" }}>Actions</TableCell>
+              <TableCell sx={{ backgroundColor: "#ebdfd1", fontWeight: 'bold' }}>Student</TableCell>
+              <TableCell sx={{ backgroundColor: "#ebdfd1", fontWeight: 'bold' }}>Task</TableCell>
+              <TableCell sx={{ backgroundColor: "#ebdfd1", fontWeight: 'bold' }}>Grade</TableCell>
+              <TableCell sx={{ backgroundColor: "#ebdfd1", fontWeight: 'bold' }}>Actions</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>

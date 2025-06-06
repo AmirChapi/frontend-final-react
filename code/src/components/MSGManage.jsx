@@ -1,4 +1,3 @@
-// MSGManage.jsx
 import React, { useEffect, useState } from "react";
 import {
   Box,
@@ -29,7 +28,6 @@ export default function MSGManage() {
   const [courses, setCourses] = useState([]);
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
-
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -94,31 +92,69 @@ export default function MSGManage() {
 
   return (
     <Box sx={{ padding: 4 }}>
-      <Typography variant="h4" gutterBottom>
+      {/* כותרת ממורכזת */}
+      <Typography
+        variant="h4"
+        gutterBottom
+        sx={{ textAlign: 'center', fontWeight: 'bold', color: '#3d3d3d' }}
+      >
         Message Management
       </Typography>
 
-      <Box sx={{ mb: 3, display: "flex", justifyContent: "flex-start" }}>
-        <Button variant="contained" color="primary" onClick={handleAdd}>
+      {/* משפט הסבר */}
+      <Typography
+        variant="subtitle1"
+        textAlign="center"
+        sx={{
+          mb: 3,
+          color: '#555',
+          fontWeight: 500,
+          fontSize: '1.1rem',
+        }}
+      >
+        Messages relevant to the selected student.
+      </Typography>
+
+      {/* כפתור הוספה בעיצוב מותאם */}
+      <Box sx={{ mb: 3, display: "flex", justifyContent: "flex-end" }}>
+        <Button
+          variant="contained"
+          onClick={handleAdd}
+          sx={{
+            backgroundColor: '#ebdfd1',
+            color: '#000',
+            borderRadius: '20px',
+            textTransform: 'none',
+            fontWeight: 'bold',
+            px: 3,
+            '&:hover': {
+              backgroundColor: '#c0aa92',
+            },
+          }}
+        >
           Add New Message
         </Button>
       </Box>
 
-      <Typography variant="h6" gutterBottom>
-        Existing Messages
-      </Typography>
-
-      <TableContainer component={Paper} sx={{ border: '1px solid black' }}>
+      {/* טבלה */}
+      <TableContainer
+        component={Paper}
+        sx={{
+          border: '2px solid #c0aa92',
+          borderRadius: 2,
+          boxShadow: '0 2px 10px rgba(0,0,0,0.05)',
+        }}
+      >
         <Table>
           <TableHead>
             <TableRow>
-              <TableCell sx={{ fontWeight: "bold", backgroundColor: '#add8e6' }}>Content</TableCell>
-              <TableCell sx={{ fontWeight: "bold", backgroundColor: '#add8e6' }}>Course Code</TableCell>
-              <TableCell sx={{ fontWeight: "bold", backgroundColor: '#add8e6' }}>Course Name</TableCell>
-              <TableCell sx={{ fontWeight: "bold", backgroundColor: '#add8e6' }}>Task Code</TableCell>
-              <TableCell sx={{ fontWeight: "bold", backgroundColor: '#add8e6' }}>Task Name</TableCell>
-              <TableCell sx={{ fontWeight: "bold", backgroundColor: '#add8e6' }}>Student ID</TableCell>
-              <TableCell sx={{ fontWeight: "bold", textAlign: "center", backgroundColor: '#add8e6' }}>Actions</TableCell>
+              <TableCell sx={{ fontWeight: "bold", backgroundColor: '#ebdfd1' }}>Content</TableCell>
+              <TableCell sx={{ fontWeight: "bold", backgroundColor: '#ebdfd1' }}>Course Code</TableCell>
+              <TableCell sx={{ fontWeight: "bold", backgroundColor: '#ebdfd1' }}>Course Name</TableCell>
+              <TableCell sx={{ fontWeight: "bold", backgroundColor: '#ebdfd1' }}>Task Code</TableCell>
+              <TableCell sx={{ fontWeight: "bold", backgroundColor: '#ebdfd1' }}>Task Name</TableCell>
+              <TableCell sx={{ fontWeight: "bold", backgroundColor: '#ebdfd1' }}>Student ID</TableCell>
+              <TableCell sx={{ fontWeight: "bold", textAlign: "center", backgroundColor: '#ebdfd1' }}>Actions</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>

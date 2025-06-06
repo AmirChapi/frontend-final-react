@@ -1,5 +1,3 @@
-// CoursesManage.jsx - Course Management Page (עם שיפורי כפתורים)
-
 import React, { useEffect, useState } from "react";
 import {
   Box,
@@ -132,84 +130,119 @@ export default function CoursesManage() {
 
   return (
     <Box sx={{ padding: 4 }}>
-      <Typography variant="h4" gutterBottom>Course Management</Typography>
-
-      <Button
-        variant="contained"
-        color="primary"
-        sx={{ marginBottom: 3 }}
-        onClick={() => navigate("/CourseForm")}
+      {/* כותרת ממורכזת */}
+      <Typography
+        variant="h4"
+        gutterBottom
+        sx={{ textAlign: 'center', fontWeight: 'bold', color: '#3d3d3d' }}
       >
-        Add New Course
-      </Button>
+        Course Management
+      </Typography>
 
-      <Typography variant="h6" gutterBottom>Existing Courses</Typography>
+      {/* משפט הסבר ממורכז */}
+      <Typography
+        variant="subtitle1"
+        textAlign="center"
+        sx={{
+          mb: 3,
+          color: '#555',
+          fontWeight: 500,
+          fontSize: '1.1rem',
+        }}
+      >
+        All courses, for administrators only.
+      </Typography>
 
-      <TableContainer component={Paper} sx={{ border: '1px solid black'}}>
+      {/* כפתור הוספה בעיצוב מותאם */}
+      <Box sx={{ mb: 3, display: 'flex', justifyContent: 'flex-end' }}>
+        <Button
+          variant="contained"
+          onClick={() => navigate("/CourseForm")}
+          sx={{
+            backgroundColor: '#ebdfd1',
+            color: '#000',
+            borderRadius: '20px',
+            textTransform: 'none',
+            fontWeight: 'bold',
+            px: 3,
+            '&:hover': {
+              backgroundColor: '#c0aa92',
+            },
+          }}
+        >
+          Add New Course
+        </Button>
+      </Box>
 
+      {/* טבלה */}
+      <TableContainer
+        component={Paper}
+        sx={{
+          border: '2px solid #c0aa92',
+          borderRadius: 2,
+          boxShadow: '0 2px 10px rgba(0,0,0,0.05)',
+        }}
+      >
         <Table>
           <TableHead>
             <TableRow>
-              <TableCell sx={{backgroundColor: '#add8e6'}}>Course Code</TableCell>
-              <TableCell sx={{backgroundColor: '#add8e6'}}>Course Name</TableCell>
-              <TableCell sx={{backgroundColor: '#add8e6'}}>Lecturer</TableCell>
-              <TableCell sx={{backgroundColor: '#add8e6'}}>Year</TableCell>
-              <TableCell sx={{backgroundColor: '#add8e6'}}>Semester</TableCell>
-              <TableCell sx={{backgroundColor: '#add8e6'}}>Actions</TableCell>
+              <TableCell sx={{ backgroundColor: '#ebdfd1', fontWeight: 'bold' }}>Course Code</TableCell>
+              <TableCell sx={{ backgroundColor: '#ebdfd1', fontWeight: 'bold' }}>Course Name</TableCell>
+              <TableCell sx={{ backgroundColor: '#ebdfd1', fontWeight: 'bold' }}>Lecturer</TableCell>
+              <TableCell sx={{ backgroundColor: '#ebdfd1', fontWeight: 'bold' }}>Year</TableCell>
+              <TableCell sx={{ backgroundColor: '#ebdfd1', fontWeight: 'bold' }}>Semester</TableCell>
+              <TableCell sx={{ backgroundColor: '#ebdfd1', fontWeight: 'bold' }}>Actions</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            {courseList.map(function (courseItem) {
-              return (
-                <TableRow key={courseItem.id}>
-                  <TableCell>{courseItem.courseCode}</TableCell>
-                  <TableCell>{courseItem.courseName}</TableCell>
-                  <TableCell>{courseItem.lecturer}</TableCell>
-                  <TableCell>{courseItem.year}</TableCell>
-                  <TableCell>{courseItem.semester}</TableCell>
-                  <TableCell>
-                    <IconButton color="primary" onClick={() => showCourseStudents(courseItem)}>
-                      <AddCircleIcon />
-                    </IconButton>
-                    <IconButton color="secondary" onClick={() => goToEditCourse(courseItem)}>
-                      <EditIcon />
-                    </IconButton>
-                    <IconButton color="error" onClick={() => deleteSelectedCourse(courseItem.id)}>
-                      <DeleteIcon />
-                    </IconButton>
-                  </TableCell>
-                </TableRow>
-              );
-            })}
+            {courseList.map((courseItem) => (
+              <TableRow key={courseItem.id}>
+                <TableCell>{courseItem.courseCode}</TableCell>
+                <TableCell>{courseItem.courseName}</TableCell>
+                <TableCell>{courseItem.lecturer}</TableCell>
+                <TableCell>{courseItem.year}</TableCell>
+                <TableCell>{courseItem.semester}</TableCell>
+                <TableCell>
+                  <IconButton color="primary" onClick={() => showCourseStudents(courseItem)}>
+                    <AddCircleIcon />
+                  </IconButton>
+                  <IconButton color="secondary" onClick={() => goToEditCourse(courseItem)}>
+                    <EditIcon />
+                  </IconButton>
+                  <IconButton color="error" onClick={() => deleteSelectedCourse(courseItem.id)}>
+                    <DeleteIcon />
+                  </IconButton>
+                </TableCell>
+              </TableRow>
+            ))}
           </TableBody>
         </Table>
       </TableContainer>
 
+      {/* דיאלוג סטודנטים בקורס */}
       <Dialog open={isDialogOpen} onClose={() => setIsDialogOpen(false)} maxWidth="xs" fullWidth>
         <DialogTitle>Students Enrolled in Course</DialogTitle>
         <DialogContent>
           {studentsInCourse.length > 0 ? (
             <List>
-              {studentsInCourse.map(function (student) {
-                return (
-                  <ListItem
-                    key={student.studentId}
-                    secondaryAction={
-                      <IconButton edge="end" color="error" onClick={() => removeStudentFromCourse(student.studentId)}>
-                        <DeleteIcon />
-                      </IconButton>
-                    }
-                  >
-                    <ListItemText primary={student.fullName + " (" + student.studentId + ")"} />
-                  </ListItem>
-                );
-              })}
+              {studentsInCourse.map((student) => (
+                <ListItem
+                  key={student.studentId}
+                  secondaryAction={
+                    <IconButton edge="end" color="error" onClick={() => removeStudentFromCourse(student.studentId)}>
+                      <DeleteIcon />
+                    </IconButton>
+                  }
+                >
+                  <ListItemText primary={`${student.fullName} (${student.studentId})`} />
+                </ListItem>
+              ))}
             </List>
           ) : (
-            <Typography sx={{ marginY: 2 }}>No students enrolled in this course.</Typography>
+            <Typography sx={{ my: 2 }}>No students enrolled in this course.</Typography>
           )}
 
-          <FormControl fullWidth sx={{ marginTop: 2 }}>
+          <FormControl fullWidth sx={{ mt: 2 }}>
             <Select
               displayEmpty
               value={studentIdToAssign}
@@ -217,21 +250,24 @@ export default function CoursesManage() {
             >
               <MenuItem value="" disabled>Select a student to assign</MenuItem>
               {studentList
-                .filter(function (student) {
-                  const courseCodes = student.courses || [];
-                  return courseToView && !courseCodes.includes(courseToView.courseCode);
-                })
-                .map(function (student) {
-                  return (
-                    <MenuItem key={student.studentId} value={student.studentId}>{student.fullName}</MenuItem>
-                  );
-                })}
+                .filter((student) =>
+                  courseToView && !(student.courses || []).includes(courseToView.courseCode)
+                )
+                .map((student) => (
+                  <MenuItem key={student.studentId} value={student.studentId}>
+                    {student.fullName}
+                  </MenuItem>
+                ))}
             </Select>
-            <Button sx={{ marginTop: 1 }} onClick={assignStudentToCourse} variant="outlined">Assign Student</Button>
+            <Button sx={{ mt: 1 }} onClick={assignStudentToCourse} variant="outlined">
+              Assign Student
+            </Button>
           </FormControl>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setIsDialogOpen(false)} color="primary">Close</Button>
+          <Button onClick={() => setIsDialogOpen(false)} color="primary">
+            Close
+          </Button>
         </DialogActions>
       </Dialog>
     </Box>

@@ -4,10 +4,8 @@ import {
   Toolbar,
   Typography,
   Box,
-  FormControl,
   Select,
   MenuItem,
-  InputLabel,
 } from '@mui/material';
 import SideDropdownMenu from './SideDropdownMenu';
 import { useNavigate } from 'react-router-dom';
@@ -42,7 +40,6 @@ export default function Header() {
       };
       localStorage.setItem('selectedStudent', JSON.stringify(data));
 
-      // רענון עמוד מלא כדי שכל הקומפוננטות ייטענו מחדש עם הסטודנט הנכון
       window.location.reload();
     }
   };
@@ -52,44 +49,63 @@ export default function Header() {
   };
 
   return (
-    <AppBar position="static" sx={{ backgroundColor: '#003366' }}>
-      <Toolbar>
+    <AppBar position="static" sx={{ backgroundColor: '#ebdfd1', position: 'relative' }}>
+      <Toolbar sx={{ position: 'relative' }}>
+        {/* תפריט צדדי */}
         <SideDropdownMenu />
 
+        {/* לוגו בצד שמאל */}
         <Box
           sx={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}
           onClick={handleHomeClick}
         >
           <Box
             component="img"
-            src="/mha-logo.png"
+            src="/logo.png"
             alt="MHA Logo"
             sx={{ height: 110, width: 110, mr: 1 }}
           />
-          <Typography variant="h6" component="div" sx={{ fontWeight: 'bold' }}>
-            MHA College
-          </Typography>
         </Box>
 
+        {/* כותרת ממורכזת */}
+        <Typography
+          variant="h6"
+          component="div"
+          sx={{
+            position: 'absolute',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            fontWeight: 'bold',
+            color: '#333',
+          }}
+        >
+          MHA College
+        </Typography>
+
+        {/* רווח מתרחב */}
         <Box sx={{ flexGrow: 1 }} />
 
-        <Box sx={{ mb: 0.5, fontWeight: 'bold', fontSize: '1.2rem', color: 'white' }}>
-  Select Student:
-</Box>
-<Select
-  value={selectedStudentId}
-  onChange={handleChange}
-  size="small"
-  sx={{ minWidth: 250, backgroundColor: 'white', borderRadius: 1 }}
->
-  {students.map((s) => (
-    <MenuItem key={s.studentId} value={s.studentId}>
-      {s.fullName} ({s.studentId})
-    </MenuItem>
-  ))}
-</Select>
-
-
+        {/* בחירת סטודנט בצד ימין */}
+        <Box sx={{ mb: 0.5, fontWeight: 'bold', fontSize: '1.2rem', color: '#333' }}>
+          Select Student:
+        </Box>
+        <Select
+          value={selectedStudentId}
+          onChange={handleChange}
+          size="small"
+          sx={{
+            minWidth: 250,
+            backgroundColor: 'white',
+            borderRadius: 1,
+            ml: 1,
+          }}
+        >
+          {students.map((s) => (
+            <MenuItem key={s.studentId} value={s.studentId}>
+              {s.fullName} ({s.studentId})
+            </MenuItem>
+          ))}
+        </Select>
       </Toolbar>
     </AppBar>
   );
