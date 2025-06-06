@@ -1,5 +1,3 @@
-// ✅ MSGForm.jsx - מתוקן כך שנטען לפי ID מה-URL במקום מ-location.state
-
 import React, { useEffect, useState } from "react";
 import {
   Box,
@@ -10,7 +8,11 @@ import {
   Button,
   Snackbar,
   Alert,
-  Stack,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
 } from "@mui/material";
 import { useParams, useNavigate } from "react-router-dom";
 import { listCourses } from "../firebase/course";
@@ -36,6 +38,7 @@ export default function MessageForm() {
   const [filteredStudents, setFilteredStudents] = useState([]);
   const [errors, setErrors] = useState({});
   const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "success" });
+  const [openCancelDialog, setOpenCancelDialog] = useState(false);
 
   useEffect(() => {
     async function fetchData() {
@@ -52,14 +55,8 @@ export default function MessageForm() {
         const message = await getMessage(id);
         if (message) {
           setFormData(message);
-
-          const filteredT = t.filter((task) => task.courseCode === message.courseCode);
-          setFilteredTasks(filteredT);
-
-          const filteredS = s.filter((stu) =>
-            Array.isArray(stu.courses) && stu.courses.includes(message.courseCode)
-          );
-          setFilteredStudents(filteredS);
+          setFilteredTasks(t.filter((task) => task.courseCode === message.courseCode));
+          setFilteredStudents(s.filter((stu) => Array.isArray(stu.courses) && stu.courses.includes(message.courseCode)));
         }
       } else {
         setFilteredTasks(t);
@@ -82,24 +79,14 @@ export default function MessageForm() {
     setFormData((prev) => ({ ...prev, [name]: value }));
 
     if (name === "courseCode") {
-      const filteredT = tasks.filter((task) => task.courseCode === value);
-      setFilteredTasks(filteredT);
-
-      const filteredS = students.filter((stu) =>
-        Array.isArray(stu.courses) && stu.courses.includes(value)
-      );
-      setFilteredStudents(filteredS);
-
+      setFilteredTasks(tasks.filter((task) => task.courseCode === value));
+      setFilteredStudents(students.filter((stu) => Array.isArray(stu.courses) && stu.courses.includes(value)));
       setFormData((prev) => ({
         ...prev,
         courseCode: value,
         assignmentCode: "",
         studentId: "",
       }));
-    }
-
-    if (name === "studentId") {
-      setErrors((prev) => ({ ...prev, studentId: "" }));
     }
   };
 
@@ -114,11 +101,8 @@ export default function MessageForm() {
       } else {
         if (!formData.studentId) {
           const recipients = formData.courseCode
-            ? students.filter((s) =>
-                Array.isArray(s.courses) && s.courses.includes(formData.courseCode)
-              )
+            ? students.filter((s) => Array.isArray(s.courses) && s.courses.includes(formData.courseCode))
             : students;
-
           for (const s of recipients) {
             await addMessage({ ...formData, studentId: s.studentId });
           }
@@ -130,21 +114,41 @@ export default function MessageForm() {
       }
 
       setTimeout(() => navigate("/MSGManage"), 1000);
-    } catch (err) {
+    } catch {
       setSnackbar({ open: true, message: "Error saving message", severity: "error" });
     }
   };
 
   const handleCancel = () => {
-    navigate("/MSGManage");
+    setOpenCancelDialog(true);
   };
 
   return (
-    <Box sx={{ display: "flex", justifyContent: "center", mt: 4, backgroundColor: '#add8e6' }}>
-      <Paper elevation={3} sx={{ p: 4, width: 500 }}>
-        <Typography variant="h6" gutterBottom>
+    <Box
+      sx={{
+        minHeight: '100vh',
+        backgroundColor: '#ffffff',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'flex-start',
+        mt: 6,
+        px: 2,
+      }}
+    >
+      <Paper
+        elevation={3}
+        sx={{
+          backgroundColor: '#ffffff',
+          border: '2px solid #c0aa92',
+          borderRadius: 2,
+          p: 4,
+          width: 400,
+        }}
+      >
+        <Typography variant="h5" align="center" gutterBottom>
           {id ? "Edit Message" : "Add Message"}
         </Typography>
+
         <form onSubmit={handleSubmit}>
           <TextField
             label="Message Content"
@@ -218,14 +222,44 @@ export default function MessageForm() {
             </Typography>
           )}
 
-          <Stack direction="row" spacing={2} mt={2}>
-            <Button type="submit" variant="contained" color="primary" fullWidth>
-              {id ? "Update" : "Save"}
-            </Button>
-            <Button variant="outlined" color="secondary" fullWidth onClick={handleCancel}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 2 }}>
+            <Button
+              variant="contained"
+              onClick={handleCancel}
+              sx={{
+                backgroundColor: '#bb2f13',
+                color: '#f5f5f5',
+                borderRadius: '20px',
+                fontWeight: 400,
+                textTransform: 'none',
+                '&:hover': {
+                  color: '#000000',
+                  fontWeight: 700,
+                  backgroundColor: '#bb2f13',
+                },
+              }}
+            >
               Cancel
             </Button>
-          </Stack>
+
+            <Button
+              type="submit"
+              variant="contained"
+              sx={{
+                backgroundColor: '#ebdfd1',
+                color: '#000',
+                borderRadius: '20px',
+                fontWeight: 400,
+                textTransform: 'none',
+                '&:hover': {
+                  backgroundColor: '#c0aa92',
+                  fontWeight: 700,
+                },
+              }}
+            >
+              {id ? "Update" : "Save"}
+            </Button>
+          </Box>
         </form>
       </Paper>
 
@@ -234,10 +268,19 @@ export default function MessageForm() {
         autoHideDuration={3000}
         onClose={() => setSnackbar((prev) => ({ ...prev, open: false }))}
       >
-        <Alert severity={snackbar.severity}>
-          {snackbar.message}
-        </Alert>
+        <Alert severity={snackbar.severity}>{snackbar.message}</Alert>
       </Snackbar>
+
+      <Dialog open={openCancelDialog} onClose={() => setOpenCancelDialog(false)}>
+        <DialogTitle>Cancel Changes?</DialogTitle>
+        <DialogContent>
+          <DialogContentText>Are you sure? Unsaved changes will be lost.</DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenCancelDialog(false)} color="primary">No</Button>
+          <Button onClick={() => navigate("/MSGManage")} color="secondary">Yes, Cancel</Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }

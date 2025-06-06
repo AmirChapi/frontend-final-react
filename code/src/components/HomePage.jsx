@@ -73,9 +73,9 @@ export default function HomePage() {
 
   if (!selectedStudent) {
     return (
-      <Box sx={{ p: 4, textAlign: 'center' }}>
+      <Box sx={{ p: 4, textAlign: 'center' , color: '#bb2f13' }}>
         <Typography variant="h5" gutterBottom>
-          Please select a student from the top menu
+          ⚠️  This page is intended for a specific student, please select a student from the list.
         </Typography>
       </Box>
     );

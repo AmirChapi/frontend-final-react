@@ -1,4 +1,3 @@
-// TaskForm.jsx
 import React, { useState, useEffect } from "react";
 import {
   Box,
@@ -27,7 +26,7 @@ import { listCourses } from "../firebase/course";
 
 export default function TaskForm() {
   const navigate = useNavigate();
-  const { id } = useParams(); // נשלף מה-URL
+  const { id } = useParams();
 
   const [formData, setFormData] = useState({
     taskCode: "",
@@ -130,9 +129,28 @@ export default function TaskForm() {
   };
 
   return (
-    <Box sx={{ padding: 4, display: "flex", justifyContent: "center", backgroundColor: "#add8e6" }}>
-      <Paper elevation={3} sx={{ padding: 4, maxWidth: 600, width: "100%" }}>
-        <Typography variant="h4" gutterBottom align="center">
+    <Box
+      sx={{
+        minHeight: '100vh',
+        backgroundColor: '#ffffff',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'flex-start',
+        mt: 6,
+        px: 2,
+      }}
+    >
+      <Paper
+        elevation={3}
+        sx={{
+          backgroundColor: '#ffffff',
+          border: '2px solid #c0aa92',
+          borderRadius: 2,
+          p: 4,
+          width: 400,
+        }}
+      >
+        <Typography variant="h5" align="center" gutterBottom>
           {id ? "Edit Task" : "Add New Task"}
         </Typography>
 
@@ -203,12 +221,41 @@ export default function TaskForm() {
             helperText={errors.taskDescription ? "Task description is required" : ""}
           />
 
-          <Box sx={{ display: "flex", justifyContent: "space-between" }}>
-            <Button variant="outlined" color="secondary" onClick={() => navigate("/TaskManage")}>
+          <Box sx={{ display: "flex", justifyContent: "space-between", mt: 1 }}>
+            <Button
+              variant="contained"
+              onClick={() => setOpenCancelDialog(true)}
+              sx={{
+                backgroundColor: '#bb2f13',
+                color: '#f5f5f5',
+                borderRadius: '20px',
+                fontWeight: 400,
+                textTransform: 'none',
+                '&:hover': {
+                  color: '#000000',
+                  fontWeight: 700,
+                  backgroundColor: '#bb2f13',
+                },
+              }}
+            >
               Cancel
             </Button>
-            <Button variant="contained" color="primary" type="submit">
-              Save
+            <Button
+              type="submit"
+              variant="contained"
+              sx={{
+                backgroundColor: '#ebdfd1',
+                color: '#000',
+                borderRadius: '20px',
+                fontWeight: 400,
+                textTransform: 'none',
+                '&:hover': {
+                  backgroundColor: '#c0aa92',
+                  fontWeight: 700,
+                },
+              }}
+            >
+             {formData.id ? "Update" : "Save"}
             </Button>
           </Box>
         </Box>
@@ -219,6 +266,17 @@ export default function TaskForm() {
           Task successfully saved!
         </Alert>
       </Snackbar>
+
+      <Dialog open={openCancelDialog} onClose={() => setOpenCancelDialog(false)}>
+        <DialogTitle>Cancel Changes?</DialogTitle>
+        <DialogContent>
+          <DialogContentText>Are you sure? Unsaved changes will be lost.</DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenCancelDialog(false)} color="primary">No</Button>
+          <Button onClick={() => navigate('/TaskManage')} color="secondary">Yes, Cancel</Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }

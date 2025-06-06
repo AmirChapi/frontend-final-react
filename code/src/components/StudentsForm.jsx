@@ -1,4 +1,3 @@
-// StudentsForm.jsx - טופס הוספת/עריכת סטודנט עם URL ID
 import React, { useState, useEffect } from 'react';
 import {
   Box, TextField, Button, Typography, RadioGroup,
@@ -71,8 +70,28 @@ export default function StudentsForm() {
   };
 
   return (
-    <Box sx={{ minHeight: '70vh', display: 'flex', justifyContent: 'center', alignItems: 'center' , backgroundColor: '#add8e6' }}>
-      <Paper elevation={3} sx={{ p: 4, width: 400, borderRadius: 2 }}>
+    <Box
+      sx={{
+        minHeight: '100vh',
+        backgroundColor: '#ffffff',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'flex-start',
+        mt: 6,
+      }}
+    >
+      <Paper
+        elevation={3}
+        sx={{
+          pt: 2,
+          pb: 4,
+          px: 4,
+          width: 400,
+          backgroundColor: '#ffffff',
+          borderRadius: 2,
+          border: '2px solid #c0aa92',
+        }}
+      >
         <Typography variant="h5" align="center" gutterBottom>
           {isEditMode ? 'Edit Student' : 'Add New Student'}
         </Typography>
@@ -108,9 +127,43 @@ export default function StudentsForm() {
             error={errors.year} helperText={errors.year && 'Year must be 2020–current'}
           />
 
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 2 }}>
-            <Button variant="outlined" color="secondary" onClick={() => setOpenCancelDialog(true)}>Cancel</Button>
-            <Button type="submit" variant="contained" color="primary">Save</Button>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 1 }}>
+            <Button
+              variant="contained"
+              onClick={() => setOpenCancelDialog(true)}
+              sx={{
+                backgroundColor: '#bb2f13',
+                color: '#f5f5f5',
+                borderRadius: '20px',
+                fontWeight: 400,
+                textTransform: 'none',
+                '&:hover': {
+                  color: '#000000',
+                  fontWeight: 700,
+                  backgroundColor: '#bb2f13',
+                },
+              }}
+            >
+              Cancel
+            </Button>
+
+            <Button
+              type="submit"
+              variant="contained"
+              sx={{
+                backgroundColor: '#ebdfd1',
+                color: '#000',
+                borderRadius: '20px',
+                fontWeight: 400,
+                textTransform: 'none',
+                '&:hover': {
+                  backgroundColor: '#c0aa92',
+                  fontWeight: 700,
+                },
+              }}
+            >
+             {formData.id ? "Update" : "Save"}
+            </Button>
           </Box>
         </Box>
       </Paper>

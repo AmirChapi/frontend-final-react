@@ -67,9 +67,10 @@ export default function GradeManage() {
     }
   };
 
-  const filteredGrades = grades.filter(
-    (grade) => grade.idNumber === selectedStudentId
-  );
+  const filteredGrades = selectedStudentId
+  ? grades.filter((grade) => grade.idNumber === selectedStudentId)
+  : grades;
+
 
   if (loading) {
     return <LinearProgress />;

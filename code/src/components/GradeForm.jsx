@@ -8,7 +8,11 @@ import {
   MenuItem,
   Snackbar,
   Alert,
-  Stack,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
 } from "@mui/material";
 import { useNavigate, useParams } from "react-router-dom";
 
@@ -31,6 +35,7 @@ export default function GradeForm() {
   const [grades, setGrades] = useState([]);
   const [errors, setErrors] = useState({});
   const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "success" });
+  const [openCancelDialog, setOpenCancelDialog] = useState(false);
 
   useEffect(() => {
     async function fetchData() {
@@ -73,7 +78,6 @@ export default function GradeForm() {
       newErrors.taskGrade = "Grade must be a number between 0 and 100";
     }
 
-    // ✅ בדיקת התאמה בין סטודנט לקורס של המטלה
     const student = students.find((s) => s.studentId === formData.idNumber);
     const task = tasks.find((t) => t.taskCode === formData.taskCode);
     if (student && task && !student.courses?.includes(task.courseCode)) {
@@ -119,9 +123,10 @@ export default function GradeForm() {
     }
   };
 
-  const handleCancel = () => navigate("/GradeManage");
+  const handleCancel = () => {
+    setOpenCancelDialog(true);
+  };
 
-  // ✅ הצגת רק מטלות שרלוונטיות לסטודנט הנבחר ושאין להן ציון קיים
   const getFilteredTasks = () => {
     const student = students.find((s) => s.studentId === formData.idNumber);
     if (!student || !Array.isArray(student.courses)) return [];
@@ -130,14 +135,33 @@ export default function GradeForm() {
       .filter((g) => g.idNumber === student.studentId && (!formData.id || g.id !== formData.id))
       .map((g) => g.taskCode);
 
-    return tasks.filter((task) =>
-      student.courses.includes(task.courseCode) && !usedTaskCodes.includes(task.taskCode)
+    return tasks.filter(
+      (task) =>
+        student.courses.includes(task.courseCode) && !usedTaskCodes.includes(task.taskCode)
     );
   };
 
   return (
-    <Box sx={{ minHeight: "70vh", display: "flex", justifyContent: "center", alignItems: "center", backgroundColor: '#add8e6' }}>
-      <Paper elevation={3} sx={{ padding: 4, width: 500, borderRadius: 2 }}>
+    <Box
+      sx={{
+        minHeight: "100vh",
+        backgroundColor: "#ffffff",
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "flex-start",
+        mt: 6,
+      }}
+    >
+      <Paper
+        elevation={3}
+        sx={{
+          backgroundColor: "#ffffff",
+          border: "2px solid #c0aa92",
+          borderRadius: 2,
+          p: 4,
+          width: 400,
+        }}
+      >
         <Typography variant="h5" align="center" gutterBottom>
           {formData.id ? "Edit Grade" : "Add New Grade"}
         </Typography>
@@ -152,7 +176,7 @@ export default function GradeForm() {
             error={!!errors.idNumber}
             helperText={errors.idNumber}
             fullWidth
-            disabled={!!formData.id} // readOnly במצב עריכה
+            disabled={!!formData.id}
           >
             <MenuItem value="">
               <em>Select a student</em>
@@ -173,7 +197,7 @@ export default function GradeForm() {
             error={!!errors.taskCode}
             helperText={errors.taskCode}
             fullWidth
-            disabled={!!formData.id} // readOnly במצב עריכה
+            disabled={!!formData.id}
           >
             <MenuItem value="">
               <em>Select a task</em>
@@ -196,14 +220,44 @@ export default function GradeForm() {
             fullWidth
           />
 
-          <Stack direction="row" spacing={2} mt={2}>
-            <Button type="submit" variant="contained" color="primary" fullWidth>
-              {formData.id ? "Update" : "Save"}
-            </Button>
-            <Button variant="outlined" color="secondary" fullWidth onClick={handleCancel}>
+          <Box sx={{ display: "flex", justifyContent: "space-between", mt: 1 }}>
+            <Button
+              variant="contained"
+              onClick={handleCancel}
+              sx={{
+                backgroundColor: "#bb2f13",
+                color: "#f5f5f5",
+                borderRadius: "20px",
+                fontWeight: 400,
+                textTransform: "none",
+                "&:hover": {
+                  color: "#000000",
+                  fontWeight: 700,
+                  backgroundColor: "#bb2f13",
+                },
+              }}
+            >
               Cancel
             </Button>
-          </Stack>
+
+            <Button
+              type="submit"
+              variant="contained"
+              sx={{
+                backgroundColor: "#ebdfd1",
+                color: "#000",
+                borderRadius: "20px",
+                fontWeight: 400,
+                textTransform: "none",
+                "&:hover": {
+                  backgroundColor: "#c0aa92",
+                  fontWeight: 700,
+                },
+              }}
+            >
+              {formData.id ? "Update" : "Save"}
+            </Button>
+          </Box>
         </Box>
       </Paper>
 
@@ -216,6 +270,19 @@ export default function GradeForm() {
           {snackbar.message}
         </Alert>
       </Snackbar>
+
+      <Dialog open={openCancelDialog} onClose={() => setOpenCancelDialog(false)}>
+        <DialogTitle>Cancel Changes?</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Are you sure? Unsaved changes will be lost.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenCancelDialog(false)} color="primary">No</Button>
+          <Button onClick={() => navigate("/GradeManage")} color="secondary">Yes, Cancel</Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }

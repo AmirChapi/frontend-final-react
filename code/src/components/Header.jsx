@@ -31,6 +31,13 @@ export default function Header() {
     const studentId = e.target.value;
     setSelectedStudentId(studentId);
 
+    if (!studentId) {
+      // בחירה של "All Students"
+      localStorage.removeItem("selectedStudent");
+      window.location.reload();
+      return;
+    }
+
     const student = students.find((s) => s.studentId === studentId);
     if (student) {
       const data = {
@@ -38,11 +45,11 @@ export default function Header() {
         fullName: student.fullName,
         courses: student.courses || [],
       };
-      localStorage.setItem('selectedStudent', JSON.stringify(data));
-
+      localStorage.setItem("selectedStudent", JSON.stringify(data));
       window.location.reload();
     }
   };
+
 
   const handleHomeClick = () => {
     navigate('/');
@@ -76,19 +83,31 @@ export default function Header() {
             left: '50%',
             transform: 'translateX(-50%)',
             fontWeight: 'bold',
+            fontSize: '1.2rem', // ← להוסיף גודל אחיד
             color: '#333',
+            fontFamily: 'Arial' // ← להבטיח אחידות
           }}
         >
           MHA College
         </Typography>
 
+
         {/* רווח מתרחב */}
         <Box sx={{ flexGrow: 1 }} />
 
         {/* בחירת סטודנט בצד ימין */}
-        <Box sx={{ mb: 0.5, fontWeight: 'bold', fontSize: '1.2rem', color: '#333' }}>
+        <Box
+          sx={{
+            mb: 0.5,
+            fontWeight: 'bold',
+            fontSize: '1.2rem', // ← תואם ל־MHA College
+            color: '#333',
+            fontFamily: 'Arial', // ← אותו פונט
+          }}
+        >
           Select Student:
         </Box>
+
         <Select
           value={selectedStudentId}
           onChange={handleChange}
@@ -100,12 +119,18 @@ export default function Header() {
             ml: 1,
           }}
         >
+          {/* אפשרות להצגת כל הסטודנטים */}
+          <MenuItem value="">
+            All Students
+          </MenuItem>
+
           {students.map((s) => (
             <MenuItem key={s.studentId} value={s.studentId}>
               {s.fullName} ({s.studentId})
             </MenuItem>
           ))}
         </Select>
+
       </Toolbar>
     </AppBar>
   );
