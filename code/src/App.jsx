@@ -5,10 +5,10 @@ import { Routes, Route } from 'react-router-dom';
 import HomePage from './components/HomePage';
 import Help from './components/Help';
 import InfoPage from './components/InfoPage';
-import MSGManage from './components/MSGManage';
+import MessageManage from './components/MessageManage';
 import StudentsManage from './components/StudentsManage';
 import CoursesManage from './components/CoursesManage';
-import MSGForm from './components/MSGForm';
+import messageForm from './components/messageForm';
 import StudentsForm from './components/StudentsForm';
 import CourseForm from './components/CourseForm';
 import TaskManage from './components/TaskManage';
@@ -36,9 +36,9 @@ export default function App() {
         <Route path='/CoursesManage' element={<CoursesManage />} />
 
         {/* Messages */}
-        <Route path='/MSGForm' element={<MSGForm />} />
-        <Route path='/MSGForm/:id' element={<MSGForm />} />
-        <Route path='/MSGManage' element={<MSGManage />} />
+        <Route path='/messageForm' element={<messageForm />} />
+        <Route path='/messageForm/:id' element={<messageForm />} />
+        <Route path='/MessageManage' element={<MessageManage />} />
 
         {/* Tasks */}
         <Route path='/TaskForm' element={<TaskForm />} />

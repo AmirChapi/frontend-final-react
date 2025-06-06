@@ -220,7 +220,7 @@ export default function HomePage() {
                         backgroundColor: '#f5e9fc',
                       },
                     }}
-                    onClick={() => navigate("/MSGManage")}
+                    onClick={() => navigate("/MessageManage")}
                   >
                     Go to All Messages
                   </Button>

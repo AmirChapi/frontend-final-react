@@ -37,7 +37,7 @@ export default function SideDropdownMenu() {
     { text: 'Courses Manage', path: '/CoursesManage', icon: <SchoolIcon /> },
     { text: 'Tasks Manage', path: '/TaskManage', icon: <AssignmentIcon /> },
     { text: 'Grades Manage', path: '/GradeManage', icon: <GradeIcon /> },
-    { text: 'MSG Manage', path: '/MSGManage', icon: <MessageIcon /> },
+    { text: 'Message Manage', path: '/MessageManage', icon: <MessageIcon /> },
     { text: 'Help', path: '/help', icon: <HelpIcon /> },
     { text: 'Student Info', path: '/info', icon: <InfoIcon /> },
   ];

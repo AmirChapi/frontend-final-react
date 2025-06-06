@@ -23,7 +23,7 @@ import { listMessages, deleteMessage } from "../firebase/message";
 import { listCourses } from "../firebase/course";
 import { listTasks } from "../firebase/task";
 
-export default function MSGManage() {
+export default function MessageManage() {
   const [messages, setMessages] = useState([]);
   const [courses, setCourses] = useState([]);
   const [tasks, setTasks] = useState([]);
@@ -32,7 +32,7 @@ export default function MSGManage() {
 
   useEffect(() => {
     async function fetchData() {
-      const [msgs, crs, tks] = await Promise.all([
+      const [messages, crs, tks] = await Promise.all([
         listMessages(),
         listCourses(),
         listTasks(),
@@ -40,10 +40,10 @@ export default function MSGManage() {
 
       const selectedStudent = JSON.parse(localStorage.getItem("selectedStudent"));
 
-      let studentMessages = msgs;
+      let studentMessages = messages;
 
       if (selectedStudent) {
-        studentMessages = msgs.filter((m) =>
+        studentMessages = messages.filter((m) =>
           (m.courseCode && selectedStudent.courses?.some(c => c.courseCode === m.courseCode)) ||
           (m.studentId && m.studentId === selectedStudent.studentId)
         );
@@ -59,19 +59,19 @@ export default function MSGManage() {
   }, []);
 
   const handleEdit = (message) => {
-    navigate(`/MSGForm/${message.id}`);
+    navigate(`/messageForm/${message.id}`);
   };
 
   const handleDelete = async (id) => {
     const confirmDelete = window.confirm("Are you sure you want to delete this message?");
     if (confirmDelete) {
       await deleteMessage(id);
-      setMessages((prev) => prev.filter((msg) => msg.id !== id));
+      setMessages((prev) => prev.filter((message) => message.id !== id));
     }
   };
 
   const handleAdd = () => {
-    navigate("/MSGForm");
+    navigate("/messageForm");
   };
 
   const getCourseName = (courseCode) => {
@@ -159,24 +159,24 @@ export default function MSGManage() {
           </TableHead>
           <TableBody>
             {messages.length > 0 ? (
-              messages.map((msg) => (
-                <TableRow key={msg.id}>
-                  <TableCell>{msg.messageContent}</TableCell>
-                  <TableCell>{msg.courseCode || "-"}</TableCell>
-                  <TableCell>{msg.courseCode ? getCourseName(msg.courseCode) : "-"}</TableCell>
-                  <TableCell>{msg.assignmentCode || "-"}</TableCell>
-                  <TableCell>{msg.assignmentCode ? getTaskName(msg.assignmentCode) : "-"}</TableCell>
-                  <TableCell>{msg.studentId || "-"}</TableCell>
+              messages.map((message) => (
+                <TableRow key={message.id}>
+                  <TableCell>{message.messageContent}</TableCell>
+                  <TableCell>{message.courseCode || "-"}</TableCell>
+                  <TableCell>{message.courseCode ? getCourseName(message.courseCode) : "-"}</TableCell>
+                  <TableCell>{message.assignmentCode || "-"}</TableCell>
+                  <TableCell>{message.assignmentCode ? getTaskName(message.assignmentCode) : "-"}</TableCell>
+                  <TableCell>{message.studentId || "-"}</TableCell>
                   <TableCell align="center">
                     <Stack direction="row" spacing={1} justifyContent="center">
-                      <IconButton color="info" onClick={() => handleEdit(msg)}>
+                      <IconButton color="info" onClick={() => handleEdit(message)}>
                         <EditIcon fontSize="small" />
                       </IconButton>
-                      <IconButton color="error" onClick={() => handleDelete(msg.id)}>
+                      <IconButton color="error" onClick={() => handleDelete(message.id)}>
                         <DeleteIcon fontSize="small" />
                       </IconButton>
-                      {msg.assignmentCode && (
-                        <IconButton color="primary" onClick={() => handleGoToGrades(msg.assignmentCode)}>
+                      {message.assignmentCode && (
+                        <IconButton color="primary" onClick={() => handleGoToGrades(message.assignmentCode)}>
                           <VisibilityIcon fontSize="small" />
                         </IconButton>
                       )}

@@ -78,7 +78,7 @@ export default function Help() {
 
           {/* Message Management Section */}
           <ListItemLink
-            to="/MSGManage"
+            to="/MessageManage"
             primary="Message Management"
             secondary="View, edit, delete, and add new system messages. Click here to manage messages."
             icon={<MessageIcon color="primary" />}

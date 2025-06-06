@@ -113,7 +113,7 @@ export default function MessageForm() {
         setSnackbar({ open: true, message: "Message added", severity: "success" });
       }
 
-      setTimeout(() => navigate("/MSGManage"), 1000);
+      setTimeout(() => navigate("/MessageManage"), 1000);
     } catch {
       setSnackbar({ open: true, message: "Error saving message", severity: "error" });
     }
@@ -278,7 +278,7 @@ export default function MessageForm() {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setOpenCancelDialog(false)} color="primary">No</Button>
-          <Button onClick={() => navigate("/MSGManage")} color="secondary">Yes, Cancel</Button>
+          <Button onClick={() => navigate("/MessageManage")} color="secondary">Yes, Cancel</Button>
         </DialogActions>
       </Dialog>
     </Box>
