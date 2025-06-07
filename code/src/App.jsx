@@ -36,8 +36,8 @@ export default function App() {
         <Route path='/CoursesManage' element={<CoursesManage />} />
 
         {/* Messages */}
-        <Route path='/messageForm' element={<messageForm />} />
-        <Route path='/messageForm/:id' element={<messageForm />} />
+        <Route path='/MessageForm' element={<messageForm />} />
+        <Route path='/MessageForm/:id' element={<messageForm />} />
         <Route path='/MessageManage' element={<MessageManage />} />
 
         {/* Tasks */}
