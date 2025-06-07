@@ -6,7 +6,7 @@ import {
   DialogContent, DialogContentText, DialogTitle
 } from '@mui/material';
 import { useNavigate, useParams } from 'react-router-dom';
-import { addStudent, updateStudent, getStudent } from '../firebase/student';
+import { addStudent, updateStudent, getStudent, listStudent } from '../firebase/student';
 
 export default function StudentsForm() {
   const navigate = useNavigate();
@@ -24,15 +24,19 @@ export default function StudentsForm() {
   const [errors, setErrors] = useState({});
   const [openSnackbar, setOpenSnackbar] = useState(false);
   const [openCancelDialog, setOpenCancelDialog] = useState(false);
+  const [allStudents, setAllStudents] = useState([]);
 
   useEffect(() => {
-    const loadStudent = async () => {
+    const loadData = async () => {
       if (isEditMode) {
         const student = await getStudent(id);
         if (student) setFormData(student);
+      } else {
+        const students = await listStudent();
+        setAllStudents(students);
       }
     };
-    loadStudent();
+    loadData();
   }, [id, isEditMode]);
 
   const handleChange = (e) => {
@@ -46,11 +50,26 @@ export default function StudentsForm() {
     const age = Number(formData.age);
     const year = Number(formData.year);
 
-    if (!/^\d{9}$/.test(formData.studentId)) newErrors.studentId = true;
-    if (!formData.fullName.trim() || !/^[A-Za-z\s]+$/.test(formData.fullName)) newErrors.fullName = true;
-    if (!age || age < 18 || age > 80) newErrors.age = true;
-    if (!formData.gender) newErrors.gender = true;
-    if (!year || year < 2020 || year > currentYear) newErrors.year = true;
+    if (!/^\d{9}$/.test(formData.studentId)) {
+      newErrors.studentId = 'Must be exactly 9 digits';
+    } else if (
+      !isEditMode &&
+      allStudents.some((s) => s.studentId === formData.studentId)
+    ) {
+      newErrors.studentId = 'This ID already exists in the system';
+    }
+
+    if (!formData.fullName.trim() || !/^[A-Za-z\s]+$/.test(formData.fullName))
+      newErrors.fullName = 'Only letters and spaces allowed';
+
+    if (!age || age < 18 || age > 80)
+      newErrors.age = 'Must be 18–80';
+
+    if (!formData.gender)
+      newErrors.gender = 'Please select gender';
+
+    if (!year || year < 2020 || year > currentYear)
+      newErrors.year = 'Year must be between 2020 and current';
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -65,6 +84,7 @@ export default function StudentsForm() {
     } else {
       await addStudent(formData);
     }
+
     setOpenSnackbar(true);
     navigate('/StudentsManage');
   };
@@ -96,38 +116,87 @@ export default function StudentsForm() {
           {isEditMode ? 'Edit Student' : 'Add New Student'}
         </Typography>
 
-        <Box component="form" onSubmit={handleSubmit} sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+        <Box
+          component="form"
+          onSubmit={handleSubmit}
+          sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}
+        >
           <TextField
-            label="Student ID" name="studentId" fullWidth required
-            value={formData.studentId} onChange={handleChange}
-            disabled={isEditMode} error={errors.studentId}
-            helperText={errors.studentId && 'Must be exactly 9 digits'}
-          />
-          <TextField
-            label="Full Name" name="fullName" fullWidth required
-            value={formData.fullName} onChange={handleChange}
-            error={errors.fullName} helperText={errors.fullName && 'Only letters and spaces allowed'}
-          />
-          <TextField
-            label="Age" name="age" type="number" fullWidth required
-            value={formData.age} onChange={handleChange}
-            error={errors.age} helperText={errors.age && 'Must be 18–80'}
-          />
-          <FormControl fullWidth required error={errors.gender}>
-            <FormLabel>Gender</FormLabel>
-            <RadioGroup row name="gender" value={formData.gender} onChange={handleChange}>
-              <FormControlLabel value="Male" control={<Radio />} label="Male" />
-              <FormControlLabel value="Female" control={<Radio />} label="Female" />
-            </RadioGroup>
-            {errors.gender && <Typography color="error" variant="caption">Please select gender</Typography>}
-          </FormControl>
-          <TextField
-            label="Registration Year" name="year" type="number" fullWidth required
-            value={formData.year} onChange={handleChange}
-            error={errors.year} helperText={errors.year && 'Year must be 2020–current'}
+            label="Student ID"
+            name="studentId"
+            fullWidth
+            required
+            value={formData.studentId}
+            onChange={handleChange}
+            disabled={isEditMode}
+            error={!!errors.studentId}
+            helperText={errors.studentId}
           />
 
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 1 }}>
+          <TextField
+            label="Full Name"
+            name="fullName"
+            fullWidth
+            required
+            value={formData.fullName}
+            onChange={handleChange}
+            error={!!errors.fullName}
+            helperText={errors.fullName}
+          />
+
+          <TextField
+            label="Age"
+            name="age"
+            type="number"
+            fullWidth
+            required
+            value={formData.age}
+            onChange={handleChange}
+            error={!!errors.age}
+            helperText={errors.age}
+          />
+
+          <FormControl fullWidth required error={!!errors.gender}>
+            <FormLabel>Gender</FormLabel>
+            <RadioGroup
+              row
+              name="gender"
+              value={formData.gender}
+              onChange={handleChange}
+            >
+              <FormControlLabel
+                value="Male"
+                control={<Radio />}
+                label="Male"
+              />
+              <FormControlLabel
+                value="Female"
+                control={<Radio />}
+                label="Female"
+              />
+            </RadioGroup>
+            {errors.gender && (
+              <Typography color="error" variant="caption">
+                {errors.gender}
+              </Typography>
+            )}
+          </FormControl>
+
+          <TextField
+            label="Registration Year"
+            name="year"
+            type="number"
+            fullWidth
+            required
+            value={formData.year}
+            onChange={handleChange}
+            error={!!errors.year}
+            helperText={errors.year}
+          />
+
+          <Box
+            sx={{ display: 'flex', justifyContent: 'space-between', mt: 1 }}
+          >
             <Button
               variant="contained"
               onClick={() => setOpenCancelDialog(true)}
@@ -162,24 +231,42 @@ export default function StudentsForm() {
                 },
               }}
             >
-             {formData.id ? "Update" : "Save"}
+              {isEditMode ? 'Update' : 'Save'}
             </Button>
           </Box>
         </Box>
       </Paper>
 
-      <Snackbar open={openSnackbar} autoHideDuration={3000} onClose={() => setOpenSnackbar(false)}>
-        <Alert severity="success" sx={{ width: '100%' }}>Student successfully saved!</Alert>
+      <Snackbar
+        open={openSnackbar}
+        autoHideDuration={3000}
+        onClose={() => setOpenSnackbar(false)}
+      >
+        <Alert severity="success" sx={{ width: '100%' }}>
+          Student successfully saved!
+        </Alert>
       </Snackbar>
 
-      <Dialog open={openCancelDialog} onClose={() => setOpenCancelDialog(false)}>
+      <Dialog
+        open={openCancelDialog}
+        onClose={() => setOpenCancelDialog(false)}
+      >
         <DialogTitle>Cancel Changes?</DialogTitle>
         <DialogContent>
-          <DialogContentText>Are you sure? Unsaved changes will be lost.</DialogContentText>
+          <DialogContentText>
+            Are you sure? Unsaved changes will be lost.
+          </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setOpenCancelDialog(false)} color="primary">No</Button>
-          <Button onClick={() => navigate('/StudentsManage')} color="secondary">Yes, Cancel</Button>
+          <Button onClick={() => setOpenCancelDialog(false)} color="primary">
+            No
+          </Button>
+          <Button
+            onClick={() => navigate('/StudentsManage')}
+            color="secondary"
+          >
+            Yes, Cancel
+          </Button>
         </DialogActions>
       </Dialog>
     </Box>
