@@ -8,7 +8,7 @@ import InfoPage from './components/InfoPage';
 import MessageManage from './components/MessageManage';
 import StudentsManage from './components/StudentsManage';
 import CoursesManage from './components/CoursesManage';
-import messageForm from './components/messageForm';
+import MessageForm from './components/MessageForm';
 import StudentsForm from './components/StudentsForm';
 import CourseForm from './components/CourseForm';
 import TaskManage from './components/TaskManage';
@@ -36,8 +36,8 @@ export default function App() {
         <Route path='/CoursesManage' element={<CoursesManage />} />
 
         {/* Messages */}
-        <Route path='/MessageForm' element={<messageForm />} />
-        <Route path='/MessageForm/:id' element={<messageForm />} />
+        <Route path='/MessageForm' element={<MessageForm />} />
+        <Route path='/MessageForm/:id' element={<MessageForm />} />
         <Route path='/MessageManage' element={<MessageManage />} />
 
         {/* Tasks */}
