@@ -24,7 +24,7 @@ import {
   Label
 } from "recharts";
 
-export default function StudentFullProfile() {
+export default function InfoPage() {
   const [students, setStudents] = useState([]);
   const [selectedStudentId, setSelectedStudentId] = useState(null);
   const [studentData, setStudentData] = useState(null);
