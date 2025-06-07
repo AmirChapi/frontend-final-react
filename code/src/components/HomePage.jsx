@@ -12,6 +12,7 @@ import { listCourses } from "../firebase/course";
 import { listTasks } from "../firebase/task";
 import { listGrades } from "../firebase/grade";
 import { listMessages } from "../firebase/message";
+import { listStudent } from "../firebase/student";
 
 export default function HomePage() {
   const [selectedStudent, setSelectedStudent] = useState(null);
@@ -23,50 +24,57 @@ export default function HomePage() {
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
 
-  // שליפת הסטודנט מה־localStorage
-  useEffect(() => {
-    const student = JSON.parse(localStorage.getItem("selectedStudent"));
-    setSelectedStudent(student);
-  }, []);
+  const fetchFreshStudent = async (studentId) => {
+    const allStudents = await listStudent();
+    return allStudents.find((s) => s.studentId === studentId);
+  };
 
-  // טעינת נתונים מה־Firebase
   useEffect(() => {
-    async function fetchAll() {
+    async function fetchData() {
+      setIsLoading(true);
+      const stored = JSON.parse(localStorage.getItem("selectedStudent"));
+
+      if (!stored || stored.studentId === "All Students") {
+        setSelectedStudent(null);
+        setIsLoading(false);
+        return;
+      }
+
+      const freshStudent = await fetchFreshStudent(stored.studentId);
+      setSelectedStudent(freshStudent || null);
+
       const [coursesData, tasksData, gradesData, messagesData] = await Promise.all([
         listCourses(),
         listTasks(),
         listGrades(),
         listMessages(),
       ]);
+
       setCourses(coursesData);
       setTasks(tasksData);
       setGrades(gradesData);
       setMessages(messagesData);
       setIsLoading(false);
     }
-    fetchAll();
+
+    fetchData();
   }, []);
 
-  // חישוב נתונים לפי הסטודנט הנבחר
   useEffect(() => {
-    if (
-      !selectedStudent ||
-      !Array.isArray(selectedStudent.courses) ||
-      courses.length === 0 ||
-      tasks.length === 0 ||
-      messages.length === 0
-    )
+    if (!selectedStudent || !Array.isArray(selectedStudent.courses)) {
+      setStudentInfo(null);
       return;
+    }
 
     const studentCourseCodes = selectedStudent.courses.map((code) => code.toString());
 
-    const studentCourses = courses.filter((course) =>
+    const studentCourses = (Array.isArray(courses) ? courses : []).filter((course) =>
       studentCourseCodes.includes(course.courseCode.toString())
     );
 
     const now = new Date();
 
-    const studentTasks = tasks
+    const studentTasks = (Array.isArray(tasks) ? tasks : [])
       .filter(
         (task) =>
           studentCourseCodes.includes(task.courseCode?.toString()) &&
@@ -75,10 +83,8 @@ export default function HomePage() {
       .sort((a, b) => new Date(a.submissionDate) - new Date(b.submissionDate))
       .slice(0, 3);
 
-    const studentMessages = messages
-      .filter(
-        (msg) => msg.studentId?.toString() === selectedStudent.studentId?.toString()
-      )
+    const studentMessages = (Array.isArray(messages) ? messages : [])
+      .filter((msg) => msg.studentId?.toString() === selectedStudent.studentId?.toString())
       .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
       .slice(0, 3);
 
@@ -90,9 +96,18 @@ export default function HomePage() {
     });
   }, [selectedStudent, courses, tasks, messages]);
 
-  if (isLoading || !studentInfo) return <LinearProgress />;
+  if (!selectedStudent) {
+    return (
+      <Box sx={{ p: 4, textAlign: 'center' }}>
+        <Typography variant="h4" sx={{ color: '#555', mt: 10 }}>
+          This page is intended to display data when a student is selected from the list.
+        </Typography>
+      </Box>
+    );
+  }
 
-  // סגנונות
+  if (isLoading) return <LinearProgress />;
+
   const cardStyle = {
     flex: '1 1 45%',
     minWidth: 280,
@@ -129,41 +144,23 @@ export default function HomePage() {
         Welcome, {studentInfo.fullName}
       </Typography>
 
-      <Typography
-        variant="body1"
-        textAlign="center"
-        sx={{
-          color: "#221e20",
-          mb: 4,
-          fontSize: "1.3rem"
-        }}
-      >
+      <Typography variant="body1" textAlign="center" sx={{ color: "#221e20", mb: 4, fontSize: "1.3rem" }}>
         Here’s a quick overview of your courses, upcoming tasks, and messages. Let’s make today productive!
       </Typography>
 
-      <Box
-        sx={{
-          display: 'flex',
-          flexWrap: 'wrap',
-          gap: 3,
-          justifyContent: 'space-between',
-        }}
-      >
-        {/* Student Info */}
+      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3, justifyContent: 'space-between' }}>
         <Card sx={cardStyle}>
           <CardContent>
             <Typography sx={sectionTitle}>👩‍🎓 Student Info</Typography>
             <Box sx={{ mt: 1 }}>
               <Typography sx={labelStyle}>ID:</Typography>
               <Typography sx={valueStyle}>{studentInfo.studentId}</Typography>
-
               <Typography sx={labelStyle}>Name:</Typography>
               <Typography sx={valueStyle}>{studentInfo.fullName}</Typography>
             </Box>
           </CardContent>
         </Card>
 
-        {/* Courses */}
         <Card sx={cardStyle}>
           <CardContent>
             <Typography sx={sectionTitle}>📚 Courses</Typography>
@@ -171,7 +168,7 @@ export default function HomePage() {
               You are currently enrolled in:
             </Typography>
             <Box sx={{ mt: 1 }}>
-              {studentInfo.courses.length > 0 ? (
+              {studentInfo.courses && studentInfo.courses.length > 0 ? (
                 studentInfo.courses.map((c, i) => (
                   <Typography key={i} sx={valueStyle}>
                     • {c.courseName}
@@ -184,7 +181,6 @@ export default function HomePage() {
           </CardContent>
         </Card>
 
-        {/* Tasks */}
         <Card sx={cardStyle}>
           <CardContent>
             <Typography sx={sectionTitle}>📝 Upcoming Tasks</Typography>
@@ -192,7 +188,7 @@ export default function HomePage() {
               Next 3 tasks:
             </Typography>
             <Box sx={{ mt: 1 }}>
-              {studentInfo.tasks.length > 0 ? (
+              {studentInfo.tasks && studentInfo.tasks.length > 0 ? (
                 studentInfo.tasks.map((t, i) => (
                   <Typography key={i} sx={valueStyle}>
                     • {t.taskName} – {new Date(t.submissionDate).toLocaleDateString()}
@@ -205,7 +201,6 @@ export default function HomePage() {
           </CardContent>
         </Card>
 
-        {/* Messages */}
         <Card sx={cardStyle}>
           <CardContent>
             <Typography sx={sectionTitle}>💬 Latest Messages</Typography>
@@ -213,7 +208,7 @@ export default function HomePage() {
               Most recent messages sent to you:
             </Typography>
             <Box sx={{ mt: 1 }}>
-              {studentInfo.messages.length > 0 ? (
+              {studentInfo.messages && studentInfo.messages.length > 0 ? (
                 <>
                   {studentInfo.messages.map((m, i) => (
                     <Typography key={i} sx={valueStyle}>
@@ -222,15 +217,7 @@ export default function HomePage() {
                   ))}
                   <Button
                     variant="outlined"
-                    sx={{
-                      mt: 2,
-                      borderColor: '#c084f5',
-                      color: '#944ce0',
-                      '&:hover': {
-                        borderColor: '#944ce0',
-                        backgroundColor: '#f5e9fc',
-                      },
-                    }}
+                    sx={{ mt: 2, borderColor: '#c084f5', color: '#944ce0', '&:hover': { borderColor: '#944ce0', backgroundColor: '#f5e9fc' } }}
                     onClick={() => navigate("/MessageManage")}
                   >
                     Go to All Messages
@@ -246,3 +233,4 @@ export default function HomePage() {
     </Box>
   );
 }
+
