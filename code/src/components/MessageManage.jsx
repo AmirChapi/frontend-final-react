@@ -59,7 +59,7 @@ export default function MessageManage() {
   }, []);
 
   const handleEdit = (message) => {
-    navigate(`/messageForm/${message.id}`);
+    navigate(`/MessageForm/${message.id}`);
   };
 
   const handleDelete = async (id) => {
@@ -71,7 +71,7 @@ export default function MessageManage() {
   };
 
   const handleAdd = () => {
-    navigate("/messageForm");
+    navigate("/MessageForm");
   };
 
   const getCourseName = (courseCode) => {
