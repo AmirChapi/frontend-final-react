@@ -74,16 +74,29 @@ export default function CourseForm() {
 
   const validate = () => {
     const errors = {};
-    if (!/\d{4}/.test(formData.courseCode.trim())) {
-      errors.courseCode = "Must be a 4-digit number";
-    }
-    if (!formData.courseName.trim()) errors.courseName = "Required";
-    if (!formData.lecturer.trim()) errors.lecturer = "Required";
-    if (!formData.semester) errors.semester = "Required";
+    const courseCode = formData.courseCode.trim();
     const year = Number(formData.year);
-    if (!year || year < 2023 || year > 2030) {
-      errors.year = "Year must be between 2023–2030";
+
+    if (!/^\d{4}$/.test(courseCode) || Number(courseCode) < 1000) {
+      errors.courseCode = "Course code must be a 4-digit number (1000–9999)";
     }
+
+    if (!formData.courseName.trim()) {
+      errors.courseName = "Course name is required";
+    }
+
+    if (!formData.lecturer.trim()) {
+      errors.lecturer = "Lecturer name is required";
+    }
+
+    if (!formData.semester) {
+      errors.semester = "Semester is required";
+    }
+
+    if (!year || year < 2020 || year > 2030) {
+      errors.year = "Year must be between 2020 and 2030";
+    }
+
     setErrors(errors);
     return Object.keys(errors).length === 0;
   };
@@ -93,17 +106,16 @@ export default function CourseForm() {
     if (!validate()) return;
 
     const isEditMode = !!formData.id;
-    const duplicate = allCourses.find((c) =>
-      !isEditMode || c.id !== formData.id
-        ? c.courseCode === formData.courseCode ||
-          (c.courseName.toLowerCase() === formData.courseName.toLowerCase() &&
-            c.semester === formData.semester)
-        : false
+
+    const duplicate = allCourses.find(
+      (c) => (!isEditMode || c.id !== formData.id) &&
+             c.courseCode === formData.courseCode
     );
+
     if (duplicate) {
       setErrors((prev) => ({
         ...prev,
-        courseCode: "Duplicate course code or course name in this semester",
+        courseCode: "A course with this code already exists",
       }));
       return;
     }
@@ -115,6 +127,7 @@ export default function CourseForm() {
       await addCourse(formData);
       setSnackbar({ open: true, message: "Course added", severity: "success" });
     }
+
     setTimeout(() => navigate("/coursesManage"), 800);
   };
 
@@ -267,7 +280,6 @@ export default function CourseForm() {
         </Snackbar>
       </Paper>
 
-      {/* Cancel Confirmation Dialog */}
       <Dialog open={openCancelDialog} onClose={() => setOpenCancelDialog(false)}>
         <DialogTitle>Cancel Changes?</DialogTitle>
         <DialogContent>
