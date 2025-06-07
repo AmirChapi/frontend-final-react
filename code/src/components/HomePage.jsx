@@ -61,7 +61,7 @@ export default function HomePage() {
   }, []);
 
   useEffect(() => {
-    if (!selectedStudent || !Array.isArray(selectedStudent.courses)) {
+    if (!selectedStudent) {
       setStudentInfo(null);
       return;
     }

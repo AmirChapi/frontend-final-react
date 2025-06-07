@@ -99,15 +99,18 @@ export default function MessageForm() {
         await updateMessage({ ...formData, id });
         setSnackbar({ open: true, message: "Message updated", severity: "success" });
       } else {
+        const timestamp = new Date().toISOString();
+
         if (!formData.studentId) {
           const recipients = formData.courseCode
             ? students.filter((s) => Array.isArray(s.courses) && s.courses.includes(formData.courseCode))
             : students;
+
           for (const s of recipients) {
-            await addMessage({ ...formData, studentId: s.studentId });
+            await addMessage({ ...formData, studentId: s.studentId, timestamp });
           }
         } else {
-          await addMessage(formData);
+          await addMessage({ ...formData, timestamp });
         }
 
         setSnackbar({ open: true, message: "Message added", severity: "success" });
