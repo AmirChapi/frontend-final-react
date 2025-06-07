@@ -56,55 +56,66 @@ export default function TaskForm() {
     fetchData();
   }, [id]);
 
-  const handleChange = (e) => {
+  const validateField = async (name, value) => {
+    let error = false;
+    let duplicate = false;
+
+    if (name === "taskCode") {
+      error = !(value.length === 3 && /^[0-9]+$/.test(value));
+      if (!id && !error && value) {
+        const exists = await isTaskCodeExists(value);
+        duplicate = exists;
+      }
+    }
+
+    if (name === "courseCode") {
+      error = !value;
+    }
+
+    if (name === "taskName") {
+      error = !value.trim();
+    }
+
+    if (name === "submissionDate") {
+      error = !value || dayjs(value).isBefore(dayjs(), "day");
+    }
+
+    if (name === "taskDescription") {
+      error = !value.trim();
+    }
+
+    setErrors((prev) => ({
+      ...prev,
+      [name]: error,
+      ...(name === "taskCode" ? { taskCodeDuplicate: duplicate } : {}),
+    }));
+  };
+
+  const handleChange = async (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
-
-    let errorField = false;
-    if (name === "taskCode") {
-      errorField = !(value.length === 3 && /^[0-9]+$/.test(value));
-    }
-    if (name === "courseCode") errorField = !value;
-    if (name === "taskName") errorField = !value.trim();
-    if (name === "submissionDate") {
-      errorField = !value || dayjs(value).isBefore(dayjs(), "day");
-    }
-    if (name === "taskDescription") errorField = !value.trim();
-    setErrors((prev) => ({ ...prev, [name]: errorField }));
+    await validateField(name, value);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const newErrors = {};
+    const fields = [
+      "taskCode",
+      "courseCode",
+      "taskName",
+      "submissionDate",
+      "taskDescription",
+    ];
+
+    let newErrors = {};
     let hasError = false;
 
-    if (!formData.taskCode || !(formData.taskCode.length === 3 && /^[0-9]+$/.test(formData.taskCode))) {
-      newErrors.taskCode = true;
-      hasError = true;
+    for (const field of fields) {
+      await validateField(field, formData[field]);
     }
 
-    if (!formData.courseCode) {
-      newErrors.courseCode = true;
-      hasError = true;
-    }
-
-    if (!formData.taskName.trim()) {
-      newErrors.taskName = true;
-      hasError = true;
-    }
-
-    if (!formData.submissionDate || dayjs(formData.submissionDate).isBefore(dayjs(), "day")) {
-      newErrors.submissionDate = true;
-      hasError = true;
-    }
-
-    if (!formData.taskDescription.trim()) {
-      newErrors.taskDescription = true;
-      hasError = true;
-    }
-
-    if (!id && !hasError) {
+    if (!id) {
       const exists = await isTaskCodeExists(formData.taskCode);
       if (exists) {
         newErrors.taskCode = true;
@@ -113,10 +124,8 @@ export default function TaskForm() {
       }
     }
 
-    if (hasError) {
-      setErrors(newErrors);
-      return;
-    }
+    const anyError = Object.values(errors).some((err) => err);
+    if (anyError || hasError) return;
 
     if (id) {
       await updateTask({ ...formData, id });
@@ -161,7 +170,7 @@ export default function TaskForm() {
             value={formData.taskCode}
             onChange={handleChange}
             disabled={!!id}
-            error={errors.taskCode || errors.taskCodeDuplicate}
+            error={!!errors.taskCode || !!errors.taskCodeDuplicate}
             helperText={
               errors.taskCodeDuplicate
                 ? "Task code already exists"
@@ -255,7 +264,7 @@ export default function TaskForm() {
                 },
               }}
             >
-             {formData.id ? "Update" : "Save"}
+              {formData.id ? "Update" : "Save"}
             </Button>
           </Box>
         </Box>

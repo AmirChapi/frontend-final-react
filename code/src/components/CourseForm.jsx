@@ -67,38 +67,52 @@ export default function CourseForm() {
     loadCourseToEdit();
   }, [id, location.state]);
 
+  const validateField = (name, value) => {
+    let error = "";
+
+    if (name === "courseCode") {
+      if (!/^\d{4}$/.test(value.trim()) || Number(value) < 1000) {
+        error = "Course code must be a 4-digit number";
+      } else if (
+        !formData.id &&
+        allCourses.find((c) => c.courseCode === value.trim())
+      ) {
+        error = "A course with this code already exists";
+      }
+    }
+
+    if (name === "courseName" && !value.trim()) {
+      error = "Course name is required";
+    }
+
+    if (name === "lecturer" && !value.trim()) {
+      error = "Lecturer name is required";
+    }
+
+    if (name === "semester" && !value) {
+      error = "Semester is required";
+    }
+
+    if (name === "year") {
+      const year = Number(value);
+      if (!year || year < 2020 || year > 2030) {
+        error = "Year must be between 2020 and 2030";
+      }
+    }
+
+    setErrors((prev) => ({ ...prev, [name]: error }));
+  };
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+    validateField(name, value);
   };
 
   const validate = () => {
-    const errors = {};
-    const courseCode = formData.courseCode.trim();
-    const year = Number(formData.year);
-
-    if (!/^\d{4}$/.test(courseCode) || Number(courseCode) < 1000) {
-      errors.courseCode = "Course code must be a 4-digit number (1000–9999)";
-    }
-
-    if (!formData.courseName.trim()) {
-      errors.courseName = "Course name is required";
-    }
-
-    if (!formData.lecturer.trim()) {
-      errors.lecturer = "Lecturer name is required";
-    }
-
-    if (!formData.semester) {
-      errors.semester = "Semester is required";
-    }
-
-    if (!year || year < 2020 || year > 2030) {
-      errors.year = "Year must be between 2020 and 2030";
-    }
-
-    setErrors(errors);
-    return Object.keys(errors).length === 0;
+    const fields = ["courseCode", "courseName", "lecturer", "semester", "year"];
+    fields.forEach((field) => validateField(field, formData[field]));
+    return Object.values(errors).every((error) => !error);
   };
 
   const handleSubmit = async (e) => {

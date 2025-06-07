@@ -14,6 +14,7 @@ import { listGrades } from "../firebase/grade";
 import { listMessages } from "../firebase/message";
 
 export default function HomePage() {
+  const [selectedStudent, setSelectedStudent] = useState(null);
   const [studentInfo, setStudentInfo] = useState(null);
   const [courses, setCourses] = useState([]);
   const [grades, setGrades] = useState([]);
@@ -22,8 +23,13 @@ export default function HomePage() {
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
 
-  const selectedStudent = JSON.parse(localStorage.getItem("selectedStudent"));
+  // שליפת הסטודנט מה־localStorage
+  useEffect(() => {
+    const student = JSON.parse(localStorage.getItem("selectedStudent"));
+    setSelectedStudent(student);
+  }, []);
 
+  // טעינת נתונים מה־Firebase
   useEffect(() => {
     async function fetchAll() {
       const [coursesData, tasksData, gradesData, messagesData] = await Promise.all([
@@ -41,23 +47,38 @@ export default function HomePage() {
     fetchAll();
   }, []);
 
+  // חישוב נתונים לפי הסטודנט הנבחר
   useEffect(() => {
-    if (!selectedStudent || !Array.isArray(selectedStudent.courses)) return;
+    if (
+      !selectedStudent ||
+      !Array.isArray(selectedStudent.courses) ||
+      courses.length === 0 ||
+      tasks.length === 0 ||
+      messages.length === 0
+    )
+      return;
 
-    const courseCodes = selectedStudent.courses.map(String);
-    const studentCourses = courseCodes
-      .map(code => courses.find(c => c.courseCode.toString() === code))
-      .filter(Boolean);
+    const studentCourseCodes = selectedStudent.courses.map((code) => code.toString());
+
+    const studentCourses = courses.filter((course) =>
+      studentCourseCodes.includes(course.courseCode.toString())
+    );
 
     const now = new Date();
+
     const studentTasks = tasks
-      .filter(t => courseCodes.includes(t.courseCode?.toString()))
-      .filter(t => new Date(t.submissionDate) >= now)
+      .filter(
+        (task) =>
+          studentCourseCodes.includes(task.courseCode?.toString()) &&
+          new Date(task.submissionDate) >= now
+      )
       .sort((a, b) => new Date(a.submissionDate) - new Date(b.submissionDate))
       .slice(0, 3);
 
     const studentMessages = messages
-      .filter((m) => m.studentId?.toString() === selectedStudent.studentId.toString())
+      .filter(
+        (msg) => msg.studentId?.toString() === selectedStudent.studentId?.toString()
+      )
       .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
       .slice(0, 3);
 
@@ -67,19 +88,9 @@ export default function HomePage() {
       tasks: studentTasks,
       messages: studentMessages,
     });
-  }, [courses, tasks, messages]);
+  }, [selectedStudent, courses, tasks, messages]);
 
-  if (isLoading) return <LinearProgress />;
-
-  if (!selectedStudent) {
-    return (
-      <Box sx={{ p: 4, textAlign: 'center' , color: '#bb2f13' }}>
-        <Typography variant="h5" gutterBottom>
-          ⚠️  This page is intended for a specific student, please select a student from the list.
-        </Typography>
-      </Box>
-    );
-  }
+  if (isLoading || !studentInfo) return <LinearProgress />;
 
   // סגנונות
   const cardStyle = {
@@ -87,7 +98,7 @@ export default function HomePage() {
     minWidth: 280,
     borderRadius: 4,
     boxShadow: '0 4px 12px rgba(0,0,0,0.04)',
-    border: '2.5px solid #ebdfd1', // מסגרת מודגשת
+    border: '2.5px solid #ebdfd1',
     backgroundColor: '#fff',
     p: 2,
   };
@@ -124,7 +135,7 @@ export default function HomePage() {
         sx={{
           color: "#221e20",
           mb: 4,
-          fontSize: "1.3rem" // הגדלת טקסט
+          fontSize: "1.3rem"
         }}
       >
         Here’s a quick overview of your courses, upcoming tasks, and messages. Let’s make today productive!
@@ -184,7 +195,7 @@ export default function HomePage() {
               {studentInfo.tasks.length > 0 ? (
                 studentInfo.tasks.map((t, i) => (
                   <Typography key={i} sx={valueStyle}>
-                    • {t.taskName}
+                    • {t.taskName} – {new Date(t.submissionDate).toLocaleDateString()}
                   </Typography>
                 ))
               ) : (

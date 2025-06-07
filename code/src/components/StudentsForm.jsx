@@ -39,40 +39,62 @@ export default function StudentsForm() {
     loadData();
   }, [id, isEditMode]);
 
+  const validateField = (name, value) => {
+    let error = "";
+    const currentYear = new Date().getFullYear();
+    const age = Number(value);
+    const year = Number(value);
+
+    if (name === "studentId") {
+      if (!/^\d{9}$/.test(value)) {
+        error = 'Must be exactly 9 digits';
+      } else if (
+        !isEditMode &&
+        allStudents.some((s) => s.studentId === value)
+      ) {
+        error = 'This ID already exists in the system';
+      }
+    }
+
+    if (name === "fullName") {
+      if (!value.trim() || !/^[A-Za-z\s]+$/.test(value)) {
+        error = 'Only letters and spaces allowed';
+      }
+    }
+
+    if (name === "age") {
+      if (!age || age < 18 || age > 80) {
+        error = 'Must be 18–80';
+      }
+    }
+
+    if (name === "gender") {
+      if (!value) {
+        error = 'Please select gender';
+      }
+    }
+
+    if (name === "year") {
+      if (!year || year < 2020 || year > currentYear) {
+        error = 'Year must be between 2020 and current';
+      }
+    }
+
+    setErrors((prev) => ({ ...prev, [name]: error }));
+  };
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+    validateField(name, value);
   };
 
   const validate = () => {
     const newErrors = {};
-    const currentYear = new Date().getFullYear();
-    const age = Number(formData.age);
-    const year = Number(formData.year);
-
-    if (!/^\d{9}$/.test(formData.studentId)) {
-      newErrors.studentId = 'Must be exactly 9 digits';
-    } else if (
-      !isEditMode &&
-      allStudents.some((s) => s.studentId === formData.studentId)
-    ) {
-      newErrors.studentId = 'This ID already exists in the system';
-    }
-
-    if (!formData.fullName.trim() || !/^[A-Za-z\s]+$/.test(formData.fullName))
-      newErrors.fullName = 'Only letters and spaces allowed';
-
-    if (!age || age < 18 || age > 80)
-      newErrors.age = 'Must be 18–80';
-
-    if (!formData.gender)
-      newErrors.gender = 'Please select gender';
-
-    if (!year || year < 2020 || year > currentYear)
-      newErrors.year = 'Year must be between 2020 and current';
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    Object.entries(formData).forEach(([key, value]) => {
+      validateField(key, value);
+    });
+    return Object.values(errors).every((err) => !err);
   };
 
   const handleSubmit = async (e) => {
