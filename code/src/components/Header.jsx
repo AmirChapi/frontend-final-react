@@ -32,7 +32,6 @@ export default function Header() {
     setSelectedStudentId(studentId);
 
     if (!studentId) {
-      // בחירה של "All Students"
       localStorage.removeItem("selectedStudent");
       window.location.reload();
       return;
@@ -58,10 +57,8 @@ export default function Header() {
   return (
     <AppBar position="static" sx={{ backgroundColor: '#ebdfd1', position: 'relative' }}>
       <Toolbar sx={{ position: 'relative' }}>
-        {/* תפריט צדדי */}
         <SideDropdownMenu />
 
-        {/* לוגו בצד שמאל */}
         <Box
           sx={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}
           onClick={handleHomeClick}
@@ -74,7 +71,6 @@ export default function Header() {
           />
         </Box>
 
-        {/* כותרת ממורכזת */}
         <Typography
           variant="h6"
           component="div"
@@ -83,26 +79,24 @@ export default function Header() {
             left: '50%',
             transform: 'translateX(-50%)',
             fontWeight: 'bold',
-            fontSize: '1.2rem', // ← להוסיף גודל אחיד
+            fontSize: '1.2rem', 
             color: '#333',
-            fontFamily: 'Arial' // ← להבטיח אחידות
+            fontFamily: 'Arial'
           }}
         >
           MHA College
         </Typography>
 
 
-        {/* רווח מתרחב */}
         <Box sx={{ flexGrow: 1 }} />
 
-        {/* בחירת סטודנט בצד ימין */}
         <Box
           sx={{
             mb: 0.5,
             fontWeight: 'bold',
-            fontSize: '1.2rem', // ← תואם ל־MHA College
+            fontSize: '1.2rem', 
             color: '#333',
-            fontFamily: 'Arial', // ← אותו פונט
+            fontFamily: 'Arial', 
           }}
         >
           Select Student:
@@ -119,7 +113,6 @@ export default function Header() {
             ml: 1,
           }}
         >
-          {/* אפשרות להצגת כל הסטודנטים */}
           <MenuItem value="">
             All Students
           </MenuItem>

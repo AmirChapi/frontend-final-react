@@ -130,7 +130,6 @@ export default function CoursesManage() {
 
   return (
     <Box sx={{ padding: 4 }}>
-      {/* כותרת ממורכזת */}
       <Typography
         variant="h4"
         gutterBottom
@@ -139,7 +138,6 @@ export default function CoursesManage() {
         Course Management
       </Typography>
 
-      {/* משפט הסבר ממורכז */}
       <Typography
         variant="subtitle1"
         textAlign="center"
@@ -153,7 +151,6 @@ export default function CoursesManage() {
         All courses, for administrators only.
       </Typography>
 
-      {/* כפתור הוספה בעיצוב מותאם */}
       <Box sx={{ mb: 3, display: 'flex', justifyContent: 'flex-end' }}>
         <Button
           variant="contained"

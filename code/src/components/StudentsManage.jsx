@@ -63,7 +63,6 @@ export default function StudentsManage() {
 
   return (
     <Box sx={{ padding: 4 }}>
-      {/* כותרת ממורכזת */}
       <Typography
         variant="h4"
         gutterBottom
@@ -72,7 +71,6 @@ export default function StudentsManage() {
         Student Management
       </Typography>
 
-      {/* משפט הסבר ממורכז */}
       <Typography
         variant="subtitle1"
         textAlign="center"
@@ -86,7 +84,6 @@ export default function StudentsManage() {
        All students, for administrators only.
             </Typography>
 
-      {/* כפתור הוספת סטודנט בצד ימין */}
       <Box sx={{ mb: 3, display: 'flex', justifyContent: 'flex-end' }}>
         <Button
           variant="contained"
@@ -107,7 +104,6 @@ export default function StudentsManage() {
         </Button>
       </Box>
 
-      {/* טבלה */}
       <TableContainer
         component={Paper}
         sx={{

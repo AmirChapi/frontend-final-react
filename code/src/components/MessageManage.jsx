@@ -92,7 +92,6 @@ export default function MessageManage() {
 
   return (
     <Box sx={{ padding: 4 }}>
-      {/* כותרת ממורכזת */}
       <Typography
         variant="h4"
         gutterBottom
@@ -101,7 +100,6 @@ export default function MessageManage() {
         Message Management
       </Typography>
 
-      {/* משפט הסבר */}
       <Typography
         variant="subtitle1"
         textAlign="center"
@@ -115,7 +113,6 @@ export default function MessageManage() {
         Messages relevant to the selected student.
       </Typography>
 
-      {/* כפתור הוספה בעיצוב מותאם */}
       <Box sx={{ mb: 3, display: "flex", justifyContent: "flex-end" }}>
         <Button
           variant="contained"
@@ -136,7 +133,6 @@ export default function MessageManage() {
         </Button>
       </Box>
 
-      {/* טבלה */}
       <TableContainer
         component={Paper}
         sx={{

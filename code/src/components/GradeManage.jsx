@@ -78,7 +78,6 @@ export default function GradeManage() {
 
   return (
     <Box sx={{ padding: 4 }}>
-      {/* כותרת ממורכזת */}
       <Typography
         variant="h4"
         gutterBottom
@@ -87,7 +86,6 @@ export default function GradeManage() {
         Grade Management
       </Typography>
 
-      {/* משפט הסבר ממורכז */}
       <Typography
         variant="subtitle1"
         textAlign="center"
@@ -101,7 +99,6 @@ export default function GradeManage() {
         Grade relevant to the selected student.
       </Typography>
 
-      {/* כפתור הוספת ציון בצד ימין */}
       <Box sx={{ mb: 3, display: 'flex', justifyContent: 'flex-end' }}>
         <Button
           variant="contained"
@@ -122,7 +119,6 @@ export default function GradeManage() {
         </Button>
       </Box>
 
-      {/* טבלה */}
       <TableContainer
         component={Paper}
         sx={{

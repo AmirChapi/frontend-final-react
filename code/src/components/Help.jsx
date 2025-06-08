@@ -1,19 +1,17 @@
 // src/components/Help.jsx
 import React from 'react';
-import { Link as RouterLink } from 'react-router-dom'; // Import Link and alias it
+import { Link as RouterLink } from 'react-router-dom'; 
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import Container from '@mui/material/Container';
 import Paper from '@mui/material/Paper';
 import List from '@mui/material/List';
 import ListItem from '@mui/material/ListItem';
-import ListItemButton from '@mui/material/ListItemButton'; // Use ListItemButton for better interaction
+import ListItemButton from '@mui/material/ListItemButton'; 
 import ListItemText from '@mui/material/ListItemText';
 import ListItemIcon from '@mui/material/ListItemIcon';
 import Divider from '@mui/material/Divider';
-import Link from '@mui/material/Link'; // MUI Link for consistent styling if needed, but RouterLink is primary
-
-// Import icons relevant to your sections
+import Link from '@mui/material/Link'; 
 import MessageIcon from '@mui/icons-material/Message';
 import PeopleIcon from '@mui/icons-material/People';
 import SchoolIcon from '@mui/icons-material/School';
@@ -21,7 +19,6 @@ import AssignmentIcon from '@mui/icons-material/Assignment';
 import InfoIcon from '@mui/icons-material/Info';
 import HomeIcon from '@mui/icons-material/Home';
 
-// Helper component to integrate React Router Link with MUI ListItem
 const ListItemLink = (props) => {
   const { icon, primary, secondary, to } = props;
 
@@ -34,7 +31,7 @@ const ListItemLink = (props) => {
   );
 
   return (
-    <li> {/* List item needs to be direct child of List */}
+    <li>
       <ListItemButton component={renderLink}>
 {icon ? (
   <ListItemIcon>
@@ -65,18 +62,14 @@ export default function Help() {
           Welcome to the application! Click on an item below to navigate to the relevant section:
         </Typography>
 
-        {/* Use component="nav" for accessibility */}
         <List component="nav" aria-label="help sections">
-          {/* Home Section */}
           <ListItemLink
             to="/"
             primary="Homepage"
             secondary="The main landing page after logging in."
             icon={<HomeIcon color="primary" />}
           />
-          <Divider component="li" /> {/* Divider as list item */}
-
-          {/* Message Management Section */}
+          <Divider component="li" />
           <ListItemLink
             to="/MessageManage"
             primary="Message Management"
@@ -85,7 +78,6 @@ export default function Help() {
           />
           <Divider component="li" />
 
-          {/* Student Management Section */}
           <ListItemLink
             to="/StudentsManage"
             primary="Student Management"
@@ -94,7 +86,6 @@ export default function Help() {
           />
           <Divider component="li" />
 
-          {/* Course Management Section */}
           <ListItemLink
             to="/CoursesManage"
             primary="Course Management"
@@ -103,7 +94,6 @@ export default function Help() {
           />
           <Divider component="li" />
 
-          {/* Task/Assignment Management Section */}
           <ListItemLink
             to="/TaskManage"
             primary="Task/Assignment Management"
@@ -112,7 +102,6 @@ export default function Help() {
           />
           <Divider component="li" />
 
-           {/* Info Page Section */}
            <ListItemLink
             to="/info"
             primary="Information"

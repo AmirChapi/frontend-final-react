@@ -77,7 +77,6 @@ export default function TasksManage() {
 
   return (
     <Box sx={{ padding: 4 }}>
-      {/* כותרת ממורכזת */}
       <Typography
         variant="h4"
         gutterBottom
@@ -86,7 +85,6 @@ export default function TasksManage() {
         Task Management
       </Typography>
 
-      {/* משפט הסבר ממורכז */}
       <Typography
         variant="subtitle1"
         textAlign="center"
@@ -100,7 +98,6 @@ export default function TasksManage() {
         Tasks relevant to the selected student.
       </Typography>
 
-      {/* כפתור הוספה ממוקם בצד ימין */}
       <Box sx={{ mb: 3, display: "flex", justifyContent: "flex-end" }}>
         <Button
           variant="contained"
@@ -121,7 +118,6 @@ export default function TasksManage() {
         </Button>
       </Box>
 
-      {/* טבלה */}
       <TableContainer
         component={Paper}
         sx={{
