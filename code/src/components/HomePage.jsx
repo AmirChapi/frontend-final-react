@@ -69,12 +69,10 @@ export default function HomePage() {
     const studentCourseCodes = Array.isArray(selectedStudent.courses)
       ? selectedStudent.courses.map((code) => code.toString())
       : [];
-    console.log("Student Course Codes:", studentCourseCodes);
     
     const studentCourses = (Array.isArray(courses) ? courses : []).filter((course) =>
       studentCourseCodes.includes(course.courseCode.toString())
     );
-    console.log("Student Courses:", studentCourses);
     
 
     const now = new Date();
@@ -103,9 +101,9 @@ export default function HomePage() {
 
   if (!selectedStudent) {
     return (
-      <Box sx={{ p: 4, textAlign: 'center' }}>
-        <Typography variant="h4" sx={{ color: '#555', mt: 10 }}>
-          This page is intended to display data when a student is selected from the list.
+      <Box sx={{ p: 4, textAlign: 'center', color: '#bb2f13' }}>
+        <Typography variant="h5" gutterBottom>
+          ⚠️  This page is intended for a specific student, please select a student from the list.
         </Typography>
       </Box>
     );
