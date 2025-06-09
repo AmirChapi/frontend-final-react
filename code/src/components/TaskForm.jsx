@@ -1,4 +1,8 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
+import {
+  useState,
+  useEffect,
+} from "react";
 import {
   Box,
   Button,
@@ -14,7 +18,7 @@ import {
   DialogContentText,
   DialogTitle,
 } from "@mui/material";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams} from "react-router-dom";
 import dayjs from "dayjs";
 import {
   addTask,
@@ -61,7 +65,7 @@ export default function TaskForm() {
     let duplicate = false;
 
     if (name === "taskCode") {
-      error = !(value.length === 3 && /^[0-9]+$/.test(value));
+      error = !/^\d{3}$/.test(value); // בדיוק 3 ספרות
       if (!id && !error && value) {
         const exists = await isTaskCodeExists(value);
         duplicate = exists;
@@ -89,6 +93,8 @@ export default function TaskForm() {
       [name]: error,
       ...(name === "taskCode" ? { taskCodeDuplicate: duplicate } : {}),
     }));
+
+    return error || duplicate;
   };
 
   const handleChange = async (e) => {
@@ -108,24 +114,16 @@ export default function TaskForm() {
       "taskDescription",
     ];
 
-    let newErrors = {};
     let hasError = false;
+    const newErrors = {};
 
     for (const field of fields) {
-      await validateField(field, formData[field]);
+      const value = formData[field];
+      const error = await validateField(field, value);
+      if (error) hasError = true;
     }
 
-    if (!id) {
-      const exists = await isTaskCodeExists(formData.taskCode);
-      if (exists) {
-        newErrors.taskCode = true;
-        newErrors.taskCodeDuplicate = true;
-        hasError = true;
-      }
-    }
-
-    const anyError = Object.values(errors).some((err) => err);
-    if (anyError || hasError) return;
+    if (hasError || Object.values(errors).some((e) => e)) return;
 
     if (id) {
       await updateTask({ ...formData, id });
@@ -175,7 +173,7 @@ export default function TaskForm() {
               errors.taskCodeDuplicate
                 ? "Task code already exists"
                 : errors.taskCode
-                ? "Task code must be 3 digits"
+                ? "Task code must be exactly 3 digits"
                 : ""
             }
           />
@@ -289,3 +287,4 @@ export default function TaskForm() {
     </Box>
   );
 }
+
