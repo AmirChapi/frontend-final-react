@@ -66,11 +66,16 @@ export default function HomePage() {
       return;
     }
 
-    const studentCourseCodes = selectedStudent.courses.map((code) => code.toString());
-
+    const studentCourseCodes = Array.isArray(selectedStudent.courses)
+      ? selectedStudent.courses.map((code) => code.toString())
+      : [];
+    console.log("Student Course Codes:", studentCourseCodes);
+    
     const studentCourses = (Array.isArray(courses) ? courses : []).filter((course) =>
       studentCourseCodes.includes(course.courseCode.toString())
     );
+    console.log("Student Courses:", studentCourses);
+    
 
     const now = new Date();
 

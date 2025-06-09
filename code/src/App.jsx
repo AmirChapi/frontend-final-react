@@ -25,27 +25,22 @@ export default function App() {
         <Route path='/help' element={<Help />} />
         <Route path='/info' element={<InfoPage />} />
 
-        {/* Students */}
         <Route path='/StudentsForm' element={<StudentsForm />} />
         <Route path='/StudentsForm/:id' element={<StudentsForm />} />
         <Route path='/StudentsManage' element={<StudentsManage />} />
 
-        {/* Courses */}
         <Route path='/CourseForm' element={<CourseForm />} />
         <Route path='/CourseForm/:id' element={<CourseForm />} />
         <Route path='/CoursesManage' element={<CoursesManage />} />
 
-        {/* Messages */}
         <Route path='/MessageForm' element={<MessageForm />} />
         <Route path='/MessageForm/:id' element={<MessageForm />} />
         <Route path='/MessageManage' element={<MessageManage />} />
 
-        {/* Tasks */}
         <Route path='/TaskForm' element={<TaskForm />} />
         <Route path='/TaskForm/:id' element={<TaskForm />} />
         <Route path='/TaskManage' element={<TaskManage />} />
 
-        {/* Grades */}
         <Route path='/GradeForm' element={<GradeForm />} />
         <Route path='/GradeForm/:id' element={<GradeForm />} />
         <Route path='/GradeManage' element={<GradeManage />} />

@@ -162,7 +162,7 @@ export default function InfoPage() {
         <Typography>Name: {student.fullName}</Typography>
         <Typography>ID: {student.studentId}</Typography>
         <Typography>Age: {student.age}</Typography>
-        <Typography>Registration Year: {student.registrationYear}</Typography>
+        <Typography>Registration Year: {student.year}</Typography>
 
         <Divider sx={{ my: 2 }} />
         <Typography variant="h6">Courses</Typography>

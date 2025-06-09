@@ -1,4 +1,3 @@
-// src/firebase/grade.js
 import {
   collection,
   getDocs,
