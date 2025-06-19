@@ -1,3 +1,5 @@
+// ✅ שדרוג: מניעת כפילויות בשם קורס עם נורמליזציה + שגיאה חיה בשדה הקלט
+
 import React, { useEffect, useState } from "react";
 import {
   Box,
@@ -67,11 +69,23 @@ export default function CourseForm() {
     loadCourseToEdit();
   }, [id, location.state]);
 
+  const normalize = (str) => str.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+
   const validateField = (name, value) => {
     let error = "";
 
-    if (name === "courseName" && !value.trim()) {
-      error = "Course name is required";
+    if (name === "courseName") {
+      if (!value.trim()) {
+        error = "Course name is required";
+      } else {
+        const normalizedValue = normalize(value);
+        const isDuplicate = allCourses.some(
+          (c) => normalize(c.courseName) === normalizedValue && c.id !== formData.id
+        );
+        if (isDuplicate) {
+          error = "A course with this name already exists";
+        }
+      }
     }
 
     if (name === "lecturer" && !value.trim()) {
