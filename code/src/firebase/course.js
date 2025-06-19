@@ -6,11 +6,15 @@ import {
   deleteDoc,
   doc,
   getDoc,
+  setDoc,
 } from "firebase/firestore";
 import { firestore } from "./config";
 
 export async function addCourse(course) {
-  return addDoc(collection(firestore, "courses"), course);
+  const docRef = doc(collection(firestore, "courses"));
+  const newCourse = { ...course, courseCode: docRef.id };
+  await setDoc(docRef, newCourse);
+  return { id: docRef.id, ...newCourse };
 }
 
 export async function listCourses() {

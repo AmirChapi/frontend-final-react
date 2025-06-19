@@ -1,3 +1,5 @@
+// ✅ גרסה מתוקנת של CourseForm.jsx – עם קביעת courseCode לפי מזהה Firestore במסך "הוספת קורס"
+
 import React, { useEffect, useState } from "react";
 import {
   Box,
@@ -70,17 +72,6 @@ export default function CourseForm() {
   const validateField = (name, value) => {
     let error = "";
 
-    if (name === "courseCode") {
-      if (!/^\d{4}$/.test(value.trim()) || Number(value) < 1000) {
-        error = "Course code must be a 4-digit number";
-      } else if (
-        !formData.id &&
-        allCourses.find((c) => c.courseCode === value.trim())
-      ) {
-        error = "A course with this code already exists";
-      }
-    }
-
     if (name === "courseName" && !value.trim()) {
       error = "Course name is required";
     }
@@ -110,7 +101,7 @@ export default function CourseForm() {
   };
 
   const validate = () => {
-    const fields = ["courseCode", "courseName", "lecturer", "semester", "year"];
+    const fields = ["courseName", "lecturer", "semester", "year"];
     fields.forEach((field) => validateField(field, formData[field]));
     return Object.values(errors).every((error) => !error);
   };
@@ -121,24 +112,13 @@ export default function CourseForm() {
 
     const isEditMode = !!formData.id;
 
-    const duplicate = allCourses.find(
-      (c) => (!isEditMode || c.id !== formData.id) &&
-             c.courseCode === formData.courseCode
-    );
-
-    if (duplicate) {
-      setErrors((prev) => ({
-        ...prev,
-        courseCode: "A course with this code already exists",
-      }));
-      return;
-    }
-
     if (isEditMode) {
       await updateCourse(formData);
       setSnackbar({ open: true, message: "Course updated", severity: "success" });
     } else {
-      await addCourse(formData);
+      const { id: courseId, ...data } = formData;
+      const added = await addCourse(data); // addCourse תוסיף courseCode אוטומטית לפי id
+      setFormData((prev) => ({ ...prev, courseCode: added.courseCode }));
       setSnackbar({ open: true, message: "Course added", severity: "success" });
     }
 
@@ -172,17 +152,15 @@ export default function CourseForm() {
         </Typography>
 
         <form onSubmit={handleSubmit}>
-          <TextField
-            name="courseCode"
-            label="Course Code"
-            value={formData.courseCode}
-            onChange={handleChange}
-            error={!!errors.courseCode}
-            helperText={errors.courseCode}
-            fullWidth
-            margin="normal"
-            disabled={!!formData.id}
-          />
+          {formData.courseCode && (
+            <TextField
+              label="Course Code"
+              value={formData.courseCode}
+              fullWidth
+              margin="normal"
+              disabled
+            />
+          )}
 
           <TextField
             name="courseName"
