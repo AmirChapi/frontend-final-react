@@ -1,5 +1,3 @@
-// ✅ גרסה מתוקנת של CourseForm.jsx – עם קביעת courseCode לפי מזהה Firestore במסך "הוספת קורס"
-
 import React, { useEffect, useState } from "react";
 import {
   Box,
@@ -117,7 +115,7 @@ export default function CourseForm() {
       setSnackbar({ open: true, message: "Course updated", severity: "success" });
     } else {
       const { id: courseId, ...data } = formData;
-      const added = await addCourse(data); // addCourse תוסיף courseCode אוטומטית לפי id
+      const added = await addCourse(data); 
       setFormData((prev) => ({ ...prev, courseCode: added.courseCode }));
       setSnackbar({ open: true, message: "Course added", severity: "success" });
     }
